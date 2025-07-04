@@ -94,6 +94,8 @@ plugins=(git zsh-autosuggestions zsh-syntax-highlighting)
 
 source \$ZSH/oh-my-zsh.sh
 [[ ! -f ~/.p10k.zsh ]] || source ~/.p10k.zsh
+echo 'export VISUAL=nvim' >> ~/.zshrc
+echo 'export EDITOR="$VISUAL"' >> ~/.zshrc
 EOF
 
 # ========== WSL Shell Auto-switch ==========
