@@ -15,6 +15,13 @@ sudo apt install -y curl git unzip build-essential cmake ninja-build gettext tmu
 # ========== Neovim Installation ==========
 if [ ! -x "$(command -v nvim)" ]; then
   echo "==> Neovim not found, building from source..."
+
+  # Check if Neovim directory exists
+  if [ -d "neovim" ]; then
+    echo "==> Removing existing neovim directory..."
+    rm -rf neovim
+  fi
+
   git clone https://github.com/neovim/neovim.git
   cd neovim
   make CMAKE_BUILD_TYPE=RelWithDebInfo
