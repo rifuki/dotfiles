@@ -7,6 +7,27 @@ if grep -qi microsoft /proc/version; then
   IS_WSL=true
 fi
 
+# ========== Swap Setup ==========
+if ! swapon --show | grep -q "/swapfile"; then
+  echo "==> Creating 2GB swap file..."
+  sudo fallocate -l 2G /swapfile
+  sudo chmod 600 /swapfile
+  sudo mkswap /swapfile
+  sudo swapon /swapfile
+
+  # Make swap persistent
+  grep -q "/swapfile" /etc/fstab || echo "/swapfile swap swap defaults 0 0" | sudo tee -a /etc/fstab
+  echo "✅ Swap created successfully"
+else
+  echo "✅ Swap already exists"
+fi
+
+# ========== Swappiness Configuration ==========
+echo "==> Configuring swappiness..."
+sudo sysctl -w vm.swappiness=30 > /dev/null 2>&1
+grep -q "vm.swappiness" /etc/sysctl.conf || echo "vm.swappiness=30" | sudo tee -a /etc/sysctl.conf > /dev/null 2>&1
+echo "✅ Swappiness set to 30"
+
 # ========== System Dependencies ==========
 echo "==> Installing system dependencies..."
 sudo apt update
@@ -35,16 +56,10 @@ fi
 # ========== Node.js & NVM ==========
 if ! command -v npm &>/dev/null; then
   echo "==> Installing Node.js via NVM..."
-  curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.3/install.sh | bash
+  curl -fsSL https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.3/install.sh | bash
 
   export NVM_DIR="$HOME/.nvm"
   [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
-
-  # Persist in .zshrc
-  grep -q 'export NVM_DIR' ~/.zshrc || cat <<EOF >> ~/.zshrc
-export NVM_DIR="\$HOME/.nvm"
-[ -s "\$NVM_DIR/nvm.sh" ] && \. "\$NVM_DIR/nvm.sh"
-EOF
 
   nvm install 22
 else
@@ -52,16 +67,24 @@ else
 fi
 
 # ========== Dotfiles ==========
-echo "==> Cloning dotfiles..."
-git clone https://github.com/rifuki/rifuki-dotvimux.git
+if [ ! -d "$HOME/.config/nvim" ] || [ ! -d "$HOME/.config/tmux" ]; then
+  echo "==> Cloning dotfiles..."
+  if [ -d "daily-dotfiles" ]; then
+    rm -rf daily-dotfiles
+  fi
+  git clone --depth=1 https://github.com/rifuki/daily-dotfiles.git
 
-echo "==> Cleaning old configs..."
-rm -rf ~/.config/.git ~/.config/.gitignore ~/.config/nvim ~/.config/tmux
+  echo "==> Cleaning old configs..."
+  rm -rf ~/.config/.git ~/.config/.gitignore ~/.config/nvim ~/.config/tmux
 
-echo "==> Copying configs..."
-mkdir -p ~/.config
-cp -r rifuki-dotvimux/. ~/.config/
-rm -rf rifuki-dotvimux
+  echo "==> Copying configs..."
+  mkdir -p ~/.config
+  cp -r daily-dotfiles/. ~/.config/
+  rm -rf daily-dotfiles
+  echo "✅ Dotfiles installed"
+else
+  echo "✅ Dotfiles already exist"
+fi
 
 # ========== Tmux Plugin Manager ==========
 TPM_DIR="$HOME/.config/tmux/plugins/tpm"
@@ -70,12 +93,25 @@ if [ ! -d "$TPM_DIR" ]; then
   git clone https://github.com/tmux-plugins/tpm "$TPM_DIR"
 fi
 echo "==> Installing Tmux plugins..."
-"$TPM_DIR/bin/install_plugins"
+if [ -x "$TPM_DIR/bin/install_plugins" ]; then
+  "$TPM_DIR/bin/install_plugins"
+else
+  echo "⚠️ TPM install_plugins not found, skipping..."
+fi
 
 # ========== Oh My Zsh + Plugins + Theme ==========
 if [ ! -d "$HOME/.oh-my-zsh" ]; then
   echo "==> Installing Oh My Zsh..."
-  RUNZSH=no KEEP_ZSHRC=yes CHSH=no bash -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"
+  RUNZSH=no KEEP_ZSHRC=yes CHSH=no bash -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)" || {
+    echo "❌ Oh My Zsh installation failed!"
+    exit 1
+  }
+fi
+
+# Verify Oh My Zsh installation
+if [ ! -d "$HOME/.oh-my-zsh" ]; then
+  echo "❌ Oh My Zsh directory not found after installation!"
+  exit 1
 fi
 
 ZSH_CUSTOM="$HOME/.oh-my-zsh/custom"
@@ -86,8 +122,14 @@ ZSH_CUSTOM="$HOME/.oh-my-zsh/custom"
 [[ ! -d "$ZSH_CUSTOM/plugins/zsh-syntax-highlighting" ]] && \
   git clone https://github.com/zsh-users/zsh-syntax-highlighting.git "$ZSH_CUSTOM/plugins/zsh-syntax-highlighting"
 
-[[ ! -d "$ZSH_CUSTOM/themes/powerlevel10k" ]] && \
-  git clone --depth=1 https://github.com/romkatv/powerlevel10k.git "$ZSH_CUSTOM/themes/powerlevel10k"
+[[ ! -d "$ZSH_CUSTOM/plugins/spaceship-ember" ]] && \
+  git clone https://github.com/spaceship-prompt/spaceship-ember.git "$ZSH_CUSTOM/plugins/spaceship-ember"
+
+[[ ! -d "$ZSH_CUSTOM/plugins/spaceship-vi-mode" ]] && \
+  git clone https://github.com/spaceship-prompt/spaceship-vi-mode.git "$ZSH_CUSTOM/plugins/spaceship-vi-mode"
+
+[[ ! -d "$ZSH_CUSTOM/themes/spaceship" ]] && \
+  git clone --depth=1 https://github.com/spaceship-prompt/spaceship-prompt.git "$ZSH_CUSTOM/themes/spaceship"
 
 # ========== .zshrc Config ==========
 echo "==> Writing ~/.zshrc..."
@@ -96,14 +138,15 @@ export ZSH="\$HOME/.oh-my-zsh"
 export NVM_DIR="\$HOME/.nvm"
 [ -s "\$NVM_DIR/nvm.sh" ] && \. "\$NVM_DIR/nvm.sh"
 
-ZSH_THEME="powerlevel10k/powerlevel10k"
-plugins=(git zsh-autosuggestions zsh-syntax-highlighting)
+ZSH_THEME="spaceship"
+plugins=(git zsh-autosuggestions zsh-syntax-highlighting spaceship-ember spaceship-vi-mode)
 
 source \$ZSH/oh-my-zsh.sh
-[[ ! -f ~/.p10k.zsh ]] || source ~/.p10k.zsh
+SPACESHIP_PROMPT_ADD_NEWLINE=false
+EOF
+
 echo 'export VISUAL=nvim' >> ~/.zshrc
 echo 'export EDITOR="$VISUAL"' >> ~/.zshrc
-EOF
 
 # ========== WSL Shell Auto-switch ==========
 if [ "$IS_WSL" = true ]; then
@@ -120,7 +163,7 @@ else
   # Try chsh on non-WSL
   if [ "$SHELL" != "$(which zsh)" ]; then
     echo "==> Setting zsh as default shell..."
-    chsh -s "$(which zsh)" || echo "⚠️ Failed to change shell. Try manually with: chsh -s $(which zsh)"
+    chsh -s "$(which zsh)" 2>/dev/null || true
   fi
 fi
 
@@ -129,5 +172,6 @@ echo "✅ Setup complete!"
 if [ "$IS_WSL" = true ]; then
   echo "👉 Please restart your WSL terminal (e.g. close and reopen)"
 else
-  echo "👉 Run 'exec zsh' or restart terminal to enjoy Zsh"
+  echo "👉 Switching to Zsh..."
+  exec zsh
 fi
