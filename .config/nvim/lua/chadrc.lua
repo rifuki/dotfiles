@@ -23,6 +23,28 @@ M.ui = {
         enabled = true,
         theme = "minimal",
         separator_style = "default",
+        modules = {
+            mode = function()
+                local utils = require("nvchad.stl.utils")
+                if not utils.is_activewin() then return "" end
+
+                local m = vim.api.nvim_get_mode().mode
+                local mode_info = utils.modes[m]
+                local sep = utils.separators["default"]
+                local sep_r = "%#St_sep_r#" .. sep["right"] .. " %#ST_EmptySpace#"
+
+                local has_nerd = vim.g.have_nerd_font ~= false
+                local icon = has_nerd and vim.fn.nr2char(0xF0AD8) or "𐰁"
+
+                return "%#St_" .. mode_info[2] .. "ModeSep#"
+                    .. sep["left"]
+                    .. "%#St_" .. mode_info[2] .. "Mode#"
+                    .. icon .. " "
+                    .. "%#St_" .. mode_info[2] .. "ModeText#"
+                    .. " " .. mode_info[1]
+                    .. sep_r
+            end,
+        },
     },
 }
 

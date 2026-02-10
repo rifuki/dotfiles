@@ -9,9 +9,11 @@ return {
         require("mason-lspconfig").setup({
             ensure_installed = {
                 "lua_ls",
-                "rust_analyzer",
+                -- rust_analyzer managed by rustup + rustaceanvim
                 "taplo",
                 "ts_ls",
+                "denols",
+                "intelephense",
                 "dockerls",
                 "yamlls",
                 "gh_actions_ls",

@@ -5,10 +5,8 @@ return {
         lsp = {
             override = {
                 ["vim.lsp.buf.signature_help"] = false,
-                -- ["vim.lsp.buf.hover"] = false,
             },
             signature = { enabled = false },
-            -- hover = { enabled = false },
         },
         routes = {
             {
