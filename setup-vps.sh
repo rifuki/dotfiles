@@ -155,7 +155,7 @@ EOF
 # ========== Set Zsh as Default Shell ==========
 if [ "$SHELL" != "$(which zsh)" ]; then
   echo "==> Setting zsh as default shell..."
-  chsh -s "$(which zsh)" 2>/dev/null || true
+  sudo chsh -s "$(which zsh)" "$USER" 2>/dev/null || true
 fi
 
 # Fallback: auto-start zsh from .bashrc if chsh failed

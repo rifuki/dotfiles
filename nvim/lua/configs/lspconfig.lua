@@ -1,21 +1,9 @@
--- load defaults i.e lua_lsp
 require("nvchad.configs.lspconfig").defaults()
 
-local lspconfig = require("lspconfig")
+-- ========== Default Servers ==========
+vim.lsp.enable({ "lua_ls", "taplo", "dockerls", "bashls" })
 
-local servers = { "lua_ls", "taplo", "dockerls", "bashls" }
-local nvlsp = require("nvchad.configs.lspconfig")
-
--- lsps with default config
-for _, lsp in ipairs(servers) do
-    lspconfig[lsp].setup({
-        on_attach = nvlsp.on_attach,
-        on_init = nvlsp.on_init,
-        capabilities = nvlsp.capabilities,
-    })
-end
-
--- Autocmd: Set filetype yaml.github-actions untuk workflow
+-- ========== GitHub Actions LSP ==========
 vim.api.nvim_create_autocmd({ "BufRead", "BufNewFile" }, {
     pattern = { ".github/workflows/*.yml", ".github/workflows/*.yaml" },
     callback = function()
@@ -23,11 +11,7 @@ vim.api.nvim_create_autocmd({ "BufRead", "BufNewFile" }, {
     end,
 })
 
--- LSP for workflow GitHub Actions
-lspconfig.gh_actions_ls.setup({
-    on_attach = nvlsp.on_attach,
-    on_init = nvlsp.on_init,
-    capabilities = nvlsp.capabilities,
+vim.lsp.config("gh_actions_ls", {
     filetypes = { "yaml.github-actions" },
     settings = {
         diagnostics = {
@@ -35,15 +19,14 @@ lspconfig.gh_actions_ls.setup({
         },
     },
     root_dir = function(fname)
-        return lspconfig.util.root_pattern(".github/workflows")(fname) or lspconfig.util.find_git_ancestor(fname)
+        local util = require("lspconfig.util")
+        return util.root_pattern(".github/workflows")(fname) or util.find_git_ancestor(fname)
     end,
 })
+vim.lsp.enable("gh_actions_ls")
 
--- YAML LSP
-lspconfig.yamlls.setup({
-    on_attach = nvlsp.on_attach,
-    on_init = nvlsp.on_init,
-    capabilities = nvlsp.capabilities,
+-- ========== YAML LSP ==========
+vim.lsp.config("yamlls", {
     settings = {
         yaml = {
             schemas = {
@@ -55,52 +38,49 @@ lspconfig.yamlls.setup({
         },
     },
 })
+vim.lsp.enable("yamlls")
 
--- Deno LSP
-lspconfig.denols.setup({
-    on_attach = nvlsp.on_attach,
-    on_init = nvlsp.on_init,
-    capabilities = nvlsp.capabilities,
-    root_dir = lspconfig.util.root_pattern("deno.json", "deno.jsonc"),
+-- ========== Deno LSP ==========
+vim.lsp.config("denols", {
+    root_dir = function(fname)
+        return require("lspconfig.util").root_pattern("deno.json", "deno.jsonc")(fname)
+    end,
     single_file_support = false,
 })
+vim.lsp.enable("denols")
 
--- Prisma LSP
-lspconfig.prismals.setup({
-    on_attach = nvlsp.on_attach,
-    on_init = nvlsp.on_init,
-    capabilities = nvlsp.capabilities,
-    root_dir = lspconfig.util.root_pattern("schema.prisma"),
+-- ========== Prisma LSP ==========
+vim.lsp.config("prismals", {
+    root_dir = function(fname)
+        return require("lspconfig.util").root_pattern("schema.prisma")(fname)
+    end,
 })
+vim.lsp.enable("prismals")
 
--- TypeScript/JavaScript
-lspconfig.ts_ls.setup({
+-- ========== TypeScript/JavaScript LSP ==========
+vim.lsp.config("ts_ls", {
     on_attach = function(client, bufnr)
-        -- Disable formatting for ts_ls to avoid handle TSX
         client.server_capabilities.documentFormattingProvider = false
         client.server_capabilities.documentRangeFormattingProvider = false
-        nvlsp.on_attach(client, bufnr)
+        require("nvchad.configs.lspconfig").on_attach(client, bufnr)
     end,
-    on_init = nvlsp.on_init,
-    capabilities = nvlsp.capabilities,
-    root_dir = lspconfig.util.root_pattern("package.json", "tsconfig.json", "jsconfig.json"),
+    root_dir = function(fname)
+        return require("lspconfig.util").root_pattern("package.json", "tsconfig.json", "jsconfig.json")(fname)
+    end,
     single_file_support = false,
 })
+vim.lsp.enable("ts_ls")
 
--- HTML/TSX (vscode-html-language-server via bun)
-lspconfig.html.setup({
+-- ========== HTML LSP (via bun) ==========
+vim.lsp.config("html", {
     cmd = { vim.fn.expand("~/.bun/bin/vscode-html-language-server"), "--stdio" },
     filetypes = { "html", "typescriptreact", "javascriptreact" },
-    on_attach = nvlsp.on_attach,
-    on_init = nvlsp.on_init,
-    capabilities = nvlsp.capabilities,
 })
+vim.lsp.enable("html")
 
--- CSS/TSX (vscode-css-language-server via bun)
-lspconfig.cssls.setup({
+-- ========== CSS LSP (via bun) ==========
+vim.lsp.config("cssls", {
     cmd = { vim.fn.expand("~/.bun/bin/vscode-css-language-server"), "--stdio" },
     filetypes = { "css", "typescriptreact", "javascriptreact" },
-    on_attach = nvlsp.on_attach,
-    on_init = nvlsp.on_init,
-    capabilities = nvlsp.capabilities,
 })
+vim.lsp.enable("cssls")
