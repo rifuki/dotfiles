@@ -20,9 +20,12 @@ return {
             "rust",
             "markdown",
             "markdown_inline",
-            "caddy"
+            "caddy",
         },
         highlight = {
+            enable = true,
+        },
+        indent = {
             enable = true,
         },
     },

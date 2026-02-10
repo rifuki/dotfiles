@@ -13,22 +13,18 @@ map("n", "q", "<Nop>", { noremap = true, silent = true })
 --   require("conform").format()
 -- end, { desc = "Format with Prettier" })
 map("n", "<leader>fm", function()
-  require("conform").format({ async = true, lsp_fallback = true })
+    require("conform").format({ async = true, lsp_fallback = true })
 end, { desc = "Format file" })
 
 map("n", "<leader>rc", function()
-  vim.cmd("enew | setlocal textwidth=72 wrap spell")
-  vim.api.nvim_create_autocmd("TextYankPost", {
-    buffer = 0,
-    callback = function()
-      vim.cmd("normal! ggVGgq")
-    end,
-    once = true,
-  })
+    vim.cmd("enew | setlocal textwidth=72 wrap spell")
+    vim.api.nvim_create_autocmd("TextYankPost", {
+        buffer = 0,
+        callback = function()
+            vim.cmd("normal! ggVGgq")
+        end,
+        once = true,
+    })
 end, { desc = "New commit buffer + auto wrap after paste" })
 
 -- map({ "n", "i", "v" }, "<C-s>", "<cmd> w <cr>")
-
-map('v', 'gy', function()
-  require('osc52').copy_visual()
-end, { desc = "Copy selection to system clipboard via OSC52" })

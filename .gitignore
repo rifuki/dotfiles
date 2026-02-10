@@ -8,19 +8,14 @@
 !*/
 !setup*.sh
 !uninstall*.sh
+!.zshrc
+!.hyper.js
 
-# But not nvim and its contents
-!nvim/
-!nvim/**
-# Ignore nvim/lazy-lock.json, but not the directory
-nvim/lazy-lock.json
-
-# But not tmux and its contents
-!tmux/
-!tmux/**
-# Ignore tmux/plugins and its contents
-tmux/plugins/
-
-# But not spaceship and its contents
-!spaceship/
-!spaceship/**
+# But not .config and its contents
+!.config/
+!.config/**
+# Ignore specific files
+.config/.git/
+.config/nvim/lazy-lock.json
+.config/tmux/plugins/
+.config/spaceship/*.zwc

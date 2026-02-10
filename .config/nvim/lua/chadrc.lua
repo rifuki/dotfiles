@@ -26,4 +26,6 @@ M.ui = {
     },
 }
 
+pcall(require, "custom.icons")
+
 return M
