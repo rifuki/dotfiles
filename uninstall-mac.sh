@@ -29,7 +29,7 @@ echo "✅ Symlinks removed"
 
 # ========== Homebrew Packages ==========
 echo "==> Removing Homebrew packages..."
-brew remove -y git neovim tmux zsh trash 2>/dev/null || true
+brew remove -y neovim tmux trash htop neofetch yazi 2>/dev/null || true
 echo "✅ Homebrew packages removed"
 
 # ========== NVM ==========

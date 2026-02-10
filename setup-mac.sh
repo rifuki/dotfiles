@@ -7,6 +7,20 @@ if [[ "$(uname)" != "Darwin" ]]; then
   exit 1
 fi
 
+# ========== Clone Dotfiles Repo ==========
+DOTFILES_DIR="$HOME/.dotfiles"
+DOTFILES_REPO="git@github.com:rifuki/.dotfiles.git"
+
+if [ ! -d "$DOTFILES_DIR/.git" ]; then
+  echo "==> Cloning dotfiles repo..."
+  git clone "$DOTFILES_REPO" "$DOTFILES_DIR"
+  echo "✅ Dotfiles cloned to $DOTFILES_DIR"
+  echo "==> Re-running script from dotfiles directory..."
+  exec "$DOTFILES_DIR/setup-mac.sh"
+else
+  echo "✅ Dotfiles repo already exists at $DOTFILES_DIR"
+fi
+
 # ========== Xcode Command Line Tools ==========
 echo "==> Checking Xcode Command Line Tools..."
 if ! command -v xcode-select &>/dev/null || ! xcode-select -p &>/dev/null; then
@@ -32,15 +46,6 @@ else
   echo "✅ Homebrew already installed: $(brew --version | head -1)"
 fi
 
-# ========== Git ==========
-if ! command -v git &>/dev/null; then
-  echo "==> Installing Git..."
-  brew install git
-  echo "✅ Git installed"
-else
-  echo "✅ Git already installed: $(git --version)"
-fi
-
 # ========== Neovim ==========
 if ! command -v nvim &>/dev/null; then
   echo "==> Installing Neovim..."
@@ -59,15 +64,6 @@ else
   echo "✅ Tmux already installed: $(tmux -V)"
 fi
 
-# ========== Zsh ==========
-if ! command -v zsh &>/dev/null; then
-  echo "==> Installing Zsh..."
-  brew install zsh
-  echo "✅ Zsh installed"
-else
-  echo "✅ Zsh already installed: $(zsh --version)"
-fi
-
 # ========== Trash (safe rm) ==========
 if ! command -v trash &>/dev/null; then
   echo "==> Installing trash..."
@@ -75,6 +71,42 @@ if ! command -v trash &>/dev/null; then
   echo "✅ trash installed"
 else
   echo "✅ trash already installed"
+fi
+
+# ========== Htop ==========
+if ! command -v htop &>/dev/null; then
+  echo "==> Installing htop..."
+  brew install htop
+  echo "✅ htop installed"
+else
+  echo "✅ htop already installed: $(htop --version | head -1)"
+fi
+
+# ========== Neofetch ==========
+if ! command -v neofetch &>/dev/null; then
+  echo "==> Installing neofetch..."
+  brew install neofetch
+  echo "✅ neofetch installed"
+else
+  echo "✅ neofetch already installed"
+fi
+
+# ========== Yazi ==========
+if ! command -v yazi &>/dev/null; then
+  echo "==> Installing yazi..."
+  brew install yazi
+  echo "✅ yazi installed"
+else
+  echo "✅ yazi already installed: $(yazi --version)"
+fi
+
+# ========== GitHub CLI ==========
+if ! command -v gh &>/dev/null; then
+  echo "==> Installing GitHub CLI..."
+  brew install gh
+  echo "✅ gh installed"
+else
+  echo "✅ gh already installed: $(gh --version | head -1)"
 fi
 
 # ========== Oh My Zsh ==========
