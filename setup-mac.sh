@@ -16,7 +16,8 @@ if [ ! -d "$DOTFILES_DIR/.git" ]; then
   git clone --branch backup/mac-2026-02-10 "$DOTFILES_REPO" "$DOTFILES_DIR"
   echo "✅ Dotfiles cloned to $DOTFILES_DIR"
 else
-  echo "✅ Dotfiles repo already exists at $DOTFILES_DIR"
+  echo "✅ Dotfiles repo already exists, pulling latest..."
+  git -C "$DOTFILES_DIR" pull --ff-only 2>/dev/null || echo "⚠️  Could not pull dotfiles (local changes?)"
 fi
 
 # ========== Xcode Command Line Tools ==========
@@ -153,7 +154,7 @@ export NVM_DIR="$HOME/.nvm"
 
 if [ ! -d "$NVM_DIR" ]; then
   echo "==> Installing NVM..."
-  curl -fsSL https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.3/install.sh | bash
+  curl -fsSL https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.3/install.sh | PROFILE=/dev/null bash
   [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
 else
   echo "==> NVM already installed, loading..."
@@ -232,6 +233,22 @@ ln -sf "$REPO_DIR/.zshrc" "$HOME/.zshrc"
 ln -sf "$REPO_DIR/.hyper.js" "$HOME/.hyper.js"
 
 echo "✅ Dotfiles symlinked"
+
+# ========== Cleanup Shell Profiles ==========
+# Remove entries added by installers (cargo, nvm) — everything is in .zshrc
+echo "==> Cleaning up shell profile files..."
+for _f in "$HOME/.zprofile" "$HOME/.zshenv" "$HOME/.profile" "$HOME/.bash_profile" "$HOME/.bashrc"; do
+  [ -f "$_f" ] || continue
+  grep -qE 'cargo/env|NVM_DIR|nvm\.sh|bun\.sh|BUN_INSTALL' "$_f" 2>/dev/null || continue
+  grep -vE 'cargo/env|NVM_DIR|nvm\.sh|bun\.sh|BUN_INSTALL|Added by.*installer' "$_f" > "${_f}.tmp"
+  if [ -s "${_f}.tmp" ]; then
+    mv "${_f}.tmp" "$_f"
+  else
+    rm -f "${_f}.tmp" "$_f"
+  fi
+  echo "   Cleaned: $_f"
+done
+echo "✅ Shell profiles cleaned"
 
 # ========== Tmux Plugin Manager ==========
 TPM_DIR="$HOME/.config/tmux/plugins/tpm"

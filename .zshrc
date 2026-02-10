@@ -31,7 +31,7 @@ export NVM_DIR="$HOME/.nvm"
 export CPATH="/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include:$CPATH"
 
 # Docker CLI completions
-fpath=(/Users/rifuki/.docker/completions $fpath)
+fpath=($HOME/.docker/completions $fpath)
 autoload -Uz compinit
 compinit
 
@@ -41,4 +41,4 @@ alias fucking='sudo'
 alias rm='trash'
 
 # bun completions
-[ -s "/Users/rifuki/.bun/_bun" ] && source "/Users/rifuki/.bun/_bun"
+[ -s "$HOME/.bun/_bun" ] && source "$HOME/.bun/_bun"
