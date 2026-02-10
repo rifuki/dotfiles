@@ -1,3 +1,6 @@
+# Remove extra newline at end of prompt
+SPACESHIP_PROMPT_ADD_NEWLINE=false
+
 # Display time
 SPACESHIP_TIME_SHOW=true
 
