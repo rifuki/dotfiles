@@ -199,15 +199,23 @@ else
 fi
 
 # Backup existing configs
-if [ -d "$HOME/.config/nvim" ] || [ -d "$HOME/.config/tmux" ] || [ -d "$HOME/.config/spaceship" ]; then
+# Only backup real directories (not symlinks) — symlinks are already ours
+_needs_backup=0
+for _d in nvim tmux spaceship; do
+  [ -d "$HOME/.config/$_d" ] && [ ! -L "$HOME/.config/$_d" ] && _needs_backup=1
+done
+[ -f "$HOME/.zshrc" ] && [ ! -L "$HOME/.zshrc" ] && _needs_backup=1
+[ -f "$HOME/.hyper.js" ] && [ ! -L "$HOME/.hyper.js" ] && _needs_backup=1
+
+if [ "$_needs_backup" = "1" ]; then
   BACKUP_DIR="$HOME/.config/backup-$(date +%Y%m%d-%H%M%S)"
   mkdir -p "$BACKUP_DIR"
   echo "==> Backing up existing configs to $BACKUP_DIR..."
-  [ -d "$HOME/.config/nvim" ] && mv "$HOME/.config/nvim" "$BACKUP_DIR/"
-  [ -d "$HOME/.config/tmux" ] && mv "$HOME/.config/tmux" "$BACKUP_DIR/"
-  [ -d "$HOME/.config/spaceship" ] && mv "$HOME/.config/spaceship" "$BACKUP_DIR/"
-  [ -f "$HOME/.zshrc" ] && mv "$HOME/.zshrc" "$BACKUP_DIR/.zshrc.bak"
-  [ -f "$HOME/.hyper.js" ] && mv "$HOME/.hyper.js" "$BACKUP_DIR/.hyper.js.bak"
+  for _d in nvim tmux spaceship; do
+    [ -d "$HOME/.config/$_d" ] && [ ! -L "$HOME/.config/$_d" ] && mv "$HOME/.config/$_d" "$BACKUP_DIR/"
+  done
+  [ -f "$HOME/.zshrc" ] && [ ! -L "$HOME/.zshrc" ] && mv "$HOME/.zshrc" "$BACKUP_DIR/.zshrc.bak"
+  [ -f "$HOME/.hyper.js" ] && [ ! -L "$HOME/.hyper.js" ] && mv "$HOME/.hyper.js" "$BACKUP_DIR/.hyper.js.bak"
   echo "✅ Backups created"
 fi
 

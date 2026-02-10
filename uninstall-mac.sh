@@ -58,6 +58,14 @@ echo "==> Removing Oh My Zsh..."
 rm -rf "$HOME/.oh-my-zsh"
 echo "✅ Oh My Zsh removed"
 
+# ========== Leftover Data Dirs ==========
+echo "==> Removing leftover data directories..."
+rm -rf "$HOME/.npm"
+rm -rf "$HOME/.local/share/nvim"
+rm -rf "$HOME/.local/state/nvim"
+rm -rf "$HOME/.local/share/tmux"
+echo "✅ Leftover data removed"
+
 # ========== Done ==========
 echo ""
 echo "✅ Uninstall complete!"
