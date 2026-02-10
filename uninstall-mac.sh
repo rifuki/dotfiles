@@ -8,7 +8,7 @@ if [[ "$(uname)" != "Darwin" ]]; then
 fi
 
 echo "⚠️  This will remove all setup-mac.sh installations!"
-read -p "Are you sure? (yes/no): " CONFIRM
+printf "Are you sure? (yes/no): " && read CONFIRM < /dev/tty
 if [ "$CONFIRM" != "yes" ]; then
   echo "Aborted."
   exit 0
@@ -29,7 +29,7 @@ echo "✅ Symlinks removed"
 
 # ========== Homebrew Packages ==========
 echo "==> Removing Homebrew packages..."
-brew remove -y neovim tmux trash htop neofetch yazi 2>/dev/null || true
+brew uninstall neovim tmux trash htop neofetch yazi gh 2>/dev/null || true
 echo "✅ Homebrew packages removed"
 
 # ========== NVM ==========

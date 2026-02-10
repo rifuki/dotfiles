@@ -13,10 +13,8 @@ DOTFILES_REPO="https://github.com/rifuki/.dotfiles.git"
 
 if [ ! -d "$DOTFILES_DIR/.git" ]; then
   echo "==> Cloning dotfiles repo..."
-  git clone "$DOTFILES_REPO" "$DOTFILES_DIR"
+  git clone --branch backup/mac-2026-02-10 "$DOTFILES_REPO" "$DOTFILES_DIR"
   echo "✅ Dotfiles cloned to $DOTFILES_DIR"
-  echo "==> Re-running script from dotfiles directory..."
-  exec bash "$DOTFILES_DIR/setup-mac.sh"
 else
   echo "✅ Dotfiles repo already exists at $DOTFILES_DIR"
 fi
@@ -24,7 +22,7 @@ fi
 # ========== Xcode Command Line Tools ==========
 echo "==> Checking Xcode Command Line Tools..."
 if ! command -v xcode-select &>/dev/null || ! xcode-select -p &>/dev/null; then
-  read -p "==> Xcode CLT not found. Install now? (yes/no): " XCD_INSTALL
+  printf "==> Xcode CLT not found. Install now? (yes/no): " && read XCD_INSTALL < /dev/tty
   if [ "$XCD_INSTALL" = "yes" ]; then
     echo "==> Installing Xcode Command Line Tools..."
     xcode-select --install
@@ -192,14 +190,14 @@ fi
 
 # ========== Sui Move Analyzer ==========
 if ! command -v sui-move-analyzer &>/dev/null; then
-  read -p "==> Install sui-move-analyzer? (yes/no): " SUI_INSTALL
+  printf "==> Install sui-move-analyzer? (yes/no): " && read SUI_INSTALL < /dev/tty
   if [ "$SUI_INSTALL" = "yes" ]; then
     echo "==> Spawning sui-move-analyzer install in tmux background session..."
     tmux new-session -d -s sui-install -n "sui-move-analyzer" \
       "cargo install --git https://github.com/movebit/sui-move-analyzer.git; \
        echo ''; \
        echo '✅ sui-move-analyzer installed! You can close this window.'; \
-       read -p 'Press Enter to exit...'"
+       read _dummy'"
     echo "✅ Install started in background!"
     echo "   Monitor progress : tmux attach -t sui-install"
     echo "   Detach from tmux : Ctrl+b then d"
@@ -214,7 +212,13 @@ fi
 
 # ========== Dotfiles Symlink ==========
 echo "==> Setting up dotfiles symlinks..."
-REPO_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# When run via curl/process-substitution, BASH_SOURCE is not a real file path
+_src="${BASH_SOURCE[0]:-}"
+if [[ "$_src" == /* ]] && [[ -f "$_src" ]]; then
+  REPO_DIR="$(cd "$(dirname "$_src")" && pwd)"
+else
+  REPO_DIR="$DOTFILES_DIR"
+fi
 
 # Backup existing configs
 if [ -d "$HOME/.config/nvim" ] || [ -d "$HOME/.config/tmux" ] || [ -d "$HOME/.config/spaceship" ]; then
@@ -267,8 +271,8 @@ fi
 
 # ========== Git Config ==========
 echo "==> Configuring Git..."
-read -p "   Enter your Git name: " GIT_NAME
-read -p "   Enter your Git email: " GIT_EMAIL
+printf "   Enter your Git name: " && read GIT_NAME < /dev/tty
+printf "   Enter your Git email: " && read GIT_EMAIL < /dev/tty
 git config --global user.name "$GIT_NAME"
 git config --global user.email "$GIT_EMAIL"
 echo "✅ Git config set"
