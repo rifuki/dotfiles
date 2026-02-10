@@ -1,10 +1,21 @@
 #!/bin/bash
 set -e
 
+# ========== OS Check ==========
+if [[ "$(uname)" == "Darwin" ]]; then
+  echo "❌ Detected macOS — aborting! For macOS, use a separate repo."
+  exit 1
+fi
+
+if ! command -v apt &>/dev/null; then
+  echo "❌ This script requires apt (Ubuntu/Debian only). Non-Ubuntu distro detected — aborting!"
+  exit 1
+fi
+
 # ========== System Dependencies ==========
 echo "==> Installing system dependencies..."
 sudo apt update
-sudo apt install -y curl git unzip build-essential cmake ninja-build gettext tmux zsh ripgrep
+sudo apt install -y curl git unzip build-essential tmux zsh ripgrep
 
 # ========== Neovim Installation ==========
 if [ ! -x "$(command -v nvim)" ]; then
@@ -45,7 +56,7 @@ nvm use 22
 if [ -d "daily-dotfiles" ]; then
   rm -rf daily-dotfiles
 fi
-git clone --depth=1 https://github.com/rifuki/daily-dotfiles.git
+git clone --depth=1 --branch vps https://github.com/rifuki/daily-dotfiles.git
 
 if [ ! -d "$HOME/.config/nvim" ] || [ ! -d "$HOME/.config/tmux" ]; then
   echo "==> Installing dotfiles..."

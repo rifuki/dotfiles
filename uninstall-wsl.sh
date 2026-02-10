@@ -12,22 +12,12 @@ if ! command -v apt &>/dev/null; then
   exit 1
 fi
 
-echo "⚠️  This will remove all setup-vps.sh installations!"
+echo "⚠️  This will remove all setup-wsl.sh installations!"
 read -p "Are you sure? (yes/no): " CONFIRM < /dev/tty
 if [ "$CONFIRM" != "yes" ]; then
   echo "Aborted."
   exit 0
 fi
-
-# ========== Swap ==========
-echo "==> Removing swap..."
-if swapon --show | grep -q "/swapfile"; then
-  sudo swapoff /swapfile
-fi
-[ -f /swapfile ] && sudo rm -f /swapfile
-sudo sed -i '/\/swapfile/d' /etc/fstab
-sudo sed -i '/vm.swappiness/d' /etc/sysctl.conf
-echo "✅ Swap removed"
 
 # ========== Neovim ==========
 echo "==> Removing Neovim..."
@@ -61,12 +51,11 @@ echo "==> Removing .zshrc..."
 rm -f ~/.zshrc
 echo "✅ .zshrc removed"
 
-# ========== Revert shell to bash ==========
-echo "==> Reverting shell to bash..."
-chsh -s "$(which bash)" 2>/dev/null || true
-sed -i '/# Auto start zsh/,/^fi$/d' ~/.bashrc
+# ========== Revert WSL shell to bash ==========
+echo "==> Removing zsh auto-start from ~/.bashrc..."
+sed -i '/# Auto start zsh in WSL/,/^fi$/d' ~/.bashrc
 echo "✅ Shell reverted to bash"
 
 # ========== Done ==========
 echo ""
-echo "✅ Uninstall complete! Please restart your terminal."
+echo "✅ Uninstall complete! Please restart your WSL terminal."

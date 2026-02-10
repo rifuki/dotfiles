@@ -1,6 +1,17 @@
 #!/bin/bash
 set -e
 
+# ========== OS Check ==========
+if [[ "$(uname)" == "Darwin" ]]; then
+  echo "❌ Detected macOS — aborting! For macOS, use a separate repo."
+  exit 1
+fi
+
+if ! command -v apt &>/dev/null; then
+  echo "❌ This script requires apt (Ubuntu/Debian only). Non-Ubuntu distro detected — aborting!"
+  exit 1
+fi
+
 # ========== Swap Setup ==========
 if ! swapon --show | grep -q "/swapfile"; then
   echo "==> Creating 2GB swap file..."
@@ -25,7 +36,7 @@ echo "✅ Swappiness set to 30"
 # ========== System Dependencies ==========
 echo "==> Installing system dependencies..."
 sudo apt update
-sudo apt install -y curl git unzip build-essential cmake ninja-build gettext tmux zsh ripgrep
+sudo apt install -y curl git unzip build-essential tmux zsh ripgrep
 
 # ========== Neovim Installation ==========
 if [ ! -x "$(command -v nvim)" ]; then
