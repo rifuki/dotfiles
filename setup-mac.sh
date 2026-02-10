@@ -181,7 +181,7 @@ fi
 # ========== Rust ==========
 if ! command -v rustup &>/dev/null; then
   echo "==> Installing Rust (stable)..."
-  curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --default-toolchain stable
+  curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --default-toolchain stable --no-modify-path
   source "$HOME/.cargo/env"
   echo "✅ Rust $(rustc --version) installed"
 else
