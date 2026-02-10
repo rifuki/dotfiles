@@ -1,12 +1,6 @@
 #!/bin/bash
 set -e
 
-# ========== Detect WSL ==========
-IS_WSL=false
-if grep -qi microsoft /proc/version; then
-  IS_WSL=true
-fi
-
 # ========== Swap Setup ==========
 if ! swapon --show | grep -q "/swapfile"; then
   echo "==> Creating 2GB swap file..."
@@ -37,7 +31,6 @@ sudo apt install -y curl git unzip build-essential cmake ninja-build gettext tmu
 if [ ! -x "$(command -v nvim)" ]; then
   echo "==> Neovim not found, building from source..."
 
-  # Check if Neovim directory exists
   if [ -d "neovim" ]; then
     echo "==> Removing existing neovim directory..."
     rm -rf neovim
@@ -54,17 +47,25 @@ else
 fi
 
 # ========== Node.js & NVM ==========
-if ! command -v npm &>/dev/null; then
-  echo "==> Installing Node.js via NVM..."
+export NVM_DIR="$HOME/.nvm"
+
+if [ ! -d "$NVM_DIR" ]; then
+  echo "==> Installing NVM..."
   curl -fsSL https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.3/install.sh | bash
-
-  export NVM_DIR="$HOME/.nvm"
   [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
+else
+  echo "==> NVM already installed, loading..."
+  [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
+fi
 
+if ! nvm ls 22 &>/dev/null; then
+  echo "==> Installing Node.js 22 via NVM..."
   nvm install 22
 else
-  echo "==> Node.js & npm already installed."
+  echo "==> Node.js 22 already installed."
 fi
+
+nvm use 22
 
 # ========== Dotfiles ==========
 if [ ! -d "$HOME/.config/nvim" ] || [ ! -d "$HOME/.config/tmux" ]; then
@@ -75,7 +76,7 @@ if [ ! -d "$HOME/.config/nvim" ] || [ ! -d "$HOME/.config/tmux" ]; then
   git clone --depth=1 https://github.com/rifuki/daily-dotfiles.git
 
   echo "==> Cleaning old configs..."
-  rm -rf ~/.config/.git ~/.config/.gitignore ~/.config/nvim ~/.config/tmux
+  rm -rf ~/.config/.git ~/.config/.gitignore ~/.config/nvim ~/.config/tmux ~/.config/spaceship
 
   echo "==> Copying configs..."
   mkdir -p ~/.config
@@ -108,7 +109,6 @@ if [ ! -d "$HOME/.oh-my-zsh" ]; then
   }
 fi
 
-# Verify Oh My Zsh installation
 if [ ! -d "$HOME/.oh-my-zsh" ]; then
   echo "❌ Oh My Zsh directory not found after installation!"
   exit 1
@@ -128,8 +128,11 @@ ZSH_CUSTOM="$HOME/.oh-my-zsh/custom"
 [[ ! -d "$ZSH_CUSTOM/plugins/spaceship-vi-mode" ]] && \
   git clone https://github.com/spaceship-prompt/spaceship-vi-mode.git "$ZSH_CUSTOM/plugins/spaceship-vi-mode"
 
-[[ ! -d "$ZSH_CUSTOM/themes/spaceship" ]] && \
-  git clone --depth=1 https://github.com/spaceship-prompt/spaceship-prompt.git "$ZSH_CUSTOM/themes/spaceship"
+if [ ! -d "$ZSH_CUSTOM/themes/spaceship-prompt" ]; then
+  echo "==> Installing Spaceship theme..."
+  git clone https://github.com/spaceship-prompt/spaceship-prompt.git "$ZSH_CUSTOM/themes/spaceship-prompt" --depth=1
+  ln -s "$ZSH_CUSTOM/themes/spaceship-prompt/spaceship.zsh-theme" "$ZSH_CUSTOM/themes/spaceship.zsh-theme"
+fi
 
 # ========== .zshrc Config ==========
 echo "==> Writing ~/.zshrc..."
@@ -143,35 +146,18 @@ plugins=(git zsh-autosuggestions zsh-syntax-highlighting spaceship-ember spacesh
 
 source \$ZSH/oh-my-zsh.sh
 SPACESHIP_PROMPT_ADD_NEWLINE=false
+
+export VISUAL=nvim
+export EDITOR="\$VISUAL"
 EOF
 
-echo 'export VISUAL=nvim' >> ~/.zshrc
-echo 'export EDITOR="$VISUAL"' >> ~/.zshrc
-
-# ========== WSL Shell Auto-switch ==========
-if [ "$IS_WSL" = true ]; then
-  echo "==> WSL detected. Adding zsh to ~/.bashrc..."
-  grep -q "exec zsh" ~/.bashrc || cat <<EOF >> ~/.bashrc
-
-# Auto start zsh in WSL
-if [ -t 1 ] && [ -x "\$(command -v zsh)" ]; then
-  export SHELL=\$(which zsh)
-  exec zsh
-fi
-EOF
-else
-  # Try chsh on non-WSL
-  if [ "$SHELL" != "$(which zsh)" ]; then
-    echo "==> Setting zsh as default shell..."
-    chsh -s "$(which zsh)" 2>/dev/null || true
-  fi
+# ========== Set Zsh as Default Shell ==========
+if [ "$SHELL" != "$(which zsh)" ]; then
+  echo "==> Setting zsh as default shell..."
+  chsh -s "$(which zsh)" 2>/dev/null || true
 fi
 
 # ========== Done ==========
 echo "✅ Setup complete!"
-if [ "$IS_WSL" = true ]; then
-  echo "👉 Please restart your WSL terminal (e.g. close and reopen)"
-else
-  echo "👉 Switching to Zsh..."
-  exec zsh
-fi
+echo "👉 Switching to Zsh..."
+exec zsh

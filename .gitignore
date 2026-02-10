@@ -6,7 +6,7 @@
 
 # But not folders themselves, so we can whitelist
 !*/
-!setup.sh
+!setup*.sh
 
 # But not nvim and its contents
 !nvim/
@@ -19,3 +19,7 @@ nvim/lazy-lock.json
 !tmux/**
 # Ignore tmux/plugins and its contents
 tmux/plugins/
+
+# But not spaceship and its contents
+!spaceship/
+!spaceship/**
