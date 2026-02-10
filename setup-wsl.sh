@@ -107,11 +107,17 @@ ZSH_CUSTOM="$HOME/.oh-my-zsh/custom"
 [[ ! -d "$ZSH_CUSTOM/plugins/spaceship-vi-mode" ]] && \
   git clone https://github.com/spaceship-prompt/spaceship-vi-mode.git "$ZSH_CUSTOM/plugins/spaceship-vi-mode"
 
+# Cleanup old spaceship installation if exists (migration)
+[ -d "$ZSH_CUSTOM/themes/spaceship" ] && rm -rf "$ZSH_CUSTOM/themes/spaceship"
+[ -f "$ZSH_CUSTOM/themes/spaceship.zsh-theme" ] && rm -f "$ZSH_CUSTOM/themes/spaceship.zsh-theme"
+
 if [ ! -d "$ZSH_CUSTOM/themes/spaceship-prompt" ]; then
   echo "==> Installing Spaceship theme..."
   git clone https://github.com/spaceship-prompt/spaceship-prompt.git "$ZSH_CUSTOM/themes/spaceship-prompt" --depth=1
-  ln -s "$ZSH_CUSTOM/themes/spaceship-prompt/spaceship.zsh-theme" "$ZSH_CUSTOM/themes/spaceship.zsh-theme"
 fi
+# Always ensure symlink exists
+[ ! -f "$ZSH_CUSTOM/themes/spaceship.zsh-theme" ] && \
+  ln -s "$ZSH_CUSTOM/themes/spaceship-prompt/spaceship.zsh-theme" "$ZSH_CUSTOM/themes/spaceship.zsh-theme"
 
 # ========== .zshrc Config ==========
 echo "==> Writing ~/.zshrc..."
