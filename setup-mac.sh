@@ -240,7 +240,7 @@ echo "==> Cleaning up shell profile files..."
 for _f in "$HOME/.zprofile" "$HOME/.zshenv" "$HOME/.profile" "$HOME/.bash_profile" "$HOME/.bashrc"; do
   [ -f "$_f" ] || continue
   grep -qE 'cargo/env|NVM_DIR|nvm\.sh|bun\.sh|BUN_INSTALL' "$_f" 2>/dev/null || continue
-  grep -vE 'cargo/env|NVM_DIR|nvm\.sh|bun\.sh|BUN_INSTALL|Added by.*installer' "$_f" > "${_f}.tmp"
+  grep -vE 'cargo/env|NVM_DIR|nvm\.sh|bun\.sh|BUN_INSTALL|_bun|Added by.*installer' "$_f" > "${_f}.tmp" || true
   if [ -s "${_f}.tmp" ]; then
     mv "${_f}.tmp" "$_f"
   else
