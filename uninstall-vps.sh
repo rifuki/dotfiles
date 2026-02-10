@@ -1,6 +1,12 @@
 #!/bin/bash
 set -e
 
+# ========== OS Check ==========
+if [[ "$(uname)" == "Darwin" ]]; then
+  echo "❌ This script is for VPS/Linux only. Detected macOS — aborting!"
+  exit 1
+fi
+
 echo "⚠️  This will remove all setup-vps.sh installations!"
 read -p "Are you sure? (yes/no): " CONFIRM < /dev/tty
 if [ "$CONFIRM" != "yes" ]; then
