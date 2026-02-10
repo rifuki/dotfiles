@@ -25,7 +25,7 @@ echo "✅ Swappiness set to 30"
 # ========== System Dependencies ==========
 echo "==> Installing system dependencies..."
 sudo apt update
-sudo apt install -y curl git unzip build-essential cmake ninja-build gettext tmux zsh
+sudo apt install -y curl git unzip build-essential cmake ninja-build gettext tmux zsh ripgrep
 
 # ========== Neovim Installation ==========
 if [ ! -x "$(command -v nvim)" ]; then
