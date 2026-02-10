@@ -40,6 +40,18 @@ echo "==> Removing NVM & Node.js..."
 rm -rf "$HOME/.nvm"
 echo "✅ NVM removed"
 
+# ========== Rust ==========
+echo "==> Removing Rust..."
+rm -rf "$HOME/.cargo" "$HOME/.rustup"
+echo "✅ Rust removed"
+
+# ========== Docker ==========
+echo "==> Removing Docker..."
+sudo apt remove -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin 2>/dev/null || true
+sudo rm -rf /var/lib/docker /etc/docker
+rm -rf "$HOME/.docker"
+echo "✅ Docker removed"
+
 # ========== Dotfiles ==========
 echo "==> Removing dotfiles..."
 rm -rf ~/.config/nvim ~/.config/tmux ~/.config/spaceship

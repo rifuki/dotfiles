@@ -30,6 +30,11 @@ echo "==> Removing NVM & Node.js..."
 rm -rf "$HOME/.nvm"
 echo "✅ NVM removed"
 
+# ========== Rust ==========
+echo "==> Removing Rust..."
+rm -rf "$HOME/.cargo" "$HOME/.rustup"
+echo "✅ Rust removed"
+
 # ========== Dotfiles ==========
 echo "==> Removing dotfiles..."
 rm -rf ~/.config/nvim ~/.config/tmux ~/.config/spaceship

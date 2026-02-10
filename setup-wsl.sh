@@ -52,6 +52,16 @@ fi
 
 nvm use 22
 
+# ========== Rust ==========
+if ! command -v rustup &>/dev/null; then
+  echo "==> Installing Rust (stable)..."
+  curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --default-toolchain stable
+  source "$HOME/.cargo/env"
+  echo "✅ Rust $(rustc --version) installed"
+else
+  echo "==> Rust already installed: $(rustc --version)"
+fi
+
 # ========== Dotfiles ==========
 if [ -d "daily-dotfiles" ]; then
   rm -rf daily-dotfiles
@@ -140,6 +150,8 @@ export SPACESHIP_CONFIG="\$HOME/.config/spaceship/spaceship.zsh"
 
 export VISUAL=nvim
 export EDITOR="\$VISUAL"
+
+. "\$HOME/.cargo/env"
 EOF
 
 # ========== WSL Shell Auto-switch ==========

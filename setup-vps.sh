@@ -73,6 +73,33 @@ fi
 
 nvm use 22
 
+# ========== Rust ==========
+if ! command -v rustup &>/dev/null; then
+  echo "==> Installing Rust (stable)..."
+  curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --default-toolchain stable
+  source "$HOME/.cargo/env"
+  echo "✅ Rust $(rustc --version) installed"
+else
+  echo "==> Rust already installed: $(rustc --version)"
+fi
+
+# ========== Docker ==========
+if ! command -v docker &>/dev/null; then
+  echo "==> Installing Docker..."
+  curl -fsSL https://get.docker.com | sh
+  echo "✅ Docker installed"
+else
+  echo "==> Docker already installed: $(docker --version)"
+fi
+
+if ! groups "$USER" | grep -q docker; then
+  echo "==> Adding $USER to docker group..."
+  sudo usermod -aG docker "$USER"
+  echo "✅ Done. Re-login required for group to take effect."
+else
+  echo "==> $USER already in docker group"
+fi
+
 # ========== Dotfiles ==========
 if [ -d "daily-dotfiles" ]; then
   rm -rf daily-dotfiles
@@ -161,6 +188,8 @@ export SPACESHIP_CONFIG="\$HOME/.config/spaceship/spaceship.zsh"
 
 export VISUAL=nvim
 export EDITOR="\$VISUAL"
+
+. "\$HOME/.cargo/env"
 EOF
 
 # ========== Set Zsh as Default Shell ==========
@@ -181,5 +210,6 @@ EOF
 
 # ========== Done ==========
 echo "✅ Setup complete!"
+echo "⚠️  Docker group requires SSH reconnect to take effect (docker without sudo)."
 echo "👉 Switching to Zsh..."
 exec zsh
