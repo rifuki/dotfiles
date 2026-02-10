@@ -276,7 +276,7 @@ if ! command -v sui-move-analyzer &>/dev/null; then
       "cargo install --git https://github.com/movebit/sui-move-analyzer.git; \
        echo ''; \
        echo '✅ sui-move-analyzer installed! You can close this window.'; \
-       read _dummy'"
+       read _dummy"
     echo "✅ Install started in background!"
     echo "   Monitor progress : tmux attach -t sui-install"
     echo "   Detach from tmux : Ctrl+b then d"
