@@ -32,6 +32,33 @@ else
   echo "✅ Homebrew already installed: $(brew --version | head -1)"
 fi
 
+# ========== Git ==========
+if ! command -v git &>/dev/null; then
+  echo "==> Installing Git..."
+  brew install git
+  echo "✅ Git installed"
+else
+  echo "✅ Git already installed: $(git --version)"
+fi
+
+# ========== Neovim ==========
+if ! command -v nvim &>/dev/null; then
+  echo "==> Installing Neovim..."
+  brew install neovim
+  echo "✅ Neovim $(nvim --version | head -1) installed"
+else
+  echo "✅ Neovim already installed: $(nvim --version | head -1)"
+fi
+
+# ========== Tmux ==========
+if ! command -v tmux &>/dev/null; then
+  echo "==> Installing Tmux..."
+  brew install tmux
+  echo "✅ Tmux installed"
+else
+  echo "✅ Tmux already installed: $(tmux -V)"
+fi
+
 # ========== Zsh ==========
 if ! command -v zsh &>/dev/null; then
   echo "==> Installing Zsh..."
@@ -39,6 +66,15 @@ if ! command -v zsh &>/dev/null; then
   echo "✅ Zsh installed"
 else
   echo "✅ Zsh already installed: $(zsh --version)"
+fi
+
+# ========== Trash (safe rm) ==========
+if ! command -v trash &>/dev/null; then
+  echo "==> Installing trash..."
+  brew install trash
+  echo "✅ trash installed"
+else
+  echo "✅ trash already installed"
 fi
 
 # ========== Oh My Zsh ==========
@@ -151,6 +187,28 @@ ln -sf "$REPO_DIR/.zshrc" "$HOME/.zshrc"
 ln -sf "$REPO_DIR/.hyper.js" "$HOME/.hyper.js"
 
 echo "✅ Dotfiles symlinked"
+
+# ========== Tmux Plugin Manager ==========
+TPM_DIR="$HOME/.config/tmux/plugins/tpm"
+if [ ! -d "$TPM_DIR" ]; then
+  echo "==> Installing TPM..."
+  git clone https://github.com/tmux-plugins/tpm "$TPM_DIR"
+fi
+echo "==> Installing Tmux plugins..."
+if [ -x "$TPM_DIR/bin/install_plugins" ]; then
+  "$TPM_DIR/bin/install_plugins"
+else
+  echo "⚠️ TPM install_plugins not found, skipping..."
+fi
+
+# ========== Spaceship Config ==========
+echo "==> Setting up Spaceship prompt..."
+if [ -f "$HOME/.oh-my-zsh/custom/themes/spaceship.zsh-theme" ]; then
+  export SPACESHIP_CONFIG="$HOME/.config/spaceship/spaceship.zsh"
+  echo "✅ Spaceship config linked"
+else
+  echo "⚠️ Spaceship theme not found, skipping config..."
+fi
 
 # ========== Git Config ==========
 echo "==> Configuring Git..."
