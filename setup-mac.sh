@@ -9,14 +9,14 @@ fi
 
 # ========== Clone Dotfiles Repo ==========
 DOTFILES_DIR="$HOME/.dotfiles"
-DOTFILES_REPO="git@github.com:rifuki/.dotfiles.git"
+DOTFILES_REPO="https://github.com/rifuki/.dotfiles.git"
 
 if [ ! -d "$DOTFILES_DIR/.git" ]; then
   echo "==> Cloning dotfiles repo..."
   git clone "$DOTFILES_REPO" "$DOTFILES_DIR"
   echo "✅ Dotfiles cloned to $DOTFILES_DIR"
   echo "==> Re-running script from dotfiles directory..."
-  exec "$DOTFILES_DIR/setup-mac.sh"
+  exec bash "$DOTFILES_DIR/setup-mac.sh"
 else
   echo "✅ Dotfiles repo already exists at $DOTFILES_DIR"
 fi
@@ -41,6 +41,7 @@ fi
 if ! command -v brew &>/dev/null; then
   echo "==> Installing Homebrew..."
   /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+  eval "$(/opt/homebrew/bin/brew shellenv bash)"
   echo "✅ Homebrew installed"
 else
   echo "✅ Homebrew already installed: $(brew --version | head -1)"
@@ -187,6 +188,28 @@ if ! command -v rustup &>/dev/null; then
   echo "✅ Rust $(rustc --version) installed"
 else
   echo "==> Rust already installed: $(rustc --version)"
+fi
+
+# ========== Sui Move Analyzer ==========
+if ! command -v sui-move-analyzer &>/dev/null; then
+  read -p "==> Install sui-move-analyzer? (yes/no): " SUI_INSTALL
+  if [ "$SUI_INSTALL" = "yes" ]; then
+    echo "==> Spawning sui-move-analyzer install in tmux background session..."
+    tmux new-session -d -s sui-install -n "sui-move-analyzer" \
+      "cargo install --git https://github.com/movebit/sui-move-analyzer.git; \
+       echo ''; \
+       echo '✅ sui-move-analyzer installed! You can close this window.'; \
+       read -p 'Press Enter to exit...'"
+    echo "✅ Install started in background!"
+    echo "   Monitor progress : tmux attach -t sui-install"
+    echo "   Detach from tmux : Ctrl+b then d"
+  else
+    echo "⏭️  Skipping sui-move-analyzer."
+    echo "   To install later, run:"
+    echo "   cargo install --git https://github.com/movebit/sui-move-analyzer.git"
+  fi
+else
+  echo "✅ sui-move-analyzer already installed"
 fi
 
 # ========== Dotfiles Symlink ==========

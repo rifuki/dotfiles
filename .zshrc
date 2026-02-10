@@ -16,6 +16,9 @@ source $ZSH/oh-my-zsh.sh
 export EDITOR=nvim
 
 # ── PATH ───────────────────────────────────────────────────────────────────────
+# Homebrew (Apple Silicon)
+[ -f "/opt/homebrew/bin/brew" ] && eval "$(/opt/homebrew/bin/brew shellenv zsh)"
+
 export PATH="$HOME/.local/bin:$PATH"
 export PATH="$HOME/.bun/bin:$PATH"
 export PATH="$HOME/.cargo/bin:$PATH"
@@ -36,3 +39,6 @@ compinit
 alias n='nvim'
 alias fucking='sudo'
 alias rm='trash'
+
+# bun completions
+[ -s "/Users/rifuki/.bun/_bun" ] && source "/Users/rifuki/.bun/_bun"
