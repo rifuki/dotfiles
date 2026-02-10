@@ -66,7 +66,7 @@ nvm use 22
 if [ -d "daily-dotfiles" ]; then
   rm -rf daily-dotfiles
 fi
-git clone --depth=1 https://github.com/rifuki/daily-dotfiles.git
+git clone --depth=1 --branch vps https://github.com/rifuki/daily-dotfiles.git
 
 if [ ! -d "$HOME/.config/nvim" ] || [ ! -d "$HOME/.config/tmux" ]; then
   echo "==> Installing dotfiles..."
