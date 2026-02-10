@@ -188,28 +188,6 @@ else
   echo "==> Rust already installed: $(rustc --version)"
 fi
 
-# ========== Sui Move Analyzer ==========
-if ! command -v sui-move-analyzer &>/dev/null; then
-  printf "==> Install sui-move-analyzer? (yes/no): " && read SUI_INSTALL < /dev/tty
-  if [ "$SUI_INSTALL" = "yes" ]; then
-    echo "==> Spawning sui-move-analyzer install in tmux background session..."
-    tmux new-session -d -s sui-install -n "sui-move-analyzer" \
-      "cargo install --git https://github.com/movebit/sui-move-analyzer.git; \
-       echo ''; \
-       echo '✅ sui-move-analyzer installed! You can close this window.'; \
-       read _dummy'"
-    echo "✅ Install started in background!"
-    echo "   Monitor progress : tmux attach -t sui-install"
-    echo "   Detach from tmux : Ctrl+b then d"
-  else
-    echo "⏭️  Skipping sui-move-analyzer."
-    echo "   To install later, run:"
-    echo "   cargo install --git https://github.com/movebit/sui-move-analyzer.git"
-  fi
-else
-  echo "✅ sui-move-analyzer already installed"
-fi
-
 # ========== Dotfiles Symlink ==========
 echo "==> Setting up dotfiles symlinks..."
 # When run via curl/process-substitution, BASH_SOURCE is not a real file path
@@ -270,17 +248,45 @@ else
 fi
 
 # ========== Git Config ==========
-echo "==> Configuring Git..."
-printf "   Enter your Git name: " && read GIT_NAME < /dev/tty
-printf "   Enter your Git email: " && read GIT_EMAIL < /dev/tty
-git config --global user.name "$GIT_NAME"
-git config --global user.email "$GIT_EMAIL"
-echo "✅ Git config set"
+GIT_NAME_SET=$(git config --global user.name 2>/dev/null)
+GIT_EMAIL_SET=$(git config --global user.email 2>/dev/null)
+if [ -z "$GIT_NAME_SET" ] || [ -z "$GIT_EMAIL_SET" ]; then
+  echo "==> Configuring Git..."
+  printf "   Enter your Git name: " && read GIT_NAME < /dev/tty
+  printf "   Enter your Git email: " && read GIT_EMAIL < /dev/tty
+  git config --global user.name "$GIT_NAME"
+  git config --global user.email "$GIT_EMAIL"
+  echo "✅ Git config set"
+else
+  echo "✅ Git already configured: $GIT_NAME_SET <$GIT_EMAIL_SET>"
+fi
 
 # ========== Set Zsh as Default Shell ==========
 if [ "$SHELL" != "$(which zsh)" ]; then
   echo "==> Setting zsh as default shell..."
   chsh -s "$(which zsh)" || echo "⚠️  chsh failed. Run: chsh -s $(which zsh)"
+fi
+
+# ========== Sui Move Analyzer ==========
+if ! command -v sui-move-analyzer &>/dev/null; then
+  printf "==> Install sui-move-analyzer? (yes/no): " && read SUI_INSTALL < /dev/tty
+  if [ "$SUI_INSTALL" = "yes" ]; then
+    echo "==> Spawning sui-move-analyzer install in tmux background session..."
+    tmux new-session -d -s sui-install -n "sui-move-analyzer" \
+      "cargo install --git https://github.com/movebit/sui-move-analyzer.git; \
+       echo ''; \
+       echo '✅ sui-move-analyzer installed! You can close this window.'; \
+       read _dummy'"
+    echo "✅ Install started in background!"
+    echo "   Monitor progress : tmux attach -t sui-install"
+    echo "   Detach from tmux : Ctrl+b then d"
+  else
+    echo "⏭️  Skipping sui-move-analyzer."
+    echo "   To install later, run:"
+    echo "   cargo install --git https://github.com/movebit/sui-move-analyzer.git"
+  fi
+else
+  echo "✅ sui-move-analyzer already installed"
 fi
 
 # ========== Done ==========
