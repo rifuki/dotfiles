@@ -179,7 +179,7 @@ else
 fi
 
 # ========== Rust ==========
-if ! command -v rustup &>/dev/null; then
+if [ ! -f "$HOME/.cargo/bin/rustup" ]; then
   echo "==> Installing Rust (stable)..."
   curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --default-toolchain stable --no-modify-path
   source "$HOME/.cargo/env"
@@ -268,7 +268,7 @@ if [ "$SHELL" != "$(which zsh)" ]; then
 fi
 
 # ========== Sui Move Analyzer ==========
-if ! command -v sui-move-analyzer &>/dev/null; then
+if [ ! -f "$HOME/.cargo/bin/sui-move-analyzer" ]; then
   printf "==> Install sui-move-analyzer? (yes/no): " && read SUI_INSTALL < /dev/tty
   if [ "$SUI_INSTALL" = "yes" ]; then
     echo "==> Spawning sui-move-analyzer install in tmux background session..."
