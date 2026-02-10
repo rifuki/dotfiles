@@ -183,9 +183,9 @@ if [ ! -f "$HOME/.cargo/bin/rustup" ]; then
   echo "==> Installing Rust (stable)..."
   curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --default-toolchain stable --no-modify-path
   source "$HOME/.cargo/env"
-  echo "✅ Rust $(rustc --version) installed"
+  echo "✅ Rust $("$HOME/.cargo/bin/rustc" --version) installed"
 else
-  echo "==> Rust already installed: $(rustc --version)"
+  echo "✅ Rust already installed: $("$HOME/.cargo/bin/rustc" --version)"
 fi
 
 # ========== Dotfiles Symlink ==========
