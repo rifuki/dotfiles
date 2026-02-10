@@ -163,6 +163,16 @@ if [ "$SHELL" != "$(which zsh)" ]; then
   chsh -s "$(which zsh)" 2>/dev/null || true
 fi
 
+# Fallback: auto-start zsh from .bashrc if chsh failed
+grep -q "exec zsh" ~/.bashrc || cat <<'EOF' >> ~/.bashrc
+
+# Auto start zsh
+if [ -t 1 ] && [ -x "$(command -v zsh)" ]; then
+  export SHELL=$(which zsh)
+  exec zsh
+fi
+EOF
+
 # ========== Done ==========
 echo "✅ Setup complete!"
 echo "👉 Switching to Zsh..."
