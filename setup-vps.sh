@@ -83,6 +83,47 @@ else
   echo "==> Rust already installed: $(rustc --version)"
 fi
 
+# ========== Gemini CLI ==========
+if ! command -v gemini &>/dev/null; then
+  echo "==> Installing Gemini CLI..."
+  npm install -g @google/gemini-cli
+  echo "✅ Gemini CLI installed"
+else
+  echo "==> Gemini CLI already installed"
+fi
+
+# ========== Bun ==========
+if [ ! -d "$HOME/.bun" ]; then
+  echo "==> Installing Bun..."
+  curl -fsSL https://bun.sh/install | bash
+  echo "✅ Bun installed"
+else
+  echo "==> Bun already installed: $("$HOME/.bun/bin/bun" --version)"
+fi
+
+# ========== fzf ==========
+if [ ! -d "$HOME/.fzf" ]; then
+  echo "==> Installing fzf..."
+  git clone --depth 1 https://github.com/junegunn/fzf.git "$HOME/.fzf"
+  "$HOME/.fzf/install" --key-bindings --completion --no-update-rc
+  echo "✅ fzf installed"
+else
+  echo "==> fzf already installed"
+fi
+
+# ========== eza ==========
+if ! command -v eza &>/dev/null; then
+  echo "==> Installing eza..."
+  EZA_VERSION=$(curl -fsSL https://api.github.com/repos/eza-community/eza/releases/latest | grep '"tag_name"' | cut -d'"' -f4)
+  curl -LO "https://github.com/eza-community/eza/releases/download/${EZA_VERSION}/eza_x86_64-unknown-linux-musl.tar.gz"
+  tar xzf eza_x86_64-unknown-linux-musl.tar.gz eza
+  sudo mv eza /usr/local/bin/eza
+  rm -f eza_x86_64-unknown-linux-musl.tar.gz
+  echo "✅ eza installed"
+else
+  echo "==> eza already installed: $(eza --version | head -1)"
+fi
+
 # ========== Docker ==========
 if ! command -v docker &>/dev/null; then
   echo "==> Installing Docker..."
@@ -98,6 +139,22 @@ if ! groups "$USER" | grep -q docker; then
   echo "✅ Done. Re-login required for group to take effect."
 else
   echo "==> $USER already in docker group"
+fi
+
+# ========== Portainer ==========
+if ! sudo docker ps -a --format '{{.Names}}' | grep -q "^portainer$"; then
+  echo "==> Installing Portainer..."
+  sudo docker volume create portainer_data
+  sudo docker run -d \
+    --name portainer \
+    --restart=always \
+    -p 9000:9000 \
+    -v /var/run/docker.sock:/var/run/docker.sock \
+    -v portainer_data:/data \
+    portainer/portainer-ce:latest
+  echo "✅ Portainer running at http://$(hostname -I | awk '{print $1}'):9000"
+else
+  echo "==> Portainer already installed"
 fi
 
 # ========== Dotfiles ==========
@@ -190,7 +247,27 @@ export VISUAL=nvim
 export EDITOR="\$VISUAL"
 
 . "\$HOME/.cargo/env"
+export BUN_INSTALL="\$HOME/.bun"
+export PATH="\$BUN_INSTALL/bin:\$PATH"
+
+[ -f ~/.fzf.zsh ] && source ~/.fzf.zsh
+
+alias ls="eza --icons"
+alias ll="eza -la --icons"
+alias lt="eza --tree --icons"
 EOF
+
+# ========== Gemini API Key (Optional) ==========
+echo "   Get your free API key at: https://aistudio.google.com/apikey"
+read -p "==> Set up Gemini API key now? (yes/no): " GEMINI_SETUP < /dev/tty
+if [ "$GEMINI_SETUP" = "yes" ]; then
+  read -p "   Enter your Gemini API key: " GEMINI_KEY < /dev/tty
+  echo "export GEMINI_API_KEY=\"$GEMINI_KEY\"" >> ~/.zshrc
+  echo "✅ Gemini API key saved to ~/.zshrc"
+else
+  echo "⏭️  Skipping. To set up later, add to ~/.zshrc:"
+  echo "   export GEMINI_API_KEY=\"your_key_here\""
+fi
 
 # ========== Set Zsh as Default Shell ==========
 if [ "$SHELL" != "$(which zsh)" ]; then
@@ -207,6 +284,33 @@ if [ -t 1 ] && [ -x "$(command -v zsh)" ]; then
   exec zsh
 fi
 EOF
+
+# ========== fail2ban ==========
+echo "==> Configuring fail2ban..."
+sudo apt install -y fail2ban
+if [ ! -f /etc/fail2ban/jail.local ]; then
+  sudo tee /etc/fail2ban/jail.local > /dev/null <<'EOF'
+[sshd]
+enabled = true
+port = ssh
+maxretry = 5
+bantime = 1h
+findtime = 10m
+EOF
+fi
+sudo systemctl enable --now fail2ban
+echo "✅ fail2ban enabled"
+
+# ========== UFW (Firewall) ==========
+echo "==> Configuring UFW..."
+sudo apt install -y ufw
+sudo ufw default deny incoming
+sudo ufw default allow outgoing
+sudo ufw allow OpenSSH
+sudo ufw allow 9000/tcp
+sudo ufw --force enable
+echo "✅ UFW enabled"
+sudo ufw status
 
 # ========== Done ==========
 echo "✅ Setup complete!"

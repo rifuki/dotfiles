@@ -30,6 +30,26 @@ echo "==> Removing NVM & Node.js..."
 rm -rf "$HOME/.nvm"
 echo "✅ NVM removed"
 
+# ========== Gemini CLI ==========
+echo "==> Removing Gemini CLI..."
+npm uninstall -g @google/gemini-cli 2>/dev/null || true
+echo "✅ Gemini CLI removed"
+
+# ========== Bun ==========
+echo "==> Removing Bun..."
+rm -rf "$HOME/.bun"
+echo "✅ Bun removed"
+
+# ========== fzf ==========
+echo "==> Removing fzf..."
+rm -rf "$HOME/.fzf" "$HOME/.fzf.zsh" "$HOME/.fzf.bash"
+echo "✅ fzf removed"
+
+# ========== eza ==========
+echo "==> Removing eza..."
+sudo rm -f /usr/local/bin/eza
+echo "✅ eza removed"
+
 # ========== Rust ==========
 echo "==> Removing Rust..."
 rm -rf "$HOME/.cargo" "$HOME/.rustup"

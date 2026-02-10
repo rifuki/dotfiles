@@ -29,6 +29,29 @@ sudo sed -i '/\/swapfile/d' /etc/fstab
 sudo sed -i '/vm.swappiness/d' /etc/sysctl.conf
 echo "✅ Swap removed"
 
+# ========== UFW ==========
+echo "==> Disabling UFW..."
+sudo ufw --force reset
+sudo ufw disable
+echo "✅ UFW disabled"
+
+# ========== fail2ban ==========
+echo "==> Removing fail2ban..."
+sudo systemctl disable --now fail2ban 2>/dev/null || true
+sudo apt remove -y fail2ban
+sudo rm -f /etc/fail2ban/jail.local
+echo "✅ fail2ban removed"
+
+# ========== fzf ==========
+echo "==> Removing fzf..."
+rm -rf "$HOME/.fzf" "$HOME/.fzf.zsh" "$HOME/.fzf.bash"
+echo "✅ fzf removed"
+
+# ========== eza ==========
+echo "==> Removing eza..."
+sudo rm -f /usr/local/bin/eza
+echo "✅ eza removed"
+
 # ========== Neovim ==========
 echo "==> Removing Neovim..."
 sudo rm -f /usr/local/bin/nvim
@@ -40,10 +63,27 @@ echo "==> Removing NVM & Node.js..."
 rm -rf "$HOME/.nvm"
 echo "✅ NVM removed"
 
+# ========== Gemini CLI ==========
+echo "==> Removing Gemini CLI..."
+npm uninstall -g @google/gemini-cli 2>/dev/null || true
+echo "✅ Gemini CLI removed"
+
+# ========== Bun ==========
+echo "==> Removing Bun..."
+rm -rf "$HOME/.bun"
+echo "✅ Bun removed"
+
 # ========== Rust ==========
 echo "==> Removing Rust..."
 rm -rf "$HOME/.cargo" "$HOME/.rustup"
 echo "✅ Rust removed"
+
+# ========== Portainer ==========
+echo "==> Removing Portainer..."
+sudo docker stop portainer 2>/dev/null || true
+sudo docker rm portainer 2>/dev/null || true
+sudo docker volume rm portainer_data 2>/dev/null || true
+echo "✅ Portainer removed"
 
 # ========== Docker ==========
 echo "==> Removing Docker..."
