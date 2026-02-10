@@ -8,21 +8,16 @@ sudo apt install -y curl git unzip build-essential cmake ninja-build gettext tmu
 
 # ========== Neovim Installation ==========
 if [ ! -x "$(command -v nvim)" ]; then
-  echo "==> Neovim not found, building from source..."
-
-  if [ -d "neovim" ]; then
-    echo "==> Removing existing neovim directory..."
-    rm -rf neovim
-  fi
-
-  git clone https://github.com/neovim/neovim.git
-  cd neovim
-  make CMAKE_BUILD_TYPE=RelWithDebInfo
-  sudo make install
-  cd ..
-  rm -rf neovim
+  echo "==> Installing Neovim (stable)..."
+  NVIM_VERSION=$(curl -fsSL https://api.github.com/repos/neovim/neovim/releases/latest | grep '"tag_name"' | cut -d'"' -f4)
+  curl -LO "https://github.com/neovim/neovim/releases/download/${NVIM_VERSION}/nvim-linux-x86_64.tar.gz"
+  tar xzf nvim-linux-x86_64.tar.gz
+  sudo mv nvim-linux-x86_64 /opt/nvim
+  sudo ln -sf /opt/nvim/bin/nvim /usr/local/bin/nvim
+  rm -f nvim-linux-x86_64.tar.gz
+  echo "✅ Neovim ${NVIM_VERSION} installed"
 else
-  echo "==> Neovim already installed at: $(command -v nvim)"
+  echo "==> Neovim already installed at: $(command -v nvim) ($(nvim --version | head -1))"
 fi
 
 # ========== Node.js & NVM ==========
@@ -47,24 +42,23 @@ fi
 nvm use 22
 
 # ========== Dotfiles ==========
-if [ ! -d "$HOME/.config/nvim" ] || [ ! -d "$HOME/.config/tmux" ]; then
-  echo "==> Cloning dotfiles..."
-  if [ -d "daily-dotfiles" ]; then
-    rm -rf daily-dotfiles
-  fi
-  git clone --depth=1 https://github.com/rifuki/daily-dotfiles.git
-
-  echo "==> Cleaning old configs..."
-  rm -rf ~/.config/.git ~/.config/.gitignore ~/.config/nvim ~/.config/tmux ~/.config/spaceship
-
-  echo "==> Copying configs..."
-  mkdir -p ~/.config
-  cp -r daily-dotfiles/. ~/.config/
+if [ -d "daily-dotfiles" ]; then
   rm -rf daily-dotfiles
-  echo "✅ Dotfiles installed"
-else
-  echo "✅ Dotfiles already exist"
 fi
+git clone --depth=1 https://github.com/rifuki/daily-dotfiles.git
+
+if [ ! -d "$HOME/.config/nvim" ] || [ ! -d "$HOME/.config/tmux" ]; then
+  echo "==> Installing dotfiles..."
+  rm -rf ~/.config/.git ~/.config/.gitignore ~/.config/nvim ~/.config/tmux
+fi
+
+# Always update spaceship config
+echo "==> Updating spaceship config..."
+rm -rf ~/.config/spaceship
+mkdir -p ~/.config
+cp -r daily-dotfiles/. ~/.config/
+rm -rf daily-dotfiles
+echo "✅ Dotfiles installed"
 
 # ========== Tmux Plugin Manager ==========
 TPM_DIR="$HOME/.config/tmux/plugins/tpm"
@@ -131,6 +125,7 @@ plugins=(git zsh-autosuggestions zsh-syntax-highlighting spaceship-ember spacesh
 
 source \$ZSH/oh-my-zsh.sh
 SPACESHIP_PROMPT_ADD_NEWLINE=false
+export SPACESHIP_CONFIG="\$HOME/.config/spaceship/spaceship.zsh"
 
 export VISUAL=nvim
 export EDITOR="\$VISUAL"

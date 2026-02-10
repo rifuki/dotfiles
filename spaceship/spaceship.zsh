@@ -1,3 +1,6 @@
+# Remove async loading indicator (…)
+SPACESHIP_PROMPT_ASYNC=false
+
 # Display time
 SPACESHIP_TIME_SHOW=true
 
