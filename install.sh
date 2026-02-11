@@ -230,9 +230,9 @@ fi
 if [ ! -d "/Applications/Ghostty.app" ]; then
   echo "==> Installing Ghostty..."
   brew install --cask ghostty
-  echo "✅ Ghostty installed"
+  echo "✅ Ghostty $(ghostty --version | head -1)"
 else
-  echo "✅ Ghostty already installed"
+  echo "✅ Ghostty already installed: $(ghostty --version | head -1)"
 fi
 
 # ========== GitHub CLI ==========
@@ -248,18 +248,7 @@ fi
 if ! command -v yabai &>/dev/null; then
   echo "==> Installing Yabai..."
   brew install asmvik/formulae/yabai
-  echo "✅ Yabai installed"
-
-  echo "==> Configuring Yabai scripting addition..."
-  echo "$(whoami) ALL=(root) NOPASSWD: sha256:$(shasum -a 256 $(which yabai) | cut -d " " -f 1) $(which yabai) --load-sa" | sudo tee /private/etc/sudoers.d/yabai > /dev/null
-  echo "✅ Scripting addition configured"
-
-  echo ""
-  echo "👉 Next steps:"
-  echo "   1. System Settings → Privacy & Security → Accessibility"
-  echo "   2. Add Yabai to the allowed apps"
-  echo "   3. Make sure yabairc has: yabai -m signal --add event=dock_did_restart action='sudo yabai --load-sa'"
-  echo "   4. Run: yabai --start-service"
+  echo "✅ Yabai $(yabai --version)"
 else
   echo "✅ Yabai already installed: $(yabai --version)"
 fi
@@ -268,14 +257,7 @@ fi
 if ! command -v skhd &>/dev/null; then
   echo "==> Installing Skhd..."
   brew install asmvik/formulae/skhd
-  echo "✅ Skhd installed"
-
-  echo ""
-  echo "👉 Next steps:"
-  echo "   1. System Settings → Privacy & Security → Accessibility"
-  echo "   2. Add Skhd to the allowed apps"
-  echo "   3. Disable 'Secure Keyboard Entry' in Terminal/other apps"
-  echo "   4. Run: skhd --start-service"
+  echo "✅ Skhd $(skhd --version)"
 else
   echo "✅ Skhd already installed: $(skhd --version)"
 fi
@@ -482,6 +464,27 @@ if [ ! -f "$HOME/.cargo/bin/sui-move-analyzer" ]; then
 else
   echo "✅ sui-move-analyzer already installed"
 fi
+
+# ========== Post-Installation Setup ==========
+echo ""
+echo "================================================"
+echo "✅ Installation Complete!"
+echo "================================================"
+echo ""
+echo "🔧 Post-Installation Steps:"
+echo ""
+echo "Yabai:"
+echo "  1. Configure scripting addition (if using SIP disabled):"
+echo "     echo \"\$(whoami) ALL=(root) NOPASSWD: sha256:\$(shasum -a 256 \$(which yabai) | cut -d \" \" -f 1) \$(which yabai) --load-sa\" | sudo tee /private/etc/sudoers.d/yabai"
+echo "  2. Make sure yabairc has: yabai -m signal --add event=dock_did_restart action='sudo yabai --load-sa'"
+echo "  3. Run: yabai --start-service"
+echo "  4. When prompted, allow Yabai in System Settings → Privacy & Security → Accessibility"
+echo ""
+echo "Skhd:"
+echo "  1. Run: skhd --start-service"
+echo "  2. When prompted, allow Skhd in System Settings → Privacy & Security → Accessibility"
+echo "  3. Disable 'Secure Keyboard Entry' in Terminal/other apps if needed"
+echo ""
 
 # ========== Done ==========
 echo ""
