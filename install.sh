@@ -32,7 +32,7 @@ This script will:
   • Back up any existing configs to ~/.config/backup-TIMESTAMP
   • Install: Xcode CLT, Homebrew, Neovim, Tmux, Oh My Zsh,
              NVM (Node 24), Bun, Rust, Yazi, gh, trash, htop, neofetch,
-             JetBrainsMono Nerd Font, ripgrep, OrbStack
+             JetBrainsMono Nerd Font, ripgrep, OrbStack, Starship
   • Set up dotfiles symlinks
   • Configure git (optional, interactive)
   • Optionally install sui-move-analyzer in tmux background
@@ -218,13 +218,22 @@ else
   echo "✅ ripgrep already installed: $(rg --version | head -1)"
 fi
 
+# ========== Starship ==========
+if ! command -v starship &>/dev/null; then
+  echo "==> Installing Starship..."
+  brew install starship
+  echo "✅ Starship $(starship --version | head -1) installed"
+else
+  echo "✅ Starship already installed: $(starship --version | head -1)"
+fi
+
 # ========== Neofetch ==========
 if ! command -v neofetch &>/dev/null; then
   echo "==> Installing neofetch..."
   brew install neofetch
   echo "✅ neofetch installed"
 else
-  echo "✅ neofetch already installed"
+  echo "✅ neofetch already installed: $(neofetch --version)"
 fi
 
 # ========== Yazi ==========
@@ -246,7 +255,8 @@ else
 fi
 
 # ========== JetBrainsMono Nerd Font ==========
-if ! brew list --cask font-jetbrains-mono-nerd-font &>/dev/null; then
+if ! brew list --cask font-jetbrains-mono-nerd-font &>/dev/null && \
+   ! ls "$HOME/Library/Fonts/JetBrainsMono"*"NerdFont"* &>/dev/null 2>&1; then
   echo "==> Installing JetBrainsMono Nerd Font..."
   brew install --cask font-jetbrains-mono-nerd-font
   echo "✅ JetBrainsMono Nerd Font installed"
@@ -308,27 +318,7 @@ echo "==> Installing Oh My Zsh plugins..."
 [[ ! -d "$ZSH_CUSTOM/plugins/zsh-syntax-highlighting" ]] && \
   git clone https://github.com/zsh-users/zsh-syntax-highlighting.git "$ZSH_CUSTOM/plugins/zsh-syntax-highlighting"
 
-[[ ! -d "$ZSH_CUSTOM/plugins/spaceship-ember" ]] && \
-  git clone https://github.com/spaceship-prompt/spaceship-ember.git "$ZSH_CUSTOM/plugins/spaceship-ember"
-
-[[ ! -d "$ZSH_CUSTOM/plugins/spaceship-vi-mode" ]] && \
-  git clone https://github.com/spaceship-prompt/spaceship-vi-mode.git "$ZSH_CUSTOM/plugins/spaceship-vi-mode"
-
-# Cleanup old spaceship installation
-[ -d "$ZSH_CUSTOM/themes/spaceship" ] && rm -rf "$ZSH_CUSTOM/themes/spaceship"
-[ -f "$ZSH_CUSTOM/themes/spaceship.zsh-theme" ] && rm -f "$ZSH_CUSTOM/themes/spaceship.zsh-theme"
-
-# Install Spaceship theme
-if [ ! -d "$ZSH_CUSTOM/themes/spaceship-prompt" ]; then
-  echo "==> Installing Spaceship theme..."
-  git clone https://github.com/spaceship-prompt/spaceship-prompt.git "$ZSH_CUSTOM/themes/spaceship-prompt" --depth=1
-fi
-
-# Ensure symlink exists
-[ ! -f "$ZSH_CUSTOM/themes/spaceship.zsh-theme" ] && \
-  ln -s "$ZSH_CUSTOM/themes/spaceship-prompt/spaceship.zsh-theme" "$ZSH_CUSTOM/themes/spaceship.zsh-theme"
-
-echo "✅ Oh My Zsh plugins and theme installed"
+echo "✅ Oh My Zsh plugins installed"
 
 # ========== NVM ==========
 export NVM_DIR="$HOME/.nvm"
@@ -397,6 +387,9 @@ ln -sf "$REPO_DIR/.hyper.js" "$HOME/.hyper.js"
 
 echo "✅ Dotfiles symlinked"
 
+# ========== Hush Login ==========
+[ ! -f "$HOME/.hushlogin" ] && touch "$HOME/.hushlogin" && echo "✅ .hushlogin created (suppresses 'Last login' message)"
+
 # ========== Cleanup Shell Profiles ==========
 # Remove entries added by installers (cargo, nvm) — everything is in .zshrc
 echo "==> Cleaning up shell profile files..."
@@ -424,14 +417,6 @@ if [ -x "$TPM_DIR/bin/install_plugins" ]; then
   "$TPM_DIR/bin/install_plugins"
 else
   echo "⚠️ TPM install_plugins not found, skipping..."
-fi
-
-# ========== Spaceship Config ==========
-echo "==> Setting up Spaceship prompt..."
-if [ -f "$HOME/.oh-my-zsh/custom/themes/spaceship.zsh-theme" ]; then
-  echo "✅ Spaceship config linked"
-else
-  echo "⚠️ Spaceship theme not found, skipping config..."
 fi
 
 # ========== Git Config ==========
