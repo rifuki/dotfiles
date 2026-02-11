@@ -243,7 +243,9 @@ fi
 BACKUP_DIR="$HOME/.config/backup-$(date +%Y%m%d-%H%M%S)"
 _did_backup=0
 _changed_tops=""
+_diff_output="$(git -C "$DOTFILES_DIR" diff --name-only HEAD 2>/dev/null)"
 while IFS= read -r _file; do
+  [ -z "$_file" ] && continue
   case "$_file" in
     .config/*)
       _name="${_file#.config/}"
@@ -256,7 +258,7 @@ while IFS= read -r _file; do
     *" $_top "*) ;;
     *) _changed_tops="$_changed_tops $_top" ;;
   esac
-done < <(git -C "$DOTFILES_DIR" diff --name-only HEAD 2>/dev/null)
+done <<< "$_diff_output"
 
 for _top in $_changed_tops; do
   _p="$HOME/$_top"
