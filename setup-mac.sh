@@ -37,6 +37,29 @@ else
   fi
 fi
 
+# ========== Backup Existing Configs ==========
+# Must happen before any tool install (OMZ/bun may create .zshrc)
+echo "==> Checking for existing configs to backup..."
+BACKUP_DIR="$HOME/.config/backup-$(date +%Y%m%d-%H%M%S)"
+_did_backup=0
+for _d in "$DOTFILES_DIR/.config"/*/; do
+  _name="$(basename "$_d")"
+  _p="$HOME/.config/$_name"
+  if [ -d "$_p" ] && [ ! -L "$_p" ]; then
+    [ "$_did_backup" = "0" ] && mkdir -p "$BACKUP_DIR" && echo "==> Backing up existing configs to $BACKUP_DIR..."
+    mv "$_p" "$BACKUP_DIR/"
+    _did_backup=1
+  fi
+done
+for _f in "$HOME/.zshrc" "$HOME/.hyper.js"; do
+  if [ -f "$_f" ] && [ ! -L "$_f" ]; then
+    [ "$_did_backup" = "0" ] && mkdir -p "$BACKUP_DIR" && echo "==> Backing up existing configs to $BACKUP_DIR..."
+    mv "$_f" "$BACKUP_DIR/"
+    _did_backup=1
+  fi
+done
+[ "$_did_backup" = "1" ] && echo "✅ Backups created" || echo "✅ No existing configs to backup"
+
 # ========== Xcode Command Line Tools ==========
 echo "==> Checking Xcode Command Line Tools..."
 if ! command -v xcode-select &>/dev/null || ! xcode-select -p &>/dev/null; then
@@ -216,46 +239,41 @@ else
   REPO_DIR="$DOTFILES_DIR"
 fi
 
+# Backup only changed symlinked configs (re-run case: local git changes)
 BACKUP_DIR="$HOME/.config/backup-$(date +%Y%m%d-%H%M%S)"
 _did_backup=0
+_changed_tops=""
+while IFS= read -r _file; do
+  case "$_file" in
+    .config/*)
+      _name="${_file#.config/}"
+      _name="${_name%%/*}"
+      _top=".config/$_name"
+      ;;
+    *) _top="$_file" ;;
+  esac
+  case " $_changed_tops " in
+    *" $_top "*) ;;
+    *) _changed_tops="$_changed_tops $_top" ;;
+  esac
+done < <(git -C "$DOTFILES_DIR" diff --name-only HEAD 2>/dev/null)
 
-# Case 1: backup real (non-symlink) configs — first time setup
-for _d in "$REPO_DIR/.config"/*/; do
-  _name="$(basename "$_d")"
-  _p="$HOME/.config/$_name"
-  if [ -d "$_p" ] && [ ! -L "$_p" ]; then
-    [ "$_did_backup" = "0" ] && mkdir -p "$BACKUP_DIR" && echo "==> Backing up existing configs to $BACKUP_DIR..."
-    mv "$_p" "$BACKUP_DIR/"
+for _top in $_changed_tops; do
+  _p="$HOME/$_top"
+  if [ -L "$_p" ]; then
+    [ "$_did_backup" = "0" ] && mkdir -p "$BACKUP_DIR" && echo "==> Local changes detected, backing up to $BACKUP_DIR..."
+    case "$_top" in
+      .config/*)
+        mkdir -p "$BACKUP_DIR/.config"
+        cp -rL "$_p" "$BACKUP_DIR/.config/" 2>/dev/null || true
+        ;;
+      *)
+        cp -rL "$_p" "$BACKUP_DIR/" 2>/dev/null || true
+        ;;
+    esac
     _did_backup=1
   fi
 done
-for _f in "$HOME/.zshrc" "$HOME/.hyper.js"; do
-  if [ -f "$_f" ] && [ ! -L "$_f" ]; then
-    [ "$_did_backup" = "0" ] && mkdir -p "$BACKUP_DIR" && echo "==> Backing up existing configs to $BACKUP_DIR..."
-    mv "$_f" "$BACKUP_DIR/"
-    _did_backup=1
-  fi
-done
-
-# Case 2: backup symlinked configs if dotfiles repo has local changes
-if git -C "$DOTFILES_DIR" status --porcelain 2>/dev/null | grep -q .; then
-  echo "==> Local dotfiles changes detected, backing up..."
-  for _d in "$REPO_DIR/.config"/*/; do
-    _name="$(basename "$_d")"
-    if [ -L "$HOME/.config/$_name" ]; then
-      [ "$_did_backup" = "0" ] && mkdir -p "$BACKUP_DIR"
-      cp -rL "$HOME/.config/$_name" "$BACKUP_DIR/" 2>/dev/null || true
-      _did_backup=1
-    fi
-  done
-  for _f in "$HOME/.zshrc" "$HOME/.hyper.js"; do
-    if [ -L "$_f" ]; then
-      [ "$_did_backup" = "0" ] && mkdir -p "$BACKUP_DIR"
-      cp -rL "$_f" "$BACKUP_DIR/" 2>/dev/null || true
-      _did_backup=1
-    fi
-  done
-fi
 
 [ "$_did_backup" = "1" ] && echo "✅ Backups saved to: $BACKUP_DIR"
 
