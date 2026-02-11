@@ -16,12 +16,12 @@ _script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 if [ -d "$_script_dir/.git" ] && git -C "$_script_dir" rev-parse --git-dir > /dev/null 2>&1; then
   # Running from cloned repo — must be in $HOME/.dotfiles
   if [ "$_script_dir" != "$DOTFILES_DIR" ]; then
-    echo "❌ Error: setup-mac.sh must be run from $HOME/.dotfiles"
+    echo "❌ Error: install.sh must be run from $HOME/.dotfiles"
     echo "   Found at: $_script_dir"
     echo ""
     echo "   Either:"
-    echo "   1. Run: curl -fsSL https://raw.githubusercontent.com/rifuki/.dotfiles/refs/heads/macos/setup-mac.sh | bash"
-    echo "   2. Or move repo: mv $_script_dir $DOTFILES_DIR && bash $DOTFILES_DIR/setup-mac.sh"
+    echo "   1. Run: curl -fsSL https://raw.githubusercontent.com/rifuki/.dotfiles/refs/heads/macos/install.sh | bash"
+    echo "   2. Or move repo: mv $_script_dir $DOTFILES_DIR && bash $DOTFILES_DIR/install.sh"
     exit 1
   fi
   echo "✅ Running from: $DOTFILES_DIR"

@@ -26,8 +26,8 @@ if [ -d "$DOTFILES_DIR/.config" ]; then
     _name="$(basename "$_d")"
     _p="$HOME/.config/$_name"
     if [ -e "$_p" ]; then
-      [ "$_did_backup" = "0" ] && mkdir -p "$BACKUP_DIR" && echo "==> Backing up configs to $BACKUP_DIR..."
-      cp -rL "$_p" "$BACKUP_DIR/" 2>/dev/null || true
+      [ "$_did_backup" = "0" ] && mkdir -p "$BACKUP_DIR/.config" && echo "==> Backing up configs to $BACKUP_DIR..."
+      cp -rL "$_p" "$BACKUP_DIR/.config/" 2>/dev/null || true
       _did_backup=1
     fi
   done

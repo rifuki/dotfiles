@@ -6,8 +6,9 @@
 
 # But not folders themselves, so we can whitelist
 !*/
-!setup-mac.sh
-!uninstall-mac.sh
+!install.sh
+!uninstall.sh
+!README.md
 !.zshrc
 !.hyper.js
 
