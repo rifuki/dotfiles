@@ -211,6 +211,15 @@ else
   echo "✅ yazi already installed: $(yazi --version)"
 fi
 
+# ========== Ghostty ==========
+if [ ! -d "/Applications/Ghostty.app" ]; then
+  echo "==> Installing Ghostty..."
+  brew install --cask ghostty
+  echo "✅ Ghostty installed"
+else
+  echo "✅ Ghostty already installed"
+fi
+
 # ========== GitHub CLI ==========
 if ! command -v gh &>/dev/null; then
   echo "==> Installing GitHub CLI..."
@@ -272,14 +281,14 @@ else
   [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
 fi
 
-if ! nvm ls 22 &>/dev/null; then
-  echo "==> Installing Node.js 22 via NVM..."
-  nvm install 22
+if ! nvm ls 24 &>/dev/null; then
+  echo "==> Installing Node.js 24 via NVM..."
+  nvm install 24
 else
-  echo "✅ Node.js 22 already installed."
+  echo "✅ Node.js 24 already installed."
 fi
 
-nvm use 22
+nvm use 24
 
 # ========== Bun ==========
 if [ ! -d "$HOME/.bun" ]; then

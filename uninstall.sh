@@ -73,6 +73,16 @@ for _f in "$HOME/.zshrc" "$HOME/.hyper.js" "$HOME/.zsh_history"; do
 done
 [ "$_did_backup" = "1" ] && echo "✅ Configs backed up to: $UNINSTALL_BACKUP_DIR" || echo "✅ No configs to backup"
 
+# ========== Homebrew Packages ==========
+if confirm "Remove Homebrew packages (neovim, tmux, ghostty, etc.)?"; then
+  echo "==> Removing Homebrew packages..."
+  brew uninstall neovim tmux trash htop neofetch yazi gh 2>/dev/null || true
+  brew uninstall --cask ghostty 2>/dev/null || true
+  echo "✅ Homebrew packages removed"
+else
+  echo "⏭️  Skipping Homebrew packages removal"
+fi
+
 # ========== Remove NVM ==========
 if [ -d "$HOME/.nvm" ]; then
   echo "==> Removing NVM..."
@@ -164,6 +174,7 @@ if confirm "Perform deep clean? (Removes .zsh_history, .wakatime, and other resi
   rm -f "$HOME/.hushlogin"
   rm -rf "$HOME/.local/share/nvim"
   rm -rf "$HOME/.local/state/nvim"
+  rm -rf "$HOME/.config/github-copilot"
   rm -rf "$HOME/.wakatime*"
   echo "✅ Residue files removed"
 else
