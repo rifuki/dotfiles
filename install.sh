@@ -7,6 +7,25 @@ if [[ "$(uname)" != "Darwin" ]]; then
   exit 1
 fi
 
+# ========== Pre-authenticate Sudo ==========
+echo "🔐 This installation requires sudo access."
+echo "Please enter your password (will be cached for this session):"
+sudo -v
+if [ $? -ne 0 ]; then
+  echo "❌ Authentication failed. Exiting."
+  exit 1
+fi
+
+# Keep sudo alive during long installation
+while true; do sudo -n true; sleep 60; done &
+SUDO_KEEP_ALIVE_PID=$!
+
+# Cleanup function for background process
+cleanup_sudo() {
+  kill $SUDO_KEEP_ALIVE_PID 2>/dev/null || true
+}
+trap cleanup_sudo EXIT
+
 # ========== Confirm Helper ==========
 confirm() {
   # $1 = prompt message
