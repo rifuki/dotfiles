@@ -157,7 +157,7 @@ if [ ! -d "$NVM_DIR" ]; then
   curl -fsSL https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.3/install.sh | PROFILE=/dev/null bash
   [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
 else
-  echo "==> NVM already installed, loading..."
+  echo "✅ NVM already installed, loading..."
   [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
 fi
 
@@ -165,7 +165,7 @@ if ! nvm ls 22 &>/dev/null; then
   echo "==> Installing Node.js 22 via NVM..."
   nvm install 22
 else
-  echo "==> Node.js 22 already installed."
+  echo "✅ Node.js 22 already installed."
 fi
 
 nvm use 22
@@ -176,7 +176,7 @@ if [ ! -d "$HOME/.bun" ]; then
   curl -fsSL https://bun.sh/install | bash
   echo "✅ Bun installed"
 else
-  echo "==> Bun already installed: $("$HOME/.bun/bin/bun" --version)"
+  echo "✅ Bun already installed: $("$HOME/.bun/bin/bun" --version)"
 fi
 
 # ========== Rust ==========
@@ -239,7 +239,7 @@ echo "✅ Dotfiles symlinked"
 echo "==> Cleaning up shell profile files..."
 for _f in "$HOME/.zprofile" "$HOME/.zshenv" "$HOME/.profile" "$HOME/.bash_profile" "$HOME/.bashrc"; do
   [ -f "$_f" ] || continue
-  grep -qE 'cargo/env|NVM_DIR|nvm\.sh|bun\.sh|BUN_INSTALL' "$_f" 2>/dev/null || continue
+  grep -qE 'cargo/env|NVM_DIR|nvm\.sh|bun\.sh|BUN_INSTALL|_bun' "$_f" 2>/dev/null || continue
   grep -vE 'cargo/env|NVM_DIR|nvm\.sh|bun\.sh|BUN_INSTALL|_bun|Added by.*installer' "$_f" > "${_f}.tmp" || true
   if [ -s "${_f}.tmp" ]; then
     mv "${_f}.tmp" "$_f"

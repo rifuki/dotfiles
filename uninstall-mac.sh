@@ -48,11 +48,6 @@ rm -rf "$HOME/.cargo"
 rm -rf "$HOME/.rustup"
 echo "✅ Rust removed"
 
-# ========== Tmux Plugin Manager ==========
-echo "==> Removing TPM..."
-rm -rf "$HOME/.config/tmux/plugins"
-echo "✅ TPM removed"
-
 # ========== Oh My Zsh ==========
 echo "==> Removing Oh My Zsh..."
 rm -rf "$HOME/.oh-my-zsh"
@@ -66,7 +61,11 @@ rm -rf "$HOME/.local/state/nvim"
 rm -rf "$HOME/.local/share/tmux"
 echo "✅ Leftover data removed"
 
+# ========== Dotfiles Repo ==========
+echo "==> Removing dotfiles repo..."
+rm -rf "$HOME/.dotfiles"
+echo "✅ Dotfiles repo removed"
+
 # ========== Done ==========
 echo ""
 echo "✅ Uninstall complete!"
-echo "⚠️  To revert shell to bash, run: chsh -s /bin/bash"
