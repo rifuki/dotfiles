@@ -61,41 +61,24 @@ done
 [ "$_did_backup" = "1" ] && echo "✅ Backups created" || echo "✅ No existing configs to backup"
 
 # Re-run case: backup changed + untracked files, then restore to original repo state
-_changed_tops=""
-_all_changes="$(
-  git -C "$DOTFILES_DIR" diff --name-only HEAD 2>/dev/null
-  git -C "$DOTFILES_DIR" ls-files --others --exclude-standard 2>/dev/null
-)"
-while IFS= read -r _file; do
-  [ -z "$_file" ] && continue
-  case "$_file" in
-    .config/*)
-      _name="${_file#.config/}"
-      _name="${_name%%/*}"
-      _top=".config/$_name"
-      ;;
-    *) _top="$_file" ;;
-  esac
-  case " $_changed_tops " in
-    *" $_top "*) ;;
-    *) _changed_tops="$_changed_tops $_top" ;;
-  esac
-done <<< "$_all_changes"
-
-for _top in $_changed_tops; do
-  _p="$HOME/$_top"
-  if [ -L "$_p" ] || [ -e "$_p" ]; then
-    [ "$_did_backup" = "0" ] && mkdir -p "$BACKUP_DIR" && echo "==> Local changes detected, backing up to $BACKUP_DIR..."
-    case "$_top" in
-      .config/*)
-        mkdir -p "$BACKUP_DIR/.config"
-        cp -rL "$_p" "$BACKUP_DIR/.config/" 2>/dev/null || true
-        ;;
-      *)
-        cp -rL "$_p" "$BACKUP_DIR/" 2>/dev/null || true
-        ;;
-    esac
-    _did_backup=1
+for _d in "$DOTFILES_DIR/.config"/*/; do
+  _name="$(basename "$_d")"
+  _p="$HOME/.config/$_name"
+  if git -C "$DOTFILES_DIR" status --porcelain ".config/$_name" 2>/dev/null | grep -q .; then
+    if [ -L "$_p" ] || [ -e "$_p" ]; then
+      [ "$_did_backup" = "0" ] && mkdir -p "$BACKUP_DIR/.config" && echo "==> Local changes detected, backing up to $BACKUP_DIR..."
+      cp -rL "$_p" "$BACKUP_DIR/.config/" 2>/dev/null || true
+      _did_backup=1
+    fi
+  fi
+done
+for _f in .zshrc .hyper.js; do
+  if git -C "$DOTFILES_DIR" status --porcelain "$_f" 2>/dev/null | grep -q .; then
+    if [ -L "$HOME/$_f" ] || [ -e "$HOME/$_f" ]; then
+      [ "$_did_backup" = "0" ] && mkdir -p "$BACKUP_DIR" && echo "==> Local changes detected, backing up to $BACKUP_DIR..."
+      cp -rL "$HOME/$_f" "$BACKUP_DIR/" 2>/dev/null || true
+      _did_backup=1
+    fi
   fi
 done
 
