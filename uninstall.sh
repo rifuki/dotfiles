@@ -52,15 +52,18 @@ echo ""
 
 # ========== Backup Current Configs ==========
 # Create backup before removing anything (safety first!)
+DOTFILES_DIR="$HOME/.dotfiles"
 UNINSTALL_BACKUP_DIR="$HOME/.config/backup-uninstall-$(date +%Y%m%d-%H%M%S)"
 _did_backup=0
 
 echo "==> Creating backup of current configs..."
-for _d in "$HOME/.config"/*/; do
+# Only backup .config directories managed by dotfiles repo
+for _d in "$DOTFILES_DIR/.config"/*/; do
   _name="$(basename "$_d")"
-  if [ -e "$_d" ]; then
+  _home_d="$HOME/.config/$_name"
+  if [ -e "$_home_d" ]; then
     [ "$_did_backup" = "0" ] && mkdir -p "$UNINSTALL_BACKUP_DIR/.config"
-    cp -rL "$_d" "$UNINSTALL_BACKUP_DIR/.config/" 2>/dev/null || true
+    cp -rL "$_home_d" "$UNINSTALL_BACKUP_DIR/.config/" 2>/dev/null || true
     _did_backup=1
   fi
 done
@@ -72,6 +75,17 @@ for _f in "$HOME/.zshrc" "$HOME/.hyper.js" "$HOME/.zsh_history"; do
   fi
 done
 [ "$_did_backup" = "1" ] && echo "✅ Configs backed up to: $UNINSTALL_BACKUP_DIR" || echo "✅ No configs to backup"
+
+# ========== Remove Symlinks ==========
+echo "==> Removing dotfiles symlinks..."
+rm -f "$HOME/.zshrc"
+rm -f "$HOME/.hyper.js"
+for _d in "$HOME/.config"/*/; do
+  if [ -L "$_d" ]; then
+    rm -f "$_d"
+  fi
+done
+echo "✅ Symlinks removed"
 
 # ========== Homebrew Packages ==========
 if confirm "Remove Homebrew packages (neovim, tmux, ghostty, etc.)?"; then
@@ -120,17 +134,6 @@ else
   echo "⏭️  Skipping Oh My Zsh removal"
 fi
 
-# ========== Remove Symlinks ==========
-echo "==> Removing dotfiles symlinks..."
-rm -f "$HOME/.zshrc"
-rm -f "$HOME/.hyper.js"
-for _d in "$HOME/.config"/*/; do
-  if [ -L "$_d" ]; then
-    rm -f "$_d"
-  fi
-done
-echo "✅ Symlinks removed"
-
 # ========== Remove Cache Files ==========
 echo "==> Cleaning up cache files..."
 rm -f "$HOME/.zcompdump"
@@ -139,35 +142,12 @@ rm -rf "$HOME/.cache/nvim" 2>/dev/null || true
 rm -rf "$HOME/.config/github-copilot" 2>/dev/null || true
 echo "✅ Cache files removed"
 
-# ========== Restore from Backup (Optional) ==========
-echo ""
-if confirm "Restore configs from backup just created?"; then
-  echo "==> Restoring from $UNINSTALL_BACKUP_DIR..."
-
-  # Restore .config directories
-  if [ -d "$UNINSTALL_BACKUP_DIR/.config" ]; then
-    mkdir -p "$HOME/.config"
-    for _d in "$UNINSTALL_BACKUP_DIR/.config"/*/; do
-      _name="$(basename "$_d")"
-      cp -rL "$_d" "$HOME/.config/$_name" 2>/dev/null || true
-      echo "   Restored: .config/$_name"
-    done
-  fi
-
-  # Restore dotfiles
-  [ -f "$UNINSTALL_BACKUP_DIR/.zshrc" ] && cp "$UNINSTALL_BACKUP_DIR/.zshrc" "$HOME/" && echo "   Restored: .zshrc"
-  [ -f "$UNINSTALL_BACKUP_DIR/.hyper.js" ] && cp "$UNINSTALL_BACKUP_DIR/.hyper.js" "$HOME/" && echo "   Restored: .hyper.js"
-  [ -f "$UNINSTALL_BACKUP_DIR/.zsh_history" ] && cp "$UNINSTALL_BACKUP_DIR/.zsh_history" "$HOME/" && echo "   Restored: .zsh_history"
-
-  echo "✅ Configs restored from backup"
-fi
-
 # ========== Deep Clean Residue ==========
 if confirm "Perform deep clean? (Removes .zsh_history, .wakatime, and other residues)"; then
   echo "==> Cleaning up residue files..."
   rm -f "$HOME"/.zcompdump*
   rm -f "$HOME/.zsh_history"
-  rm -f "$HOME/.zsh_sessions"
+  rm -rf "$HOME/.zsh_sessions"
   rm -f "$HOME/.node_repl_history"
   rm -f "$HOME/.gitconfig"
   rm -f "$HOME/.gitignore_global"
