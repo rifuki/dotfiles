@@ -7,6 +7,8 @@ if [[ "$(uname)" != "Darwin" ]]; then
   exit 1
 fi
 
+DOTFILES_DIR="$HOME/.dotfiles"
+
 echo "⚠️  This will remove all setup-mac.sh installations!"
 printf "Are you sure? (yes/no): " && read CONFIRM < /dev/tty
 if [ "$CONFIRM" != "yes" ]; then
@@ -14,17 +16,39 @@ if [ "$CONFIRM" != "yes" ]; then
   exit 0
 fi
 
+# ========== Backup User Configs ==========
+# cp -rL to dereference symlinks and copy actual content
+BACKUP_DIR="$HOME/.config/backup-uninstall-$(date +%Y%m%d-%H%M%S)"
+_did_backup=0
+
+if [ -d "$DOTFILES_DIR/.config" ]; then
+  for _d in "$DOTFILES_DIR/.config"/*/; do
+    _name="$(basename "$_d")"
+    _p="$HOME/.config/$_name"
+    if [ -e "$_p" ]; then
+      [ "$_did_backup" = "0" ] && mkdir -p "$BACKUP_DIR" && echo "==> Backing up configs to $BACKUP_DIR..."
+      cp -rL "$_p" "$BACKUP_DIR/" 2>/dev/null || true
+      _did_backup=1
+    fi
+  done
+fi
+for _f in "$HOME/.zshrc" "$HOME/.hyper.js"; do
+  if [ -e "$_f" ]; then
+    [ "$_did_backup" = "0" ] && mkdir -p "$BACKUP_DIR" && echo "==> Backing up configs to $BACKUP_DIR..."
+    cp -rL "$_f" "$BACKUP_DIR/" 2>/dev/null || true
+    _did_backup=1
+  fi
+done
+[ "$_did_backup" = "1" ] && echo "✅ Backups saved to: $BACKUP_DIR"
+
 # ========== Dotfiles Symlinks ==========
 echo "==> Removing dotfiles symlinks..."
-rm -f "$HOME/.config/nvim"
-rm -f "$HOME/.config/tmux"
-rm -f "$HOME/.config/spaceship"
-rm -f "$HOME/.config/ghostty"
-rm -f "$HOME/.config/neofetch"
-rm -f "$HOME/.config/yabai"
-rm -f "$HOME/.config/skhd"
-rm -f "$HOME/.zshrc"
-rm -f "$HOME/.hyper.js"
+if [ -d "$DOTFILES_DIR/.config" ]; then
+  for _d in "$DOTFILES_DIR/.config"/*/; do
+    rm -f "$HOME/.config/$(basename "$_d")"
+  done
+fi
+rm -f "$HOME/.zshrc" "$HOME/.hyper.js"
 echo "✅ Symlinks removed"
 
 # ========== Homebrew Packages ==========

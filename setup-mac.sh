@@ -216,36 +216,54 @@ else
   REPO_DIR="$DOTFILES_DIR"
 fi
 
-# Backup existing configs
-# Only backup real directories (not symlinks) — symlinks are already ours
-_needs_backup=0
-for _d in nvim tmux spaceship; do
-  [ -d "$HOME/.config/$_d" ] && [ ! -L "$HOME/.config/$_d" ] && _needs_backup=1
-done
-[ -f "$HOME/.zshrc" ] && [ ! -L "$HOME/.zshrc" ] && _needs_backup=1
-[ -f "$HOME/.hyper.js" ] && [ ! -L "$HOME/.hyper.js" ] && _needs_backup=1
+BACKUP_DIR="$HOME/.config/backup-$(date +%Y%m%d-%H%M%S)"
+_did_backup=0
 
-if [ "$_needs_backup" = "1" ]; then
-  BACKUP_DIR="$HOME/.config/backup-$(date +%Y%m%d-%H%M%S)"
-  mkdir -p "$BACKUP_DIR"
-  echo "==> Backing up existing configs to $BACKUP_DIR..."
-  for _d in nvim tmux spaceship; do
-    [ -d "$HOME/.config/$_d" ] && [ ! -L "$HOME/.config/$_d" ] && mv "$HOME/.config/$_d" "$BACKUP_DIR/"
+# Case 1: backup real (non-symlink) configs — first time setup
+for _d in "$REPO_DIR/.config"/*/; do
+  _name="$(basename "$_d")"
+  _p="$HOME/.config/$_name"
+  if [ -d "$_p" ] && [ ! -L "$_p" ]; then
+    [ "$_did_backup" = "0" ] && mkdir -p "$BACKUP_DIR" && echo "==> Backing up existing configs to $BACKUP_DIR..."
+    mv "$_p" "$BACKUP_DIR/"
+    _did_backup=1
+  fi
+done
+for _f in "$HOME/.zshrc" "$HOME/.hyper.js"; do
+  if [ -f "$_f" ] && [ ! -L "$_f" ]; then
+    [ "$_did_backup" = "0" ] && mkdir -p "$BACKUP_DIR" && echo "==> Backing up existing configs to $BACKUP_DIR..."
+    mv "$_f" "$BACKUP_DIR/"
+    _did_backup=1
+  fi
+done
+
+# Case 2: backup symlinked configs if dotfiles repo has local changes
+if git -C "$DOTFILES_DIR" status --porcelain 2>/dev/null | grep -q .; then
+  echo "==> Local dotfiles changes detected, backing up..."
+  [ "$_did_backup" = "0" ] && mkdir -p "$BACKUP_DIR"
+  for _d in "$REPO_DIR/.config"/*/; do
+    _name="$(basename "$_d")"
+    [ -L "$HOME/.config/$_name" ] && cp -rL "$HOME/.config/$_name" "$BACKUP_DIR/" 2>/dev/null || true
   done
-  [ -f "$HOME/.zshrc" ] && [ ! -L "$HOME/.zshrc" ] && mv "$HOME/.zshrc" "$BACKUP_DIR/.zshrc.bak"
-  [ -f "$HOME/.hyper.js" ] && [ ! -L "$HOME/.hyper.js" ] && mv "$HOME/.hyper.js" "$BACKUP_DIR/.hyper.js.bak"
-  echo "✅ Backups created"
+  [ -L "$HOME/.zshrc" ] && cp -rL "$HOME/.zshrc" "$BACKUP_DIR/" 2>/dev/null || true
+  [ -L "$HOME/.hyper.js" ] && cp -rL "$HOME/.hyper.js" "$BACKUP_DIR/" 2>/dev/null || true
+  _did_backup=1
 fi
+
+[ "$_did_backup" = "1" ] && echo "✅ Backups saved to: $BACKUP_DIR"
+
+# Remove old symlinks (fresh start)
+for _d in "$REPO_DIR/.config"/*/; do
+  rm -f "$HOME/.config/$(basename "$_d")"
+done
+rm -f "$HOME/.zshrc" "$HOME/.hyper.js"
 
 # Create symlinks
 mkdir -p "$HOME/.config"
-ln -sf "$REPO_DIR/.config/nvim" "$HOME/.config/nvim"
-ln -sf "$REPO_DIR/.config/tmux" "$HOME/.config/tmux"
-ln -sf "$REPO_DIR/.config/spaceship" "$HOME/.config/spaceship"
-ln -sf "$REPO_DIR/.config/ghostty" "$HOME/.config/ghostty"
-ln -sf "$REPO_DIR/.config/neofetch" "$HOME/.config/neofetch"
-ln -sf "$REPO_DIR/.config/yabai" "$HOME/.config/yabai"
-ln -sf "$REPO_DIR/.config/skhd" "$HOME/.config/skhd"
+for _d in "$REPO_DIR/.config"/*/; do
+  _name="$(basename "$_d")"
+  ln -sf "$REPO_DIR/.config/$_name" "$HOME/.config/$_name"
+done
 ln -sf "$REPO_DIR/.zshrc" "$HOME/.zshrc"
 ln -sf "$REPO_DIR/.hyper.js" "$HOME/.hyper.js"
 
