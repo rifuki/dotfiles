@@ -31,7 +31,8 @@ This script will:
   • Clone/update dotfiles to ~/.dotfiles
   • Back up any existing configs to ~/.config/backup-TIMESTAMP
   • Install: Xcode CLT, Homebrew, Neovim, Tmux, Oh My Zsh,
-             NVM (Node 24), Bun, Rust, Yazi, gh, trash, htop, neofetch
+             NVM (Node 24), Bun, Rust, Yazi, gh, trash, htop, neofetch,
+             JetBrainsMono Nerd Font, ripgrep, OrbStack
   • Set up dotfiles symlinks
   • Configure git (optional, interactive)
   • Optionally install sui-move-analyzer in tmux background
@@ -106,7 +107,7 @@ for _d in "$DOTFILES_DIR/.config"/*/; do
     _did_backup=1
   fi
 done
-for _f in "$HOME/.zshrc" "$HOME/.hyper.js" "$HOME/.zsh_history"; do
+for _f in "$HOME/.zshrc" "$HOME/.hyper.js"; do
   if [ -f "$_f" ] && [ ! -L "$_f" ]; then
     [ "$_did_backup" = "0" ] && mkdir -p "$BACKUP_DIR" && echo "==> Backing up existing configs to $BACKUP_DIR..."
     mv "$_f" "$BACKUP_DIR/"
@@ -208,6 +209,15 @@ else
   echo "✅ htop already installed: $(htop --version | head -1)"
 fi
 
+# ========== Ripgrep ==========
+if ! command -v rg &>/dev/null; then
+  echo "==> Installing ripgrep..."
+  brew install ripgrep
+  echo "✅ ripgrep installed"
+else
+  echo "✅ ripgrep already installed: $(rg --version | head -1)"
+fi
+
 # ========== Neofetch ==========
 if ! command -v neofetch &>/dev/null; then
   echo "==> Installing neofetch..."
@@ -230,9 +240,27 @@ fi
 if [ ! -d "/Applications/Ghostty.app" ]; then
   echo "==> Installing Ghostty..."
   brew install --cask ghostty
-  echo "✅ Ghostty $(ghostty --version | head -1)"
+  echo "✅ Ghostty $(ghostty --version | head -1) installed"
 else
   echo "✅ Ghostty already installed: $(ghostty --version | head -1)"
+fi
+
+# ========== JetBrainsMono Nerd Font ==========
+if ! brew list --cask font-jetbrains-mono-nerd-font &>/dev/null; then
+  echo "==> Installing JetBrainsMono Nerd Font..."
+  brew install --cask font-jetbrains-mono-nerd-font
+  echo "✅ JetBrainsMono Nerd Font installed"
+else
+  echo "✅ JetBrainsMono Nerd Font already installed"
+fi
+
+# ========== OrbStack ==========
+if [ ! -d "/Applications/OrbStack.app" ]; then
+  echo "==> Installing OrbStack..."
+  brew install --cask orbstack
+  echo "✅ OrbStack installed"
+else
+  echo "✅ OrbStack already installed"
 fi
 
 # ========== GitHub CLI ==========
@@ -401,7 +429,6 @@ fi
 # ========== Spaceship Config ==========
 echo "==> Setting up Spaceship prompt..."
 if [ -f "$HOME/.oh-my-zsh/custom/themes/spaceship.zsh-theme" ]; then
-  export SPACESHIP_CONFIG="$HOME/.config/spaceship/spaceship.zsh"
   echo "✅ Spaceship config linked"
 else
   echo "⚠️ Spaceship theme not found, skipping config..."
