@@ -244,6 +244,42 @@ else
   echo "✅ gh already installed: $(gh --version | head -1)"
 fi
 
+# ========== Yabai ==========
+if ! command -v yabai &>/dev/null; then
+  echo "==> Installing Yabai..."
+  brew install asmvik/formulae/yabai
+  echo "✅ Yabai installed"
+
+  echo "==> Configuring Yabai scripting addition..."
+  echo "$(whoami) ALL=(root) NOPASSWD: sha256:$(shasum -a 256 $(which yabai) | cut -d " " -f 1) $(which yabai) --load-sa" | sudo tee /private/etc/sudoers.d/yabai > /dev/null
+  echo "✅ Scripting addition configured"
+
+  echo ""
+  echo "👉 Next steps:"
+  echo "   1. System Settings → Privacy & Security → Accessibility"
+  echo "   2. Add Yabai to the allowed apps"
+  echo "   3. Make sure yabairc has: yabai -m signal --add event=dock_did_restart action='sudo yabai --load-sa'"
+  echo "   4. Run: yabai --start-service"
+else
+  echo "✅ Yabai already installed: $(yabai --version)"
+fi
+
+# ========== Skhd ==========
+if ! command -v skhd &>/dev/null; then
+  echo "==> Installing Skhd..."
+  brew install asmvik/formulae/skhd
+  echo "✅ Skhd installed"
+
+  echo ""
+  echo "👉 Next steps:"
+  echo "   1. System Settings → Privacy & Security → Accessibility"
+  echo "   2. Add Skhd to the allowed apps"
+  echo "   3. Disable 'Secure Keyboard Entry' in Terminal/other apps"
+  echo "   4. Run: skhd --start-service"
+else
+  echo "✅ Skhd already installed: $(skhd --version)"
+fi
+
 # ========== Oh My Zsh ==========
 if [ ! -d "$HOME/.oh-my-zsh" ]; then
   echo "==> Installing Oh My Zsh..."
