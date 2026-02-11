@@ -31,7 +31,7 @@ This script will:
   • Clone/update dotfiles to ~/.dotfiles
   • Back up any existing configs to ~/.config/backup-TIMESTAMP
   • Install: Xcode CLT, Homebrew, Neovim, Tmux, Oh My Zsh,
-             NVM (Node 22), Bun, Rust, Yazi, gh, trash, htop, neofetch
+             NVM (Node 24), Bun, Rust, Yazi, gh, trash, htop, neofetch
   • Set up dotfiles symlinks
   • Configure git (optional, interactive)
   • Optionally install sui-move-analyzer in tmux background
@@ -44,6 +44,23 @@ if ! confirm "Proceed with installation?"; then
 fi
 
 echo ""
+
+# ========== Xcode Command Line Tools ==========
+echo "==> Checking Xcode Command Line Tools (CLT)..."
+echo "    Note: This installs only the ~200MB CLI tools (git, make, clang)."
+echo "    NOT the full Xcode IDE. Required for Homebrew and Rust."
+if ! command -v xcode-select &>/dev/null || ! xcode-select -p &>/dev/null; then
+  if confirm "Install Xcode CLT now?"; then
+    echo "==> Installing Xcode Command Line Tools..."
+    xcode-select --install
+    echo "⚠️  Please complete the Xcode installation and re-run this script."
+    exit 0
+  else
+    echo "⏭️  Skipping Xcode CLT. Note: Some tools may not work without it."
+  fi
+else
+  echo "✅ Xcode CLT already installed"
+fi
 
 # ========== Clone Dotfiles Repo ==========
 DOTFILES_DIR="$HOME/.dotfiles"
@@ -128,23 +145,6 @@ if [ "$_did_backup" = "1" ]; then
   git -C "$DOTFILES_DIR" restore . 2>/dev/null || git -C "$DOTFILES_DIR" checkout -- . 2>/dev/null || true
   git -C "$DOTFILES_DIR" clean -fd 2>/dev/null || true
   echo "✅ Dotfiles restored to remote state"
-fi
-
-# ========== Xcode Command Line Tools ==========
-echo "==> Checking Xcode Command Line Tools (CLT)..."
-echo "    Note: This installs only the ~200MB CLI tools (git, make, clang)."
-echo "    NOT the full Xcode IDE. Required for Homebrew and Rust."
-if ! command -v xcode-select &>/dev/null || ! xcode-select -p &>/dev/null; then
-  if confirm "Install Xcode CLT now?"; then
-    echo "==> Installing Xcode Command Line Tools..."
-    xcode-select --install
-    echo "⚠️  Please complete the Xcode installation and re-run this script."
-    exit 0
-  else
-    echo "⏭️  Skipping Xcode CLT. Note: Some tools may not work without it."
-  fi
-else
-  echo "✅ Xcode CLT already installed"
 fi
 
 # ========== Homebrew ==========
@@ -404,7 +404,16 @@ fi
 
 # ========== Sui Move Analyzer ==========
 if [ ! -f "$HOME/.cargo/bin/sui-move-analyzer" ]; then
-  if confirm "Install sui-move-analyzer in background? (takes ~10min)"; then
+  SUI_INSTALL="no"
+  if [ -t 0 ] || [ -c /dev/tty ]; then
+    if confirm "Install sui-move-analyzer in background? (takes ~10min)"; then
+      SUI_INSTALL="yes"
+    fi
+  else
+    echo "⚠️  Skipping sui-move-analyzer (no terminal available)."
+  fi
+
+  if [ "$SUI_INSTALL" = "yes" ]; then
     echo "==> Spawning sui-move-analyzer install in tmux background session..."
     tmux new-session -d -s sui-install -n "sui-move-analyzer" \
       "cargo install --git https://github.com/movebit/sui-move-analyzer.git sui-move-analyzer; \
