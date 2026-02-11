@@ -9,7 +9,7 @@ fi
 
 # ========== Clone Dotfiles Repo ==========
 DOTFILES_DIR="$HOME/.dotfiles"
-DOTFILES_REPO="https://github.com/rifuki/.dotfiles.git"
+DOTFILES_REPO="https://github.com/rifuki/dotfiles.git"
 
 # Check if running from within a git repo
 _script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -20,7 +20,7 @@ if [ -d "$_script_dir/.git" ] && git -C "$_script_dir" rev-parse --git-dir > /de
     echo "   Found at: $_script_dir"
     echo ""
     echo "   Either:"
-    echo "   1. Run: curl -fsSL https://raw.githubusercontent.com/rifuki/.dotfiles/refs/heads/macos/install.sh | bash"
+    echo "   1. Run: curl -fsSL https://dotfiles.rifuki.dev/macos/install.sh | bash"
     echo "   2. Or move repo: mv $_script_dir $DOTFILES_DIR && bash $DOTFILES_DIR/install.sh"
     exit 1
   fi

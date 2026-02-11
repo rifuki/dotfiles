@@ -5,7 +5,7 @@ Personal macOS dotfiles — batteries included.
 ## Install
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/rifuki/.dotfiles/refs/heads/macos/install.sh | bash
+curl -fsSL https://dotfiles.rifuki.dev/macos/install.sh | bash
 ```
 
 > Restart terminal or run `exec zsh` after install.
@@ -13,7 +13,7 @@ curl -fsSL https://raw.githubusercontent.com/rifuki/.dotfiles/refs/heads/macos/i
 ## Uninstall
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/rifuki/.dotfiles/refs/heads/macos/uninstall.sh | bash
+curl -fsSL https://dotfiles.rifuki.dev/macos/uninstall.sh | bash
 ```
 
 ## What's included
