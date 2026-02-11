@@ -7,25 +7,6 @@ if [[ "$(uname)" != "Darwin" ]]; then
   exit 1
 fi
 
-# ========== Pre-authenticate Sudo ==========
-echo "🔐 This installation requires sudo access."
-echo "Please enter your password (will be cached for this session):"
-sudo -v
-if [ $? -ne 0 ]; then
-  echo "❌ Authentication failed. Exiting."
-  exit 1
-fi
-
-# Keep sudo alive during long installation
-while true; do sudo -n true; sleep 60; done &
-SUDO_KEEP_ALIVE_PID=$!
-
-# Cleanup function for background process
-cleanup_sudo() {
-  kill $SUDO_KEEP_ALIVE_PID 2>/dev/null || true
-}
-trap cleanup_sudo EXIT
-
 # ========== Confirm Helper ==========
 confirm() {
   # $1 = prompt message
@@ -167,7 +148,24 @@ fi
 # ========== Homebrew ==========
 if ! command -v brew &>/dev/null; then
   echo "==> Installing Homebrew..."
+
+  # Temporarily disable exit on error
+  set +e
   /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+  BREW_RESULT=$?
+  set -e
+
+  if [ $BREW_RESULT -ne 0 ]; then
+    echo "❌ Homebrew installation failed (likely due to password prompt in non-interactive mode)"
+    echo ""
+    echo "Please install Homebrew manually:"
+    echo "  /bin/bash -c \"\$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)\""
+    echo ""
+    echo "Then re-run this script to continue:"
+    echo "  curl -fsSL https://dotfiles.rifuki.dev/macos/install.sh | bash"
+    exit 1
+  fi
+
   eval "$(/opt/homebrew/bin/brew shellenv bash)"
   echo "✅ Homebrew installed"
 else
