@@ -277,7 +277,12 @@ for _top in $_changed_tops; do
   fi
 done
 
-[ "$_did_backup" = "1" ] && echo "✅ Backups saved to: $BACKUP_DIR"
+if [ "$_did_backup" = "1" ]; then
+  echo "✅ Backups saved to: $BACKUP_DIR"
+  echo "==> Restoring dotfiles to original repo state..."
+  git -C "$DOTFILES_DIR" restore . 2>/dev/null || git -C "$DOTFILES_DIR" checkout -- . 2>/dev/null || true
+  echo "✅ Dotfiles restored to remote state"
+fi
 
 # Remove old symlinks (fresh start)
 for _d in "$REPO_DIR/.config"/*/; do
