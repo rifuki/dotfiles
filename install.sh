@@ -325,15 +325,19 @@ else
 fi
 
 # ========== Git Config ==========
-GIT_NAME_SET=$(git config --global user.name 2>/dev/null)
-GIT_EMAIL_SET=$(git config --global user.email 2>/dev/null)
+GIT_NAME_SET=$(git config --global user.name 2>/dev/null) || true
+GIT_EMAIL_SET=$(git config --global user.email 2>/dev/null) || true
 if [ -z "$GIT_NAME_SET" ] || [ -z "$GIT_EMAIL_SET" ]; then
   echo "==> Configuring Git..."
-  printf "   Enter your Git name: " && read GIT_NAME < /dev/tty
-  printf "   Enter your Git email: " && read GIT_EMAIL < /dev/tty
-  git config --global user.name "$GIT_NAME"
-  git config --global user.email "$GIT_EMAIL"
-  echo "✅ Git config set"
+  if [ -t 0 ] || [ -c /dev/tty ]; then
+    printf "   Enter your Git name: " && read GIT_NAME < /dev/tty && \
+    printf "   Enter your Git email: " && read GIT_EMAIL < /dev/tty && \
+    git config --global user.name "$GIT_NAME" && \
+    git config --global user.email "$GIT_EMAIL" && \
+    echo "✅ Git config set" || echo "⚠️  Git config skipped (could not read from terminal)"
+  else
+    echo "⚠️  Git config skipped (no terminal available)"
+  fi
 else
   echo "✅ Git already configured: $GIT_NAME_SET <$GIT_EMAIL_SET>"
 fi
@@ -346,7 +350,13 @@ fi
 
 # ========== Sui Move Analyzer ==========
 if [ ! -f "$HOME/.cargo/bin/sui-move-analyzer" ]; then
-  printf "==> Install sui-move-analyzer? (yes/no): " && read SUI_INSTALL < /dev/tty
+  SUI_INSTALL=""
+  if [ -t 0 ] || [ -c /dev/tty ]; then
+    printf "==> Install sui-move-analyzer? (yes/no): " && read SUI_INSTALL < /dev/tty || true
+  else
+    echo "⚠️  Skipping sui-move-analyzer (no terminal available). Install later with:"
+    echo "   cargo install --git https://github.com/movebit/sui-move-analyzer.git"
+  fi
   if [ "$SUI_INSTALL" = "yes" ]; then
     echo "==> Spawning sui-move-analyzer install in tmux background session..."
     tmux new-session -d -s sui-install -n "sui-move-analyzer" \
