@@ -80,7 +80,7 @@ done
 echo "==> Removing dotfiles symlinks..."
 rm -f "$HOME/.zshrc"
 rm -f "$HOME/.hyper.js"
-for _d in "$HOME/.config"/*/; do
+for _d in "$HOME/.config"/*; do
   if [ -L "$_d" ]; then
     rm -f "$_d"
   fi

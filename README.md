@@ -5,15 +5,23 @@ Personal macOS dotfiles — batteries included.
 ## Install
 
 ```bash
-curl -fsSL https://dotfiles.rifuki.dev/macos/install.sh | bash
+bash <(curl -fsSL https://dotfiles.rifuki.dev/macos/install.sh)
 ```
+
+> Uses `bash <()` instead of `curl | bash` to preserve interactive TTY for Homebrew password prompt.
 
 > Restart terminal or run `exec zsh` after install.
 
 ## Uninstall
 
 ```bash
-curl -fsSL https://dotfiles.rifuki.dev/macos/uninstall.sh | bash
+bash <(curl -fsSL https://dotfiles.rifuki.dev/macos/uninstall.sh)
+```
+
+### Remove Homebrew completely
+
+```bash
+bash ~/.dotfiles/uninstall-brew.sh
 ```
 
 ## What's included
@@ -25,10 +33,13 @@ curl -fsSL https://dotfiles.rifuki.dev/macos/uninstall.sh | bash
 | [Tmux](https://github.com/tmux/tmux) | Terminal multiplexer |
 | [Oh My Zsh](https://ohmyz.sh) | Zsh framework |
 | [Spaceship](https://spaceship-prompt.sh) | Zsh prompt |
-| [NVM](https://github.com/nvm-sh/nvm) | Node version manager (Node 22) |
+| [NVM](https://github.com/nvm-sh/nvm) | Node version manager (Node 24) |
 | [Bun](https://bun.sh) | JavaScript runtime & package manager |
 | [Rust](https://rustup.rs) | Rust toolchain (stable) |
 | [Yazi](https://github.com/sxyazi/yazi) | Terminal file manager |
+| [Yabai](https://github.com/asmvik/yabai) | Tiling window manager |
+| [Skhd](https://github.com/asmvik/skhd) | Hotkey daemon |
+| [Ghostty](https://ghostty.org) | Terminal emulator |
 | [gh](https://cli.github.com) | GitHub CLI |
 | [trash](https://github.com/sindresorhus/trash-cli) | Safe `rm` replacement |
 | [htop](https://htop.dev) | Process viewer |
@@ -42,6 +53,24 @@ curl -fsSL https://dotfiles.rifuki.dev/macos/uninstall.sh | bash
 - `yabai` + `skhd` — Tiling window manager + hotkeys
 - `neofetch` — System info display
 - `.zshrc` — Shell config (PATH, aliases, plugins)
+
+## Post-Installation (Yabai & Skhd)
+
+After install, manually set up Yabai and Skhd:
+
+**Yabai:**
+1. Configure scripting addition (if SIP disabled):
+   ```bash
+   echo "$(whoami) ALL=(root) NOPASSWD: sha256:$(shasum -a 256 $(which yabai) | cut -d " " -f 1) $(which yabai) --load-sa" | sudo tee /private/etc/sudoers.d/yabai
+   ```
+2. Make sure `yabairc` has: `yabai -m signal --add event=dock_did_restart action="sudo yabai --load-sa"`
+3. Run: `yabai --start-service`
+4. When prompted, allow Yabai in **System Settings → Privacy & Security → Accessibility**
+
+**Skhd:**
+1. Run: `skhd --start-service`
+2. When prompted, allow Skhd in **System Settings → Privacy & Security → Accessibility**
+3. Disable **Secure Keyboard Entry** in Terminal if needed
 
 ## Re-run / Update
 
@@ -65,7 +94,8 @@ Re-running `install.sh` is safe:
 ├── .zshrc
 ├── .hyper.js
 ├── install.sh
-└── uninstall.sh
+├── uninstall.sh
+└── uninstall-brew.sh
 ```
 
 All configs are symlinked from `~/.dotfiles` to their respective locations in `$HOME`.
