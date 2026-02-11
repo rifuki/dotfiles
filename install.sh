@@ -7,6 +7,44 @@ if [[ "$(uname)" != "Darwin" ]]; then
   exit 1
 fi
 
+# ========== Confirm Helper ==========
+confirm() {
+  # $1 = prompt message
+  local _ans
+  if [ -t 0 ] || [ -c /dev/tty ]; then
+    printf "%s [y/n]: " "$1"
+    read -r _ans < /dev/tty
+    case "${_ans}" in
+      [yY]|[yY][eE][sS]) return 0 ;;
+      *) return 1 ;;
+    esac
+  fi
+  return 1  # non-interactive: default no
+}
+
+# ========== Welcome Banner ==========
+cat << 'EOF'
+================================================
+     dotfiles installer — macOS
+================================================
+This script will:
+  • Clone/update dotfiles to ~/.dotfiles
+  • Back up any existing configs to ~/.config/backup-TIMESTAMP
+  • Install: Xcode CLT, Homebrew, Neovim, Tmux, Oh My Zsh,
+             NVM (Node 22), Bun, Rust, Yazi, gh, trash, htop, neofetch
+  • Set up dotfiles symlinks
+  • Configure git (optional, interactive)
+  • Optionally install sui-move-analyzer in tmux background
+================================================
+EOF
+
+if ! confirm "Proceed with installation?"; then
+  echo "⏭️  Installation cancelled."
+  exit 0
+fi
+
+echo ""
+
 # ========== Clone Dotfiles Repo ==========
 DOTFILES_DIR="$HOME/.dotfiles"
 DOTFILES_REPO="https://github.com/rifuki/dotfiles.git"
@@ -39,7 +77,9 @@ fi
 
 # ========== Backup Existing Configs ==========
 # Must happen before any tool install (OMZ/bun may create .zshrc)
-echo "==> Checking for existing configs to backup..."
+echo "==> Checking for existing configs..."
+echo "    Any existing (non-symlinked) configs will be moved to:"
+echo "    ~/.config/backup-TIMESTAMP/"
 BACKUP_DIR="$HOME/.config/backup-$(date +%Y%m%d-%H%M%S)"
 _did_backup=0
 for _d in "$DOTFILES_DIR/.config"/*/; do
@@ -91,10 +131,11 @@ if [ "$_did_backup" = "1" ]; then
 fi
 
 # ========== Xcode Command Line Tools ==========
-echo "==> Checking Xcode Command Line Tools..."
+echo "==> Checking Xcode Command Line Tools (CLT)..."
+echo "    Note: This installs only the ~200MB CLI tools (git, make, clang)."
+echo "    NOT the full Xcode IDE. Required for Homebrew and Rust."
 if ! command -v xcode-select &>/dev/null || ! xcode-select -p &>/dev/null; then
-  printf "==> Xcode CLT not found. Install now? (yes/no): " && read XCD_INSTALL < /dev/tty
-  if [ "$XCD_INSTALL" = "yes" ]; then
+  if confirm "Install Xcode CLT now?"; then
     echo "==> Installing Xcode Command Line Tools..."
     xcode-select --install
     echo "⚠️  Please complete the Xcode installation and re-run this script."
@@ -330,11 +371,15 @@ GIT_EMAIL_SET=$(git config --global user.email 2>/dev/null || true)
 if [ -z "$GIT_NAME_SET" ] || [ -z "$GIT_EMAIL_SET" ]; then
   echo "==> Configuring Git..."
   if [ -t 0 ] || [ -c /dev/tty ]; then
-    printf "   Enter your Git name: " && read -r GIT_NAME < /dev/tty
-    printf "   Enter your Git email: " && read -r GIT_EMAIL < /dev/tty
-    git config --global user.name "$GIT_NAME"
-    git config --global user.email "$GIT_EMAIL"
-    echo "✅ Git config set"
+    if confirm "Configure Git user name and email?"; then
+      printf "   Enter your Git name: " && read -r GIT_NAME < /dev/tty
+      printf "   Enter your Git email: " && read -r GIT_EMAIL < /dev/tty
+      git config --global user.name "$GIT_NAME"
+      git config --global user.email "$GIT_EMAIL"
+      echo "✅ Git config set"
+    else
+      echo "⏭️  Git config skipped"
+    fi
   else
     echo "⚠️  Git config skipped (no terminal available)"
   fi
@@ -350,14 +395,7 @@ fi
 
 # ========== Sui Move Analyzer ==========
 if [ ! -f "$HOME/.cargo/bin/sui-move-analyzer" ]; then
-  SUI_INSTALL="no"
-  if [ -t 0 ] || [ -c /dev/tty ]; then
-    printf "==> Install sui-move-analyzer? (yes/no): " && read -r SUI_INSTALL < /dev/tty || SUI_INSTALL="no"
-  else
-    echo "⚠️  Skipping sui-move-analyzer (no terminal available)."
-  fi
-
-  if [ "$SUI_INSTALL" = "yes" ]; then
+  if confirm "Install sui-move-analyzer in background? (takes ~10min)"; then
     echo "==> Spawning sui-move-analyzer install in tmux background session..."
     tmux new-session -d -s sui-install -n "sui-move-analyzer" \
       "cargo install --git https://github.com/movebit/sui-move-analyzer.git sui-move-analyzer; \
