@@ -152,6 +152,24 @@ if confirm "Restore configs from backup just created?"; then
   echo "✅ Configs restored from backup"
 fi
 
+# ========== Deep Clean Residue ==========
+if confirm "Perform deep clean? (Removes .zsh_history, .wakatime, and other residues)"; then
+  echo "==> Cleaning up residue files..."
+  rm -f "$HOME"/.zcompdump*
+  rm -f "$HOME/.zsh_history"
+  rm -f "$HOME/.zsh_sessions"
+  rm -f "$HOME/.node_repl_history"
+  rm -f "$HOME/.gitconfig"
+  rm -f "$HOME/.gitignore_global"
+  rm -f "$HOME/.hushlogin"
+  rm -rf "$HOME/.local/share/nvim"
+  rm -rf "$HOME/.local/state/nvim"
+  rm -rf "$HOME/.wakatime*"
+  echo "✅ Residue files removed"
+else
+  echo "⏭️  Skipping deep clean"
+fi
+
 # ========== Done ==========
 echo ""
 echo "✅ Uninstallation complete!"
