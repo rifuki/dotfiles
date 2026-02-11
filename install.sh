@@ -47,17 +47,15 @@ echo ""
 
 # ========== Xcode Command Line Tools ==========
 echo "==> Checking Xcode Command Line Tools (CLT)..."
-echo "    Note: This installs only the ~200MB CLI tools (git, make, clang)."
-echo "    NOT the full Xcode IDE. Required for Homebrew and Rust."
 if ! command -v xcode-select &>/dev/null || ! xcode-select -p &>/dev/null; then
-  if confirm "Install Xcode CLT now?"; then
-    echo "==> Installing Xcode Command Line Tools..."
-    xcode-select --install
-    echo "⚠️  Please complete the Xcode installation and re-run this script."
-    exit 0
-  else
-    echo "⏭️  Skipping Xcode CLT. Note: Some tools may not work without it."
-  fi
+  echo "⚠️  Xcode CLT not found!"
+  echo "==> Installing Xcode Command Line Tools..."
+  xcode-select --install
+  echo ""
+  echo "✅ Installation request sent."
+  echo "👉 Please follow the popup instructions to install Xcode CLT."
+  echo "👉 Once installed, re-run this script to continue."
+  exit 0
 else
   echo "✅ Xcode CLT already installed"
 fi
