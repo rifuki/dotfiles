@@ -7,89 +7,153 @@ if [[ "$(uname)" != "Darwin" ]]; then
   exit 1
 fi
 
-DOTFILES_DIR="$HOME/.dotfiles"
+# ========== Confirm Helper ==========
+confirm() {
+  # $1 = prompt message
+  local _ans
+  if [ -t 0 ] || [ -c /dev/tty ]; then
+    printf "%s [y/n]: " "$1"
+    read -r _ans < /dev/tty
+    case "${_ans}" in
+      [yY]|[yY][eE][sS]) return 0 ;;
+      *) return 1 ;;
+    esac
+  fi
+  return 1  # non-interactive: default no
+}
 
-echo "⚠️  This will remove all setup-mac.sh installations!"
-printf "Are you sure? (yes/no): " && read CONFIRM < /dev/tty
-if [ "$CONFIRM" != "yes" ]; then
-  echo "Aborted."
+# ========== Welcome Banner ==========
+cat << 'EOF'
+================================================
+     dotfiles uninstaller — macOS
+================================================
+This script will remove:
+  • NVM (~/.nvm) - Node Version Manager
+  • Bun (~/.bun) - JavaScript runtime
+  • Rust (~/.cargo) - Rust toolchain
+  • Oh My Zsh (~/.oh-my-zsh) - Zsh framework
+  • Dotfiles symlinks (.zshrc, .hyper.js, .config/*)
+  • Cache files (.zcompdump, .node_repl_history,
+    .cache/nvim, .config/github-copilot)
+
+This will NOT remove:
+  • Homebrew or any Homebrew packages
+  • .zsh_history (backed up during install)
+  • Backed up configs (if available for restore)
+================================================
+EOF
+
+if ! confirm "Proceed with uninstallation?"; then
+  echo "⏭️  Uninstallation cancelled."
   exit 0
 fi
 
-# ========== Backup User Configs ==========
-# cp -rL to dereference symlinks and copy actual content
-BACKUP_DIR="$HOME/.config/backup-uninstall-$(date +%Y%m%d-%H%M%S)"
+echo ""
+
+# ========== Backup Current Configs ==========
+# Create backup before removing anything (safety first!)
+UNINSTALL_BACKUP_DIR="$HOME/.config/backup-uninstall-$(date +%Y%m%d-%H%M%S)"
 _did_backup=0
 
-if [ -d "$DOTFILES_DIR/.config" ]; then
-  for _d in "$DOTFILES_DIR/.config"/*/; do
-    _name="$(basename "$_d")"
-    _p="$HOME/.config/$_name"
-    if [ -e "$_p" ]; then
-      [ "$_did_backup" = "0" ] && mkdir -p "$BACKUP_DIR/.config" && echo "==> Backing up configs to $BACKUP_DIR..."
-      cp -rL "$_p" "$BACKUP_DIR/.config/" 2>/dev/null || true
-      _did_backup=1
-    fi
-  done
-fi
-for _f in "$HOME/.zshrc" "$HOME/.hyper.js"; do
-  if [ -e "$_f" ]; then
-    [ "$_did_backup" = "0" ] && mkdir -p "$BACKUP_DIR" && echo "==> Backing up configs to $BACKUP_DIR..."
-    cp -rL "$_f" "$BACKUP_DIR/" 2>/dev/null || true
+echo "==> Creating backup of current configs..."
+for _d in "$HOME/.config"/*/; do
+  _name="$(basename "$_d")"
+  if [ -e "$_d" ]; then
+    [ "$_did_backup" = "0" ] && mkdir -p "$UNINSTALL_BACKUP_DIR/.config"
+    cp -rL "$_d" "$UNINSTALL_BACKUP_DIR/.config/" 2>/dev/null || true
     _did_backup=1
   fi
 done
-[ "$_did_backup" = "1" ] && echo "✅ Backups saved to: $BACKUP_DIR"
+for _f in "$HOME/.zshrc" "$HOME/.hyper.js" "$HOME/.zsh_history"; do
+  if [ -e "$_f" ]; then
+    [ "$_did_backup" = "0" ] && mkdir -p "$UNINSTALL_BACKUP_DIR"
+    cp -L "$_f" "$UNINSTALL_BACKUP_DIR/" 2>/dev/null || true
+    _did_backup=1
+  fi
+done
+[ "$_did_backup" = "1" ] && echo "✅ Configs backed up to: $UNINSTALL_BACKUP_DIR" || echo "✅ No configs to backup"
 
-# ========== Dotfiles Symlinks ==========
-echo "==> Removing dotfiles symlinks..."
-if [ -d "$DOTFILES_DIR/.config" ]; then
-  for _d in "$DOTFILES_DIR/.config"/*/; do
-    rm -f "$HOME/.config/$(basename "$_d")"
-  done
+# ========== Remove NVM ==========
+if [ -d "$HOME/.nvm" ]; then
+  echo "==> Removing NVM..."
+  rm -rf "$HOME/.nvm"
+  echo "✅ NVM removed"
+else
+  echo "✅ NVM not found"
 fi
-rm -f "$HOME/.zshrc" "$HOME/.hyper.js"
+
+# ========== Remove Bun ==========
+if [ -d "$HOME/.bun" ]; then
+  echo "==> Removing Bun..."
+  rm -rf "$HOME/.bun"
+  echo "✅ Bun removed"
+else
+  echo "✅ Bun not found"
+fi
+
+# ========== Remove Rust ==========
+if [ -d "$HOME/.cargo" ] || [ -d "$HOME/.rustup" ]; then
+  echo "==> Removing Rust..."
+  rm -rf "$HOME/.cargo"
+  rm -rf "$HOME/.rustup"
+  echo "✅ Rust removed"
+else
+  echo "✅ Rust not found"
+fi
+
+# ========== Remove Oh My Zsh ==========
+if confirm "Remove Oh My Zsh? (custom configs will be preserved in backup)"; then
+  echo "==> Removing Oh My Zsh..."
+  rm -rf "$HOME/.oh-my-zsh"
+  echo "✅ Oh My Zsh removed"
+else
+  echo "⏭️  Skipping Oh My Zsh removal"
+fi
+
+# ========== Remove Symlinks ==========
+echo "==> Removing dotfiles symlinks..."
+rm -f "$HOME/.zshrc"
+rm -f "$HOME/.hyper.js"
+for _d in "$HOME/.config"/*/; do
+  if [ -L "$_d" ]; then
+    rm -f "$_d"
+  fi
+done
 echo "✅ Symlinks removed"
 
-# ========== Homebrew Packages ==========
-echo "==> Removing Homebrew packages..."
-brew uninstall neovim tmux trash htop neofetch yazi gh 2>/dev/null || true
-echo "✅ Homebrew packages removed"
+# ========== Remove Cache Files ==========
+echo "==> Cleaning up cache files..."
+rm -f "$HOME/.zcompdump"
+rm -f "$HOME/.node_repl_history"
+rm -rf "$HOME/.cache/nvim" 2>/dev/null || true
+rm -rf "$HOME/.config/github-copilot" 2>/dev/null || true
+echo "✅ Cache files removed"
 
-# ========== NVM ==========
-echo "==> Removing NVM..."
-rm -rf "$HOME/.nvm"
-echo "✅ NVM removed"
+# ========== Restore from Backup (Optional) ==========
+echo ""
+if confirm "Restore configs from backup just created?"; then
+  echo "==> Restoring from $UNINSTALL_BACKUP_DIR..."
 
-# ========== Bun ==========
-echo "==> Removing Bun..."
-rm -rf "$HOME/.bun"
-echo "✅ Bun removed"
+  # Restore .config directories
+  if [ -d "$UNINSTALL_BACKUP_DIR/.config" ]; then
+    mkdir -p "$HOME/.config"
+    for _d in "$UNINSTALL_BACKUP_DIR/.config"/*/; do
+      _name="$(basename "$_d")"
+      cp -rL "$_d" "$HOME/.config/$_name" 2>/dev/null || true
+      echo "   Restored: .config/$_name"
+    done
+  fi
 
-# ========== Rust ==========
-echo "==> Removing Rust..."
-rm -rf "$HOME/.cargo"
-rm -rf "$HOME/.rustup"
-echo "✅ Rust removed"
+  # Restore dotfiles
+  [ -f "$UNINSTALL_BACKUP_DIR/.zshrc" ] && cp "$UNINSTALL_BACKUP_DIR/.zshrc" "$HOME/" && echo "   Restored: .zshrc"
+  [ -f "$UNINSTALL_BACKUP_DIR/.hyper.js" ] && cp "$UNINSTALL_BACKUP_DIR/.hyper.js" "$HOME/" && echo "   Restored: .hyper.js"
+  [ -f "$UNINSTALL_BACKUP_DIR/.zsh_history" ] && cp "$UNINSTALL_BACKUP_DIR/.zsh_history" "$HOME/" && echo "   Restored: .zsh_history"
 
-# ========== Oh My Zsh ==========
-echo "==> Removing Oh My Zsh..."
-rm -rf "$HOME/.oh-my-zsh"
-echo "✅ Oh My Zsh removed"
-
-# ========== Leftover Data Dirs ==========
-echo "==> Removing leftover data directories..."
-rm -rf "$HOME/.npm"
-rm -rf "$HOME/.local/share/nvim"
-rm -rf "$HOME/.local/state/nvim"
-rm -rf "$HOME/.local/share/tmux"
-echo "✅ Leftover data removed"
-
-# ========== Dotfiles Repo ==========
-echo "==> Removing dotfiles repo..."
-rm -rf "$HOME/.dotfiles"
-echo "✅ Dotfiles repo removed"
+  echo "✅ Configs restored from backup"
+fi
 
 # ========== Done ==========
 echo ""
-echo "✅ Uninstall complete!"
+echo "✅ Uninstallation complete!"
+echo "📦 Backup saved to: $UNINSTALL_BACKUP_DIR"
+echo "👉 You may need to restart your terminal or reset your shell configuration"

@@ -91,7 +91,7 @@ for _d in "$DOTFILES_DIR/.config"/*/; do
     _did_backup=1
   fi
 done
-for _f in "$HOME/.zshrc" "$HOME/.hyper.js"; do
+for _f in "$HOME/.zshrc" "$HOME/.hyper.js" "$HOME/.zsh_history"; do
   if [ -f "$_f" ] && [ ! -L "$_f" ]; then
     [ "$_did_backup" = "0" ] && mkdir -p "$BACKUP_DIR" && echo "==> Backing up existing configs to $BACKUP_DIR..."
     mv "$_f" "$BACKUP_DIR/"
