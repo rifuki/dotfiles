@@ -240,14 +240,21 @@ done
 # Case 2: backup symlinked configs if dotfiles repo has local changes
 if git -C "$DOTFILES_DIR" status --porcelain 2>/dev/null | grep -q .; then
   echo "==> Local dotfiles changes detected, backing up..."
-  [ "$_did_backup" = "0" ] && mkdir -p "$BACKUP_DIR"
   for _d in "$REPO_DIR/.config"/*/; do
     _name="$(basename "$_d")"
-    [ -L "$HOME/.config/$_name" ] && cp -rL "$HOME/.config/$_name" "$BACKUP_DIR/" 2>/dev/null || true
+    if [ -L "$HOME/.config/$_name" ]; then
+      [ "$_did_backup" = "0" ] && mkdir -p "$BACKUP_DIR"
+      cp -rL "$HOME/.config/$_name" "$BACKUP_DIR/" 2>/dev/null || true
+      _did_backup=1
+    fi
   done
-  [ -L "$HOME/.zshrc" ] && cp -rL "$HOME/.zshrc" "$BACKUP_DIR/" 2>/dev/null || true
-  [ -L "$HOME/.hyper.js" ] && cp -rL "$HOME/.hyper.js" "$BACKUP_DIR/" 2>/dev/null || true
-  _did_backup=1
+  for _f in "$HOME/.zshrc" "$HOME/.hyper.js"; do
+    if [ -L "$_f" ]; then
+      [ "$_did_backup" = "0" ] && mkdir -p "$BACKUP_DIR"
+      cp -rL "$_f" "$BACKUP_DIR/" 2>/dev/null || true
+      _did_backup=1
+    fi
+  done
 fi
 
 [ "$_did_backup" = "1" ] && echo "✅ Backups saved to: $BACKUP_DIR"
