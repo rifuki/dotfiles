@@ -60,9 +60,12 @@ for _f in "$HOME/.zshrc" "$HOME/.hyper.js"; do
 done
 [ "$_did_backup" = "1" ] && echo "✅ Backups created" || echo "✅ No existing configs to backup"
 
-# Re-run case: backup only changed files + restore to original repo state
+# Re-run case: backup changed + untracked files, then restore to original repo state
 _changed_tops=""
-_diff_output="$(git -C "$DOTFILES_DIR" diff --name-only HEAD 2>/dev/null)"
+_all_changes="$(
+  git -C "$DOTFILES_DIR" diff --name-only HEAD 2>/dev/null
+  git -C "$DOTFILES_DIR" ls-files --others --exclude-standard 2>/dev/null
+)"
 while IFS= read -r _file; do
   [ -z "$_file" ] && continue
   case "$_file" in
@@ -77,11 +80,11 @@ while IFS= read -r _file; do
     *" $_top "*) ;;
     *) _changed_tops="$_changed_tops $_top" ;;
   esac
-done <<< "$_diff_output"
+done <<< "$_all_changes"
 
 for _top in $_changed_tops; do
   _p="$HOME/$_top"
-  if [ -L "$_p" ]; then
+  if [ -L "$_p" ] || [ -e "$_p" ]; then
     [ "$_did_backup" = "0" ] && mkdir -p "$BACKUP_DIR" && echo "==> Local changes detected, backing up to $BACKUP_DIR..."
     case "$_top" in
       .config/*)
@@ -96,10 +99,11 @@ for _top in $_changed_tops; do
   fi
 done
 
-if [ -n "$_diff_output" ]; then
-  [ "$_did_backup" = "1" ] && echo "✅ Local changes backed up to: $BACKUP_DIR"
+if [ "$_did_backup" = "1" ]; then
+  echo "✅ Local changes backed up to: $BACKUP_DIR"
   echo "==> Restoring dotfiles to original repo state..."
   git -C "$DOTFILES_DIR" restore . 2>/dev/null || git -C "$DOTFILES_DIR" checkout -- . 2>/dev/null || true
+  git -C "$DOTFILES_DIR" clean -fd 2>/dev/null || true
   echo "✅ Dotfiles restored to remote state"
 fi
 
