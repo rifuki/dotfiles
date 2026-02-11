@@ -11,13 +11,30 @@ fi
 DOTFILES_DIR="$HOME/.dotfiles"
 DOTFILES_REPO="https://github.com/rifuki/.dotfiles.git"
 
-if [ ! -d "$DOTFILES_DIR/.git" ]; then
-  echo "==> Cloning dotfiles repo..."
-  git clone --branch backup/mac-2026-02-10 "$DOTFILES_REPO" "$DOTFILES_DIR"
-  echo "✅ Dotfiles cloned to $DOTFILES_DIR"
+# Check if running from within a git repo
+_script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+if [ -d "$_script_dir/.git" ] && git -C "$_script_dir" rev-parse --git-dir > /dev/null 2>&1; then
+  # Running from cloned repo — must be in $HOME/.dotfiles
+  if [ "$_script_dir" != "$DOTFILES_DIR" ]; then
+    echo "❌ Error: setup-mac.sh must be run from $HOME/.dotfiles"
+    echo "   Found at: $_script_dir"
+    echo ""
+    echo "   Either:"
+    echo "   1. Run: curl -fsSL https://raw.githubusercontent.com/rifuki/.dotfiles/refs/heads/backup/mac-2026-02-10/setup-mac.sh | bash"
+    echo "   2. Or move repo: mv $_script_dir $DOTFILES_DIR && bash $DOTFILES_DIR/setup-mac.sh"
+    exit 1
+  fi
+  echo "✅ Running from: $DOTFILES_DIR"
 else
-  echo "✅ Dotfiles repo already exists, pulling latest..."
-  git -C "$DOTFILES_DIR" pull --ff-only 2>/dev/null || echo "⚠️  Could not pull dotfiles (local changes?)"
+  # Not in a repo, clone if needed
+  if [ ! -d "$DOTFILES_DIR/.git" ]; then
+    echo "==> Cloning dotfiles repo..."
+    git clone --branch backup/mac-2026-02-10 "$DOTFILES_REPO" "$DOTFILES_DIR"
+    echo "✅ Dotfiles cloned to $DOTFILES_DIR"
+  else
+    echo "✅ Dotfiles repo already exists, pulling latest..."
+    git -C "$DOTFILES_DIR" pull --ff-only 2>/dev/null || echo "⚠️  Could not pull dotfiles (local changes?)"
+  fi
 fi
 
 # ========== Xcode Command Line Tools ==========
