@@ -99,31 +99,73 @@ if [ "$_fi" = "$_ft" ]; then STATUS+=("all installed")
 elif [ "$_fi" -gt 0 ]; then STATUS+=("${_fi}/${_ft} installed")
 else STATUS+=(""); fi
 
-# 1: Ghostty + Font
+# 1: Yabai + Skhd
+LABELS+=("Yabai + Skhd")
+DESCRIPTIONS+=("Tiling WM + hotkey daemon")
+SELECTED+=(1)
+command -v yabai &>/dev/null && STATUS+=("installed") || STATUS+=("")
+
+# 2: Ghostty + Font
 LABELS+=("Ghostty + Nerd Font")
 DESCRIPTIONS+=("Ghostty terminal + JetBrainsMono")
 SELECTED+=(1)
 [ -d "/Applications/Ghostty.app" ] && STATUS+=("installed") || STATUS+=("")
 
-# 2: OrbStack
+# 3: OrbStack
 LABELS+=("OrbStack")
 DESCRIPTIONS+=("Docker & Linux VM runtime")
 SELECTED+=(1)
 [ -d "/Applications/OrbStack.app" ] && STATUS+=("installed") || STATUS+=("")
 
-# 3: Cloudflare WARP + Hot
+# 4: Cloudflare WARP + Hot
 LABELS+=("Cloudflare WARP + Hot")
 DESCRIPTIONS+=("Menu bar: VPN + thermal monitor")
 SELECTED+=(1)
 [ -d "/Applications/Cloudflare WARP.app" ] && STATUS+=("installed") || STATUS+=("")
 
-# 4: Google Chrome
+# 5: Google Chrome
 LABELS+=("Google Chrome")
 DESCRIPTIONS+=("Browser")
 SELECTED+=(1)
 [ -d "/Applications/Google Chrome.app" ] && STATUS+=("installed") || STATUS+=("")
 
-# 5: SSH Keys (iCloud)
+# 6: Oh My Zsh
+LABELS+=("Oh My Zsh")
+DESCRIPTIONS+=("Zsh framework + plugins")
+SELECTED+=(1)
+[ -d "$HOME/.oh-my-zsh" ] && STATUS+=("installed") || STATUS+=("")
+
+# 7: NVM + Node
+LABELS+=("NVM + Node 24")
+DESCRIPTIONS+=("Node Version Manager + Node.js")
+SELECTED+=(1)
+[ -d "$HOME/.nvm" ] && STATUS+=("installed") || STATUS+=("")
+
+# 8: Bun
+LABELS+=("Bun")
+DESCRIPTIONS+=("JavaScript runtime")
+SELECTED+=(1)
+[ -d "$HOME/.bun" ] && STATUS+=("installed") || STATUS+=("")
+
+# 9: Rust
+LABELS+=("Rust")
+DESCRIPTIONS+=("Rust toolchain via rustup")
+SELECTED+=(1)
+[ -f "$HOME/.cargo/bin/rustup" ] && STATUS+=("installed") || STATUS+=("")
+
+# 10: suiup + Sui Testnet
+LABELS+=("suiup + Sui Testnet")
+DESCRIPTIONS+=("Sui version manager + latest testnet binary")
+SELECTED+=(1)
+[ -f "$HOME/.local/bin/suiup" ] && STATUS+=("installed") || STATUS+=("")
+
+# 11: sui-move-analyzer
+LABELS+=("sui-move-analyzer")
+DESCRIPTIONS+=("Sui Move language server (~10min)")
+SELECTED+=(1)
+[ -f "$HOME/.cargo/bin/sui-move-analyzer" ] && STATUS+=("installed") || STATUS+=("")
+
+# 12: SSH Keys (iCloud)
 LABELS+=("SSH Keys (iCloud)")
 DESCRIPTIONS+=("Symlink ~/.ssh from iCloud Drive")
 _icloud_base="$HOME/Library/Mobile Documents/com~apple~CloudDocs"
@@ -135,43 +177,7 @@ else
   SELECTED+=(0); STATUS+=("iCloud not found")
 fi
 
-# 6: Yabai + Skhd
-LABELS+=("Yabai + Skhd")
-DESCRIPTIONS+=("Tiling WM + hotkey daemon")
-SELECTED+=(1)
-command -v yabai &>/dev/null && STATUS+=("installed") || STATUS+=("")
-
-# 7: Oh My Zsh
-LABELS+=("Oh My Zsh")
-DESCRIPTIONS+=("Zsh framework + plugins")
-SELECTED+=(1)
-[ -d "$HOME/.oh-my-zsh" ] && STATUS+=("installed") || STATUS+=("")
-
-# 8: NVM + Node
-LABELS+=("NVM + Node 24")
-DESCRIPTIONS+=("Node Version Manager + Node.js")
-SELECTED+=(1)
-[ -d "$HOME/.nvm" ] && STATUS+=("installed") || STATUS+=("")
-
-# 9: Bun
-LABELS+=("Bun")
-DESCRIPTIONS+=("JavaScript runtime")
-SELECTED+=(1)
-[ -d "$HOME/.bun" ] && STATUS+=("installed") || STATUS+=("")
-
-# 10: Rust
-LABELS+=("Rust")
-DESCRIPTIONS+=("Rust toolchain via rustup")
-SELECTED+=(1)
-[ -f "$HOME/.cargo/bin/rustup" ] && STATUS+=("installed") || STATUS+=("")
-
-# 11: sui-move-analyzer
-LABELS+=("sui-move-analyzer")
-DESCRIPTIONS+=("Sui Move language server (~10min)")
-SELECTED+=(1)
-[ -f "$HOME/.cargo/bin/sui-move-analyzer" ] && STATUS+=("installed") || STATUS+=("")
-
-# 12: macOS Defaults
+# 13: macOS Defaults
 LABELS+=("macOS Defaults")
 DESCRIPTIONS+=("Key repeat, Finder tweaks, no smart quotes")
 SELECTED+=(1)
@@ -227,6 +233,10 @@ while true; do
   elif [ -z "$_input" ]; then
     break
   fi
+  # Dependency: sui-move-analyzer (11) requires Rust (9)
+  [ "${SELECTED[11]}" = "1" ] && SELECTED[9]=1
+  # Deselect Rust (9) → auto-deselect sui-move-analyzer (11)
+  [ "${SELECTED[9]}" = "0" ] && SELECTED[11]=0
 done
 
 # ========== Confirmation ==========
@@ -381,8 +391,27 @@ if [ "${SELECTED[0]}" = "1" ]; then
   done
 fi
 
-# ========== 1: Ghostty + Font ==========
+# ========== 1: Yabai + Skhd ==========
 if [ "${SELECTED[1]}" = "1" ]; then
+  step "Installing window manager"
+  if ! command -v yabai &>/dev/null; then
+    info_msg "Installing Yabai..."
+    brew install asmvik/formulae/yabai
+    done_msg "Yabai installed"
+  else
+    done_msg "Yabai already installed"
+  fi
+  if ! command -v skhd &>/dev/null; then
+    info_msg "Installing Skhd..."
+    brew install asmvik/formulae/skhd
+    done_msg "Skhd installed"
+  else
+    done_msg "Skhd already installed"
+  fi
+fi
+
+# ========== 2: Ghostty + Font ==========
+if [ "${SELECTED[2]}" = "1" ]; then
   step "Installing Ghostty + Nerd Font"
   if [ ! -d "/Applications/Ghostty.app" ]; then
     info_msg "Installing Ghostty..."
@@ -401,8 +430,8 @@ if [ "${SELECTED[1]}" = "1" ]; then
   fi
 fi
 
-# ========== 2: OrbStack ==========
-if [ "${SELECTED[2]}" = "1" ]; then
+# ========== 3: OrbStack ==========
+if [ "${SELECTED[3]}" = "1" ]; then
   step "Installing OrbStack"
   if [ ! -d "/Applications/OrbStack.app" ]; then
     info_msg "Installing OrbStack..."
@@ -413,8 +442,8 @@ if [ "${SELECTED[2]}" = "1" ]; then
   fi
 fi
 
-# ========== 3: Cloudflare WARP + Hot ==========
-if [ "${SELECTED[3]}" = "1" ]; then
+# ========== 4: Cloudflare WARP + Hot ==========
+if [ "${SELECTED[4]}" = "1" ]; then
   step "Installing menu bar apps"
   if [ ! -d "/Applications/Cloudflare WARP.app" ]; then
     info_msg "Installing Cloudflare WARP..."
@@ -432,8 +461,8 @@ if [ "${SELECTED[3]}" = "1" ]; then
   fi
 fi
 
-# ========== 4: Google Chrome ==========
-if [ "${SELECTED[4]}" = "1" ]; then
+# ========== 5: Google Chrome ==========
+if [ "${SELECTED[5]}" = "1" ]; then
   step "Installing Google Chrome"
   if [ ! -d "/Applications/Google Chrome.app" ]; then
     info_msg "Installing Google Chrome..."
@@ -444,8 +473,99 @@ if [ "${SELECTED[4]}" = "1" ]; then
   fi
 fi
 
-# ========== 5: SSH Keys (iCloud) ==========
-if [ "${SELECTED[5]}" = "1" ]; then
+# ========== 6: Oh My Zsh ==========
+if [ "${SELECTED[6]}" = "1" ]; then
+  step "Setting up Oh My Zsh"
+  if [ ! -d "$HOME/.oh-my-zsh" ]; then
+    info_msg "Installing Oh My Zsh..."
+    RUNZSH=no KEEP_ZSHRC=yes CHSH=no bash -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)" || {
+      fail_msg "Oh My Zsh installation failed!"
+      exit 1
+    }
+    done_msg "Oh My Zsh installed"
+  else
+    done_msg "Oh My Zsh already installed"
+  fi
+  ZSH_CUSTOM="$HOME/.oh-my-zsh/custom"
+  info_msg "Checking plugins..."
+  [[ ! -d "$ZSH_CUSTOM/plugins/zsh-autosuggestions" ]] && \
+    git clone https://github.com/zsh-users/zsh-autosuggestions "$ZSH_CUSTOM/plugins/zsh-autosuggestions"
+  [[ ! -d "$ZSH_CUSTOM/plugins/zsh-syntax-highlighting" ]] && \
+    git clone https://github.com/zsh-users/zsh-syntax-highlighting.git "$ZSH_CUSTOM/plugins/zsh-syntax-highlighting"
+  done_msg "Plugins ready"
+fi
+
+# ========== 7: NVM + Node ==========
+if [ "${SELECTED[7]}" = "1" ]; then
+  step "Setting up NVM + Node 24"
+  export NVM_DIR="$HOME/.nvm"
+  if [ ! -d "$NVM_DIR" ]; then
+    info_msg "Installing NVM..."
+    curl -fsSL https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.3/install.sh | PROFILE=/dev/null bash
+    [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
+    done_msg "NVM installed"
+  else
+    done_msg "NVM already installed"
+    [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
+  fi
+  if ! nvm ls 24 &>/dev/null; then
+    info_msg "Installing Node.js 24..."
+    nvm install 24
+    done_msg "Node.js 24 installed"
+  else
+    done_msg "Node.js 24 already installed"
+  fi
+  nvm use 24
+fi
+
+# ========== 8: Bun ==========
+if [ "${SELECTED[8]}" = "1" ]; then
+  step "Setting up Bun"
+  if [ ! -d "$HOME/.bun" ]; then
+    info_msg "Installing Bun..."
+    curl -fsSL https://bun.sh/install | bash
+    git -C "$DOTFILES_DIR" restore .zshrc 2>/dev/null || true
+    done_msg "Bun installed"
+  else
+    done_msg "Bun already installed: $("$HOME/.bun/bin/bun" --version)"
+  fi
+fi
+
+# ========== 9: Rust ==========
+if [ "${SELECTED[9]}" = "1" ]; then
+  step "Setting up Rust"
+  if [ ! -f "$HOME/.cargo/bin/rustup" ]; then
+    info_msg "Installing Rust (stable)..."
+    curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --default-toolchain stable --no-modify-path
+    source "$HOME/.cargo/env"
+    done_msg "Rust installed"
+  else
+    done_msg "Rust already installed: $("$HOME/.cargo/bin/rustc" --version)"
+  fi
+fi
+
+# ========== 10: suiup + Sui Testnet ==========
+if [ "${SELECTED[10]}" = "1" ]; then
+  step "Installing suiup + Sui Testnet"
+  if [ ! -f "$HOME/.local/bin/suiup" ]; then
+    info_msg "Installing suiup..."
+    curl -sSfL https://raw.githubusercontent.com/MystenLabs/suiup/main/install.sh | sh
+    done_msg "suiup installed"
+  else
+    done_msg "suiup already installed"
+  fi
+  export PATH="$HOME/.local/bin:$PATH"
+  if command -v suiup &>/dev/null; then
+    info_msg "Installing Sui testnet (latest)..."
+    suiup install sui@testnet
+    done_msg "Sui testnet installed"
+  else
+    warn_msg "suiup not found in PATH — run: suiup install sui@testnet"
+  fi
+fi
+
+# ========== 12: SSH Keys (iCloud) ==========
+if [ "${SELECTED[12]}" = "1" ]; then
   step "Setting up SSH keys from iCloud"
   _icloud_base="$HOME/Library/Mobile Documents/com~apple~CloudDocs"
 
@@ -514,98 +634,8 @@ if [ "${SELECTED[5]}" = "1" ]; then
   fi
 fi
 
-# ========== 6: Yabai + Skhd ==========
-if [ "${SELECTED[6]}" = "1" ]; then
-  step "Installing window manager"
-  if ! command -v yabai &>/dev/null; then
-    info_msg "Installing Yabai..."
-    brew install asmvik/formulae/yabai
-    done_msg "Yabai installed"
-  else
-    done_msg "Yabai already installed"
-  fi
-  if ! command -v skhd &>/dev/null; then
-    info_msg "Installing Skhd..."
-    brew install asmvik/formulae/skhd
-    done_msg "Skhd installed"
-  else
-    done_msg "Skhd already installed"
-  fi
-fi
-
-# ========== 7: Oh My Zsh ==========
-if [ "${SELECTED[7]}" = "1" ]; then
-  step "Setting up Oh My Zsh"
-  if [ ! -d "$HOME/.oh-my-zsh" ]; then
-    info_msg "Installing Oh My Zsh..."
-    RUNZSH=no KEEP_ZSHRC=yes CHSH=no bash -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)" || {
-      fail_msg "Oh My Zsh installation failed!"
-      exit 1
-    }
-    done_msg "Oh My Zsh installed"
-  else
-    done_msg "Oh My Zsh already installed"
-  fi
-  ZSH_CUSTOM="$HOME/.oh-my-zsh/custom"
-  info_msg "Checking plugins..."
-  [[ ! -d "$ZSH_CUSTOM/plugins/zsh-autosuggestions" ]] && \
-    git clone https://github.com/zsh-users/zsh-autosuggestions "$ZSH_CUSTOM/plugins/zsh-autosuggestions"
-  [[ ! -d "$ZSH_CUSTOM/plugins/zsh-syntax-highlighting" ]] && \
-    git clone https://github.com/zsh-users/zsh-syntax-highlighting.git "$ZSH_CUSTOM/plugins/zsh-syntax-highlighting"
-  done_msg "Plugins ready"
-fi
-
-# ========== 8: NVM + Node ==========
-if [ "${SELECTED[8]}" = "1" ]; then
-  step "Setting up NVM + Node 24"
-  export NVM_DIR="$HOME/.nvm"
-  if [ ! -d "$NVM_DIR" ]; then
-    info_msg "Installing NVM..."
-    curl -fsSL https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.3/install.sh | PROFILE=/dev/null bash
-    [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
-    done_msg "NVM installed"
-  else
-    done_msg "NVM already installed"
-    [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
-  fi
-  if ! nvm ls 24 &>/dev/null; then
-    info_msg "Installing Node.js 24..."
-    nvm install 24
-    done_msg "Node.js 24 installed"
-  else
-    done_msg "Node.js 24 already installed"
-  fi
-  nvm use 24
-fi
-
-# ========== 9: Bun ==========
-if [ "${SELECTED[9]}" = "1" ]; then
-  step "Setting up Bun"
-  if [ ! -d "$HOME/.bun" ]; then
-    info_msg "Installing Bun..."
-    curl -fsSL https://bun.sh/install | bash
-    git -C "$DOTFILES_DIR" restore .zshrc 2>/dev/null || true
-    done_msg "Bun installed"
-  else
-    done_msg "Bun already installed: $("$HOME/.bun/bin/bun" --version)"
-  fi
-fi
-
-# ========== 10: Rust ==========
-if [ "${SELECTED[10]}" = "1" ]; then
-  step "Setting up Rust"
-  if [ ! -f "$HOME/.cargo/bin/rustup" ]; then
-    info_msg "Installing Rust (stable)..."
-    curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --default-toolchain stable --no-modify-path
-    source "$HOME/.cargo/env"
-    done_msg "Rust installed"
-  else
-    done_msg "Rust already installed: $("$HOME/.cargo/bin/rustc" --version)"
-  fi
-fi
-
-# ========== 12: macOS Defaults ==========
-if [ "${SELECTED[12]}" = "1" ]; then
+# ========== 13: macOS Defaults ==========
+if [ "${SELECTED[13]}" = "1" ]; then
   step "Applying macOS defaults"
   bash "$DOTFILES_DIR/macos-defaults.sh"
 fi
@@ -727,7 +757,7 @@ echo -e "${BOLD}${GREEN}╔═════════════════�
 echo -e "${BOLD}${GREEN}║           ✓ Installation complete!               ║${NC}"
 echo -e "${BOLD}${GREEN}╚══════════════════════════════════════════════════╝${NC}"
 echo ""
-if [ "${SELECTED[6]}" = "1" ]; then
+if [ "${SELECTED[1]}" = "1" ]; then
   echo -e "  ${CYAN}Yabai:${NC}"
   echo -e "    ${DIM}1. echo \"\$(whoami) ALL=(root) NOPASSWD: sha256:\$(shasum -a 256 \$(which yabai) | cut -d \" \" -f 1) \$(which yabai) --load-sa\" | sudo tee /private/etc/sudoers.d/yabai${NC}"
   echo -e "    ${DIM}2. yabai --start-service${NC}"

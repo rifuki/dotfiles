@@ -4,7 +4,7 @@ set -e
 # ========== Packages ==========
 BREW_FORMULAE=(neovim tmux trash htop neofetch yazi gh ripgrep starship yabai skhd)
 BREW_CASKS=(ghostty orbstack cloudflare-warp hot google-chrome font-jetbrains-mono-nerd-font)
-TOOL_NAMES=(nvim starship ghostty yazi tmux neofetch wakatime orbstack yabai skhd)
+TOOL_NAMES=(nvim starship ghostty yazi tmux neofetch wakatime orbstack yabai skhd sui gh ripgrep trash htop hot)
 
 # ========== Colors ==========
 RED='\033[0;31m'
@@ -72,12 +72,22 @@ LABELS+=("Rust")
 DESCRIPTIONS+=("~/.cargo, ~/.rustup")
 if [ -d "$HOME/.cargo" ] || [ -d "$HOME/.rustup" ]; then DETECTED+=(1); SELECTED+=(1); else DETECTED+=(0); SELECTED+=(0); fi
 
-# 4: Oh My Zsh
+# 4: sui-move-analyzer
+LABELS+=("sui-move-analyzer")
+DESCRIPTIONS+=("~/.cargo/bin/sui-move-analyzer")
+if [ -f "$HOME/.cargo/bin/sui-move-analyzer" ]; then DETECTED+=(1); SELECTED+=(1); else DETECTED+=(0); SELECTED+=(0); fi
+
+# 5: Oh My Zsh
 LABELS+=("Oh My Zsh")
 DESCRIPTIONS+=("~/.oh-my-zsh")
 if [ -d "$HOME/.oh-my-zsh" ]; then DETECTED+=(1); SELECTED+=(1); else DETECTED+=(0); SELECTED+=(0); fi
 
-# 5: Deep Clean
+# 6: suiup + Sui
+LABELS+=("suiup + Sui")
+DESCRIPTIONS+=("~/.local/bin/sui*, ~/.sui")
+if [ -f "$HOME/.local/bin/suiup" ] || [ -d "$HOME/.sui" ]; then DETECTED+=(1); SELECTED+=(1); else DETECTED+=(0); SELECTED+=(0); fi
+
+# 7: Deep Clean
 LABELS+=("Deep Clean")
 DESCRIPTIONS+=(".cache, .local, .npm, .wakatime, .gitconfig")
 DETECTED+=(1); SELECTED+=(1)
@@ -137,6 +147,10 @@ while true; do
   elif [ -z "$_input" ]; then
     break
   fi
+  # Dependency: Rust (3) selected → auto-select sui-move-analyzer (4) if detected
+  [ "${SELECTED[3]}" = "1" ] && [ "${DETECTED[4]}" = "1" ] && SELECTED[4]=1
+  # Deselect Rust (3) → auto-deselect sui-move-analyzer (4)
+  [ "${SELECTED[3]}" = "0" ] && SELECTED[4]=0
 done
 
 # ========== Confirmation Summary ==========
@@ -234,8 +248,15 @@ if [ "${SELECTED[3]}" = "1" ]; then
   done_msg "Rust removed"
 fi
 
-# ========== Oh My Zsh (index 4) ==========
+# ========== sui-move-analyzer (index 4) ==========
 if [ "${SELECTED[4]}" = "1" ]; then
+  step "Removing sui-move-analyzer"
+  rm -f "$HOME/.cargo/bin/sui-move-analyzer"
+  done_msg "sui-move-analyzer removed"
+fi
+
+# ========== Oh My Zsh (index 5) ==========
+if [ "${SELECTED[5]}" = "1" ]; then
   step "Removing Oh My Zsh"
   rm -rf "$HOME/.oh-my-zsh"
   done_msg "Oh My Zsh removed"
@@ -248,8 +269,20 @@ rm -f "$HOME/.node_repl_history"
 rm -rf "$HOME/.config/github-copilot" 2>/dev/null || true
 done_msg "Cache files removed"
 
-# ========== Deep Clean (index 5) ==========
-if [ "${SELECTED[5]}" = "1" ]; then
+# ========== suiup + Sui (index 6) ==========
+if [ "${SELECTED[6]}" = "1" ]; then
+  step "Removing suiup + Sui"
+  rm -f "$HOME/.local/bin/suiup"
+  done_msg "suiup removed"
+  for _bin in sui walrus mvr; do
+    [ -f "$HOME/.local/bin/$_bin" ] && rm -f "$HOME/.local/bin/$_bin" && done_msg "$_bin removed" || true
+  done
+  rm -rf "$HOME/.sui"
+  done_msg "~/.sui removed"
+fi
+
+# ========== Deep Clean (index 7) ==========
+if [ "${SELECTED[7]}" = "1" ]; then
   step "Deep cleaning residue files"
 
   # XDG directories
