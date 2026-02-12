@@ -476,7 +476,7 @@ fi
 # ========== 6: Oh My Zsh ==========
 if [ "${SELECTED[6]}" = "1" ]; then
   step "Setting up Oh My Zsh"
-  if [ ! -d "$HOME/.oh-my-zsh" ]; then
+  if [ ! -f "$HOME/.oh-my-zsh/oh-my-zsh.sh" ]; then
     info_msg "Installing Oh My Zsh..."
     RUNZSH=no KEEP_ZSHRC=yes CHSH=no bash -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)" || {
       fail_msg "Oh My Zsh installation failed!"
@@ -488,10 +488,14 @@ if [ "${SELECTED[6]}" = "1" ]; then
   fi
   ZSH_CUSTOM="$HOME/.oh-my-zsh/custom"
   info_msg "Checking plugins..."
-  [[ ! -d "$ZSH_CUSTOM/plugins/zsh-autosuggestions" ]] && \
+  if [[ ! -f "$ZSH_CUSTOM/plugins/zsh-autosuggestions/zsh-autosuggestions.zsh" ]]; then
+    rm -rf "$ZSH_CUSTOM/plugins/zsh-autosuggestions" 2>/dev/null || true
     git clone https://github.com/zsh-users/zsh-autosuggestions "$ZSH_CUSTOM/plugins/zsh-autosuggestions"
-  [[ ! -d "$ZSH_CUSTOM/plugins/zsh-syntax-highlighting" ]] && \
+  fi
+  if [[ ! -f "$ZSH_CUSTOM/plugins/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh" ]]; then
+    rm -rf "$ZSH_CUSTOM/plugins/zsh-syntax-highlighting" 2>/dev/null || true
     git clone https://github.com/zsh-users/zsh-syntax-highlighting.git "$ZSH_CUSTOM/plugins/zsh-syntax-highlighting"
+  fi
   done_msg "Plugins ready"
 fi
 
@@ -499,14 +503,14 @@ fi
 if [ "${SELECTED[7]}" = "1" ]; then
   step "Setting up NVM + Node 24"
   export NVM_DIR="$HOME/.nvm"
-  if [ ! -d "$NVM_DIR" ]; then
+  if [ ! -s "$NVM_DIR/nvm.sh" ]; then
     info_msg "Installing NVM..."
     curl -fsSL https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.3/install.sh | PROFILE=/dev/null bash
     [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
     done_msg "NVM installed"
   else
     done_msg "NVM already installed"
-    [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
+    \. "$NVM_DIR/nvm.sh"
   fi
   if ! nvm ls 24 &>/dev/null; then
     info_msg "Installing Node.js 24..."
@@ -521,7 +525,7 @@ fi
 # ========== 8: Bun ==========
 if [ "${SELECTED[8]}" = "1" ]; then
   step "Setting up Bun"
-  if [ ! -d "$HOME/.bun" ]; then
+  if [ ! -f "$HOME/.bun/bin/bun" ]; then
     info_msg "Installing Bun..."
     curl -fsSL https://bun.sh/install | bash
     git -C "$DOTFILES_DIR" restore .zshrc 2>/dev/null || true
@@ -540,7 +544,14 @@ if [ "${SELECTED[9]}" = "1" ]; then
     source "$HOME/.cargo/env"
     done_msg "Rust installed"
   else
-    done_msg "Rust already installed: $("$HOME/.cargo/bin/rustc" --version)"
+    source "$HOME/.cargo/env" 2>/dev/null || true
+    if ! "$HOME/.cargo/bin/rustup" show active-toolchain &>/dev/null; then
+      info_msg "No default toolchain found, setting stable..."
+      "$HOME/.cargo/bin/rustup" default stable
+      done_msg "Rust stable toolchain set"
+    else
+      done_msg "Rust already installed: $("$HOME/.cargo/bin/rustc" --version)"
+    fi
   fi
 fi
 
@@ -556,9 +567,13 @@ if [ "${SELECTED[10]}" = "1" ]; then
   fi
   export PATH="$HOME/.local/bin:$PATH"
   if command -v suiup &>/dev/null; then
-    info_msg "Installing Sui testnet (latest)..."
-    suiup install sui@testnet
-    done_msg "Sui testnet installed"
+    if [ ! -f "$HOME/.local/bin/sui" ]; then
+      info_msg "Installing Sui testnet (latest)..."
+      suiup install sui@testnet
+      done_msg "Sui testnet installed"
+    else
+      done_msg "Sui testnet already installed: $("$HOME/.local/bin/sui" --version 2>/dev/null | head -1)"
+    fi
   else
     warn_msg "suiup not found in PATH — run: suiup install sui@testnet"
   fi
