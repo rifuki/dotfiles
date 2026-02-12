@@ -123,37 +123,49 @@ DESCRIPTIONS+=("Browser")
 SELECTED+=(1)
 [ -d "/Applications/Google Chrome.app" ] && STATUS+=("installed") || STATUS+=("")
 
-# 5: Yabai + Skhd
+# 5: SSH Keys (iCloud)
+LABELS+=("SSH Keys (iCloud)")
+DESCRIPTIONS+=("Symlink ~/.ssh from iCloud Drive")
+_icloud_base="$HOME/Library/Mobile Documents/com~apple~CloudDocs"
+if [ -L "$HOME/.ssh" ]; then
+  SELECTED+=(1); STATUS+=("symlinked")
+elif [ -d "$_icloud_base" ]; then
+  SELECTED+=(1); STATUS+=("iCloud available")
+else
+  SELECTED+=(0); STATUS+=("iCloud not found")
+fi
+
+# 6: Yabai + Skhd
 LABELS+=("Yabai + Skhd")
 DESCRIPTIONS+=("Tiling WM + hotkey daemon")
 SELECTED+=(1)
 command -v yabai &>/dev/null && STATUS+=("installed") || STATUS+=("")
 
-# 6: Oh My Zsh
+# 7: Oh My Zsh
 LABELS+=("Oh My Zsh")
 DESCRIPTIONS+=("Zsh framework + plugins")
 SELECTED+=(1)
 [ -d "$HOME/.oh-my-zsh" ] && STATUS+=("installed") || STATUS+=("")
 
-# 7: NVM + Node
+# 8: NVM + Node
 LABELS+=("NVM + Node 24")
 DESCRIPTIONS+=("Node Version Manager + Node.js")
 SELECTED+=(1)
 [ -d "$HOME/.nvm" ] && STATUS+=("installed") || STATUS+=("")
 
-# 8: Bun
+# 9: Bun
 LABELS+=("Bun")
 DESCRIPTIONS+=("JavaScript runtime")
 SELECTED+=(1)
 [ -d "$HOME/.bun" ] && STATUS+=("installed") || STATUS+=("")
 
-# 9: Rust
+# 10: Rust
 LABELS+=("Rust")
 DESCRIPTIONS+=("Rust toolchain via rustup")
 SELECTED+=(1)
 [ -f "$HOME/.cargo/bin/rustup" ] && STATUS+=("installed") || STATUS+=("")
 
-# 10: sui-move-analyzer
+# 11: sui-move-analyzer
 LABELS+=("sui-move-analyzer")
 DESCRIPTIONS+=("Sui Move language server (~10min)")
 SELECTED+=(1)
@@ -425,8 +437,59 @@ if [ "${SELECTED[4]}" = "1" ]; then
   fi
 fi
 
-# ========== 5: Yabai + Skhd ==========
+# ========== 5: SSH Keys (iCloud) ==========
 if [ "${SELECTED[5]}" = "1" ]; then
+  step "Setting up SSH keys from iCloud"
+  _icloud_base="$HOME/Library/Mobile Documents/com~apple~CloudDocs"
+
+  if [ -L "$HOME/.ssh" ]; then
+    done_msg "~/.ssh already symlinked → $(readlink "$HOME/.ssh")"
+  else
+    _ssh_path=""
+
+    # Auto-detect .ssh in iCloud
+    if [ -d "$_icloud_base" ]; then
+      _found=$(find "$_icloud_base" -maxdepth 3 -type d -name ".ssh" 2>/dev/null | head -1)
+      if [ -n "$_found" ]; then
+        info_msg "Found .ssh at: $_found"
+        if confirm "Use this path?"; then
+          _ssh_path="$_found"
+        fi
+      fi
+    fi
+
+    # Manual input fallback
+    if [ -z "$_ssh_path" ]; then
+      printf "    Enter path to .ssh folder: "
+      read -r _ssh_path < /dev/tty
+      _ssh_path="${_ssh_path/#\~/$HOME}"
+    fi
+
+    # Validate and create symlink
+    if [ -n "$_ssh_path" ] && [ -d "$_ssh_path" ]; then
+      if [ -d "$HOME/.ssh" ]; then
+        warn_msg "~/.ssh exists as a regular directory"
+        if confirm "Backup and replace?"; then
+          mv "$HOME/.ssh" "$HOME/.ssh.bak-$(date +%Y%m%d-%H%M%S)"
+          done_msg "Backed up existing ~/.ssh"
+        else
+          warn_msg "Skipped SSH symlink"
+          _ssh_path=""
+        fi
+      fi
+      if [ -n "$_ssh_path" ]; then
+        ln -sf "$_ssh_path" "$HOME/.ssh"
+        chmod 700 "$HOME/.ssh"
+        done_msg "~/.ssh → $_ssh_path"
+      fi
+    elif [ -n "$_ssh_path" ]; then
+      warn_msg "Path not found: $_ssh_path"
+    fi
+  fi
+fi
+
+# ========== 6: Yabai + Skhd ==========
+if [ "${SELECTED[6]}" = "1" ]; then
   step "Installing window manager"
   if ! command -v yabai &>/dev/null; then
     info_msg "Installing Yabai..."
@@ -444,8 +507,8 @@ if [ "${SELECTED[5]}" = "1" ]; then
   fi
 fi
 
-# ========== 6: Oh My Zsh ==========
-if [ "${SELECTED[6]}" = "1" ]; then
+# ========== 7: Oh My Zsh ==========
+if [ "${SELECTED[7]}" = "1" ]; then
   step "Setting up Oh My Zsh"
   if [ ! -d "$HOME/.oh-my-zsh" ]; then
     info_msg "Installing Oh My Zsh..."
@@ -466,8 +529,8 @@ if [ "${SELECTED[6]}" = "1" ]; then
   done_msg "Plugins ready"
 fi
 
-# ========== 7: NVM + Node ==========
-if [ "${SELECTED[7]}" = "1" ]; then
+# ========== 8: NVM + Node ==========
+if [ "${SELECTED[8]}" = "1" ]; then
   step "Setting up NVM + Node 24"
   export NVM_DIR="$HOME/.nvm"
   if [ ! -d "$NVM_DIR" ]; then
@@ -489,8 +552,8 @@ if [ "${SELECTED[7]}" = "1" ]; then
   nvm use 24
 fi
 
-# ========== 8: Bun ==========
-if [ "${SELECTED[8]}" = "1" ]; then
+# ========== 9: Bun ==========
+if [ "${SELECTED[9]}" = "1" ]; then
   step "Setting up Bun"
   if [ ! -d "$HOME/.bun" ]; then
     info_msg "Installing Bun..."
@@ -501,8 +564,8 @@ if [ "${SELECTED[8]}" = "1" ]; then
   fi
 fi
 
-# ========== 9: Rust ==========
-if [ "${SELECTED[9]}" = "1" ]; then
+# ========== 10: Rust ==========
+if [ "${SELECTED[10]}" = "1" ]; then
   step "Setting up Rust"
   if [ ! -f "$HOME/.cargo/bin/rustup" ]; then
     info_msg "Installing Rust (stable)..."
@@ -602,8 +665,8 @@ if [ "$SHELL" != "$(which zsh)" ]; then
   chsh -s "$(which zsh)" || warn_msg "chsh failed"
 fi
 
-# ========== 10: sui-move-analyzer ==========
-if [ "${SELECTED[10]}" = "1" ]; then
+# ========== 11: sui-move-analyzer ==========
+if [ "${SELECTED[11]}" = "1" ]; then
   step "Checking sui-move-analyzer"
   if [ ! -f "$HOME/.cargo/bin/sui-move-analyzer" ]; then
     if command -v cargo &>/dev/null; then
@@ -635,7 +698,7 @@ echo -e "${BOLD}${GREEN}╔═════════════════�
 echo -e "${BOLD}${GREEN}║           ✓ Installation complete!               ║${NC}"
 echo -e "${BOLD}${GREEN}╚══════════════════════════════════════════════════╝${NC}"
 echo ""
-if [ "${SELECTED[5]}" = "1" ]; then
+if [ "${SELECTED[6]}" = "1" ]; then
   echo -e "  ${CYAN}Yabai:${NC}"
   echo -e "    ${DIM}1. echo \"\$(whoami) ALL=(root) NOPASSWD: sha256:\$(shasum -a 256 \$(which yabai) | cut -d \" \" -f 1) \$(which yabai) --load-sa\" | sudo tee /private/etc/sudoers.d/yabai${NC}"
   echo -e "    ${DIM}2. yabai --start-service${NC}"
