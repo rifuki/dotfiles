@@ -793,6 +793,20 @@ if [ "${SELECTED[1]}" = "1" ]; then
   echo -e "    ${DIM}2. yabai --start-service${NC}"
   echo -e "    ${DIM}3. Allow in System Settings > Privacy & Security > Accessibility${NC}"
   echo ""
+  echo -e "  ${YELLOW}⚠  For full Yabai features, partial SIP disable is required (2 reboots):${NC}"
+  if [[ "$(uname -m)" == "arm64" ]]; then
+    echo -e "    ${DIM}1. Recovery Mode (hold power) → Utilities → Terminal:${NC}"
+    echo -e "       ${DIM}csrutil enable --without fs --without debug --without nvram${NC}"
+    echo -e "    ${DIM}   → Reboot${NC}"
+    echo -e "    ${DIM}2. After reboot:  sudo nvram boot-args=-arm64e_preview_abi${NC}"
+    echo -e "    ${DIM}   → Reboot again${NC}"
+  else
+    echo -e "    ${DIM}1. Recovery Mode (Cmd+R) → Utilities → Terminal:${NC}"
+    echo -e "       ${DIM}csrutil disable --with kext --with dtrace --with nvram --with basesystem${NC}"
+    echo -e "    ${DIM}   → Reboot${NC}"
+  fi
+  echo -e "    ${DIM}Guide: https://github.com/asmvik/yabai/wiki/Disabling-System-Integrity-Protection${NC}"
+  echo ""
   echo -e "  ${CYAN}Skhd:${NC}"
   echo -e "    ${DIM}1. skhd --start-service${NC}"
   echo -e "    ${DIM}2. Allow in System Settings > Privacy & Security > Accessibility${NC}"
