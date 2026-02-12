@@ -99,9 +99,9 @@ info_msg "Keep folders on top when sorting..."
 defaults write com.apple.finder _FXSortFoldersFirst -bool true
 done_msg "Folders first → enabled"
 
-info_msg "Group by Kind in Icon View..."
-defaults write com.apple.finder FXPreferredGroupBy -string "Kind"
-done_msg "Group by → Kind"
+info_msg "Disable group by (use sort only, no dynamic reflow)..."
+defaults write com.apple.finder FXPreferredGroupBy -string "None"
+done_msg "Group by → None"
 
 info_msg "Search current folder by default (Cmd+F)..."
 defaults write com.apple.finder FXDefaultSearchScope -string "SCcf"
@@ -111,10 +111,6 @@ info_msg "Open new Finder window to Home folder..."
 defaults write com.apple.finder NewWindowTarget -string "PfHm"
 defaults write com.apple.finder NewWindowTargetPath -string "file://$HOME/"
 done_msg "New Finder window → Home folder"
-
-info_msg "Enable Quit option for Finder (Cmd+Q)..."
-defaults write com.apple.finder QuitMenuItem -bool true
-done_msg "Finder Quit menu item → enabled"
 
 # NOTE: .DS_Store intentionally kept — required for macOS Tags (color labels) on external drives
 
