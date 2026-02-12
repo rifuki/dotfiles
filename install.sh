@@ -577,6 +577,7 @@ if [ "${SELECTED[9]}" = "1" ]; then
   if [ ! -d "$HOME/.bun" ]; then
     info_msg "Installing Bun..."
     curl -fsSL https://bun.sh/install | bash
+    git -C "$DOTFILES_DIR" restore .zshrc 2>/dev/null || true
     done_msg "Bun installed"
   else
     done_msg "Bun already installed: $("$HOME/.bun/bin/bun" --version)"
@@ -689,20 +690,16 @@ if [ "${SELECTED[11]}" = "1" ]; then
   step "Checking sui-move-analyzer"
   if [ ! -f "$HOME/.cargo/bin/sui-move-analyzer" ]; then
     if command -v cargo &>/dev/null; then
-      if tmux has-session -t sui-install 2>/dev/null; then
-        warn_msg "Session 'sui-install' already running"
-        echo -e "  ${DIM}Monitor:  tmux attach -t sui-install${NC}"
-      else
-        info_msg "Spawning in tmux background session..."
-        tmux new-session -d -s sui-install -n "sui-move-analyzer" \
-          "cargo install --git https://github.com/movebit/sui-move-analyzer.git sui-move-analyzer; \
-           echo ''; \
-           echo '✅ sui-move-analyzer installed!'; \
-           read -r _dummy"
-        done_msg "Install started in background"
-        echo -e "  ${DIM}Monitor:  tmux attach -t sui-install${NC}"
-        echo -e "  ${DIM}Detach:   Ctrl+b then d${NC}"
-      fi
+      tmux kill-session -t sui-install 2>/dev/null || true
+      info_msg "Spawning in tmux background session..."
+      tmux new-session -d -s sui-install -n "sui-move-analyzer" \
+        "cargo install --git https://github.com/movebit/sui-move-analyzer.git sui-move-analyzer; \
+         echo ''; \
+         echo '✅ sui-move-analyzer installed!'; \
+         read -r _dummy"
+      done_msg "Install started in background"
+      echo -e "  ${DIM}Monitor:  tmux attach -t sui-install${NC}"
+      echo -e "  ${DIM}Detach:   Ctrl+b then d${NC}"
     else
       warn_msg "Rust not installed, skipping sui-move-analyzer"
     fi
