@@ -79,6 +79,18 @@ else
   done_msg "Xcode CLT already installed"
 fi
 
+# ========== Rosetta 2 (Apple Silicon only) ==========
+if [[ "$(uname -m)" == "arm64" ]]; then
+  step "Checking Rosetta 2"
+  if /usr/bin/pgrep -q oahd; then
+    done_msg "Rosetta 2 already installed"
+  else
+    info_msg "Installing Rosetta 2..."
+    softwareupdate --install-rosetta --agree-to-license
+    done_msg "Rosetta 2 installed"
+  fi
+fi
+
 echo ""
 
 # ========== Detect Current State ==========
@@ -211,7 +223,7 @@ draw_menu() {
   echo -e "    ${DIM}• Xcode CLT, Homebrew, Dotfiles repo${NC}"
   echo -e "    ${DIM}• Backup, Symlinks, Shell cleanup, Git config${NC}"
   echo ""
-  echo -e "  ${DIM}Enter number to toggle  |  ${NC}${BOLD}a${NC}${DIM} = all  |  ${NC}${BOLD}n${NC}${DIM} = none  |  ${NC}${BOLD}Enter${NC}${DIM} = continue${NC}"
+  echo -e "  ${DIM}Enter number to toggle  |  ${NC}${BOLD}a${NC}${DIM} = all  |  ${NC}${BOLD}n${NC}${DIM} = none  |  ${NC}${BOLD}Enter${NC}${DIM} = continue  |  ${NC}${BOLD}q${NC}${DIM} = quit${NC}"
   echo ""
 }
 
@@ -232,6 +244,9 @@ while true; do
     for (( i=0; i<_total; i++ )); do SELECTED[$i]=0; done
   elif [ -z "$_input" ]; then
     break
+  elif [[ "$_input" = [qQ] ]]; then
+    echo -e "\n  ${YELLOW}⏭️  Installation cancelled.${NC}"
+    exit 0
   fi
   # Dependency: sui-move-analyzer (11) requires Rust (9)
   [ "${SELECTED[11]}" = "1" ] && SELECTED[9]=1
@@ -569,7 +584,7 @@ if [ "${SELECTED[10]}" = "1" ]; then
   if command -v suiup &>/dev/null; then
     if [ ! -f "$HOME/.local/bin/sui" ]; then
       info_msg "Installing Sui testnet (latest)..."
-      suiup install sui@testnet
+      suiup install --yes sui@testnet
       done_msg "Sui testnet installed"
     else
       done_msg "Sui testnet already installed: $("$HOME/.local/bin/sui" --version 2>/dev/null | head -1)"

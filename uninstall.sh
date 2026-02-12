@@ -119,7 +119,7 @@ draw_menu() {
   echo -e "    ${DIM}• Dotfiles symlinks (.zshrc, .hyper.js, .config/*)${NC}"
   echo -e "    ${DIM}• Cache files (.zcompdump, .node_repl_history)${NC}"
   echo ""
-  echo -e "  ${DIM}Enter number to toggle  |  ${NC}${BOLD}a${NC}${DIM} = all  |  ${NC}${BOLD}n${NC}${DIM} = none  |  ${NC}${BOLD}Enter${NC}${DIM} = continue${NC}"
+  echo -e "  ${DIM}Enter number to toggle  |  ${NC}${BOLD}a${NC}${DIM} = all  |  ${NC}${BOLD}n${NC}${DIM} = none  |  ${NC}${BOLD}Enter${NC}${DIM} = continue  |  ${NC}${BOLD}q${NC}${DIM} = quit${NC}"
   echo ""
 }
 
@@ -146,6 +146,9 @@ while true; do
     done
   elif [ -z "$_input" ]; then
     break
+  elif [[ "$_input" = [qQ] ]]; then
+    echo -e "\n  ${YELLOW}⏭️  Uninstallation cancelled.${NC}"
+    exit 0
   fi
   # Dependency: Rust (3) selected → auto-select sui-move-analyzer (4) if detected
   [ "${SELECTED[3]}" = "1" ] && [ "${DETECTED[4]}" = "1" ] && SELECTED[4]=1
