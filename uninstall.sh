@@ -1,6 +1,11 @@
 #!/bin/bash
 set -e
 
+# ========== Packages ==========
+BREW_FORMULAE=(neovim tmux trash htop neofetch yazi gh ripgrep starship)
+BREW_CASKS=(ghostty orbstack font-jetbrains-mono-nerd-font)
+TOOL_NAMES=(nvim starship ghostty yazi tmux neofetch wakatime)
+
 # ========== OS Check ==========
 if [[ "$(uname)" != "Darwin" ]]; then
   echo "❌ This script is for macOS only. Detected non-macOS system — aborting!"
@@ -33,12 +38,12 @@ This script will remove:
   • Rust (~/.cargo) - Rust toolchain
   • Oh My Zsh (~/.oh-my-zsh) - Zsh framework
   • Dotfiles symlinks (.zshrc, .hyper.js, .config/*)
-  • Cache files (.zcompdump, .node_repl_history,
-    .cache/nvim, .config/github-copilot)
+  • Cache files (.zcompdump, .node_repl_history, .config/github-copilot)
+  • Deep clean (optional): all tool data in .cache, .local, .npm,
+    .wakatime.cfg, .zsh_history, .gitconfig, etc.
 
 This will NOT remove:
-  • Homebrew or any Homebrew packages
-  • .zsh_history (backed up during install)
+  • Homebrew or any Homebrew packages (optional prompt)
   • Backed up configs (if available for restore)
 ================================================
 EOF
@@ -88,10 +93,18 @@ done
 echo "✅ Symlinks removed"
 
 # ========== Homebrew Packages ==========
-if confirm "Remove Homebrew packages (neovim, tmux, ghostty, etc.)?"; then
+if confirm "Remove Homebrew packages (${BREW_FORMULAE[*]}, ${BREW_CASKS[*]})?"; then
   echo "==> Removing Homebrew packages..."
-  brew uninstall neovim tmux trash htop neofetch yazi gh 2>/dev/null || true
-  brew uninstall --cask ghostty 2>/dev/null || true
+  for _pkg in "${BREW_FORMULAE[@]}"; do
+    if brew list "$_pkg" &>/dev/null; then
+      brew uninstall --ignore-dependencies "$_pkg" && echo "   Removed $_pkg" || echo "   ⚠️ Failed to remove $_pkg"
+    fi
+  done
+  for _pkg in "${BREW_CASKS[@]}"; do
+    if brew list --cask "$_pkg" &>/dev/null; then
+      brew uninstall --cask "$_pkg" && echo "   Removed $_pkg" || echo "   ⚠️ Failed to remove $_pkg"
+    fi
+  done
   echo "✅ Homebrew packages removed"
 else
   echo "⏭️  Skipping Homebrew packages removal"
@@ -99,28 +112,40 @@ fi
 
 # ========== Remove NVM ==========
 if [ -d "$HOME/.nvm" ]; then
-  echo "==> Removing NVM..."
-  rm -rf "$HOME/.nvm"
-  echo "✅ NVM removed"
+  if confirm "Remove NVM (~/.nvm)?"; then
+    echo "==> Removing NVM..."
+    rm -rf "$HOME/.nvm"
+    echo "✅ NVM removed"
+  else
+    echo "⏭️  Skipping NVM removal"
+  fi
 else
   echo "✅ NVM not found"
 fi
 
 # ========== Remove Bun ==========
 if [ -d "$HOME/.bun" ]; then
-  echo "==> Removing Bun..."
-  rm -rf "$HOME/.bun"
-  echo "✅ Bun removed"
+  if confirm "Remove Bun (~/.bun)?"; then
+    echo "==> Removing Bun..."
+    rm -rf "$HOME/.bun"
+    echo "✅ Bun removed"
+  else
+    echo "⏭️  Skipping Bun removal"
+  fi
 else
   echo "✅ Bun not found"
 fi
 
 # ========== Remove Rust ==========
 if [ -d "$HOME/.cargo" ] || [ -d "$HOME/.rustup" ]; then
-  echo "==> Removing Rust..."
-  rm -rf "$HOME/.cargo"
-  rm -rf "$HOME/.rustup"
-  echo "✅ Rust removed"
+  if confirm "Remove Rust (~/.cargo, ~/.rustup)?"; then
+    echo "==> Removing Rust..."
+    rm -rf "$HOME/.cargo"
+    rm -rf "$HOME/.rustup"
+    echo "✅ Rust removed"
+  else
+    echo "⏭️  Skipping Rust removal"
+  fi
 else
   echo "✅ Rust not found"
 fi
@@ -136,26 +161,39 @@ fi
 
 # ========== Remove Cache Files ==========
 echo "==> Cleaning up cache files..."
-rm -f "$HOME/.zcompdump"
+rm -f "$HOME"/.zcompdump*
 rm -f "$HOME/.node_repl_history"
-rm -rf "$HOME/.cache/nvim" 2>/dev/null || true
 rm -rf "$HOME/.config/github-copilot" 2>/dev/null || true
 echo "✅ Cache files removed"
 
 # ========== Deep Clean Residue ==========
-if confirm "Perform deep clean? (Removes .zsh_history, .wakatime, and other residues)"; then
+if confirm "Perform deep clean? (Removes all tool data from .cache, .local, .npm, etc.)"; then
   echo "==> Cleaning up residue files..."
-  rm -f "$HOME"/.zcompdump*
+
+  # Scan XDG directories for tool-related data
+  for _dir in "$HOME/.cache" "$HOME/.local/share" "$HOME/.local/state"; do
+    for _tool in "${TOOL_NAMES[@]}"; do
+      if [ -e "$_dir/$_tool" ]; then
+        rm -rf "$_dir/$_tool"
+        echo "   Removed $_dir/$_tool"
+      fi
+    done
+  done
+
+  # Tool config directories in .config
+  rm -rf "$HOME/.config/gh"
+  rm -rf "$HOME/.config/git"
+
+  # Dotfiles in $HOME
   rm -f "$HOME/.zsh_history"
   rm -rf "$HOME/.zsh_sessions"
-  rm -f "$HOME/.node_repl_history"
   rm -f "$HOME/.gitconfig"
   rm -f "$HOME/.gitignore_global"
   rm -f "$HOME/.hushlogin"
-  rm -rf "$HOME/.local/share/nvim"
-  rm -rf "$HOME/.local/state/nvim"
-  rm -rf "$HOME/.config/github-copilot"
-  rm -rf "$HOME/.wakatime*"
+  rm -f "$HOME/.wakatime.cfg"
+  rm -rf "$HOME/.wakatime"
+  rm -rf "$HOME/.npm"
+
   echo "✅ Residue files removed"
 else
   echo "⏭️  Skipping deep clean"
