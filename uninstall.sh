@@ -2,8 +2,7 @@
 set -e
 
 # ========== Packages ==========
-BREW_FORMULAE=(neovim tmux trash htop neofetch yazi gh ripgrep starship yabai skhd)
-BREW_CASKS=(ghostty orbstack cloudflare-warp hot google-chrome font-jetbrains-mono-nerd-font)
+BREW_FORMULAE=(neovim tmux trash htop neofetch yazi gh ripgrep starship)
 TOOL_NAMES=(nvim starship ghostty yazi tmux neofetch wakatime orbstack yabai skhd sui suiup walrus mvr gh ripgrep trash htop hot)
 
 # ========== Colors ==========
@@ -39,55 +38,82 @@ DESCRIPTIONS=()
 SELECTED=()
 DETECTED=()
 
-# 0: Homebrew Packages
+# 0: Homebrew Formulae
 _brew_count=0
 if command -v brew &>/dev/null; then
   for _pkg in "${BREW_FORMULAE[@]}"; do
     brew list "$_pkg" &>/dev/null && ((_brew_count++)) || true
   done
-  for _pkg in "${BREW_CASKS[@]}"; do
-    brew list --cask "$_pkg" &>/dev/null && ((_brew_count++)) || true
-  done
 fi
-LABELS+=("Homebrew Packages")
-DESCRIPTIONS+=("${_brew_count} packages found")
+LABELS+=("Homebrew Formulae")
+DESCRIPTIONS+=("${_brew_count}/${#BREW_FORMULAE[@]} found")
 if [ "$_brew_count" -gt 0 ]; then
   DETECTED+=(1); SELECTED+=(1)
 else
   DETECTED+=(0); SELECTED+=(0)
 fi
 
-# 1: NVM
-LABELS+=("NVM")
-DESCRIPTIONS+=("~/.nvm")
-if [ -d "$HOME/.nvm" ]; then DETECTED+=(1); SELECTED+=(1); else DETECTED+=(0); SELECTED+=(0); fi
+# 1: Yabai + Skhd
+LABELS+=("Yabai + Skhd")
+DESCRIPTIONS+=("Tiling WM + hotkey daemon")
+if command -v yabai &>/dev/null || command -v skhd &>/dev/null; then DETECTED+=(1); SELECTED+=(1); else DETECTED+=(0); SELECTED+=(0); fi
 
-# 2: Bun
-LABELS+=("Bun")
-DESCRIPTIONS+=("~/.bun")
-if [ -d "$HOME/.bun" ]; then DETECTED+=(1); SELECTED+=(1); else DETECTED+=(0); SELECTED+=(0); fi
+# 2: Ghostty + Nerd Font
+LABELS+=("Ghostty + Nerd Font")
+DESCRIPTIONS+=("Ghostty terminal + JetBrainsMono")
+if [ -d "/Applications/Ghostty.app" ]; then DETECTED+=(1); SELECTED+=(1); else DETECTED+=(0); SELECTED+=(0); fi
 
-# 3: Rust
-LABELS+=("Rust")
-DESCRIPTIONS+=("~/.cargo, ~/.rustup")
-if [ -d "$HOME/.cargo" ] || [ -d "$HOME/.rustup" ]; then DETECTED+=(1); SELECTED+=(1); else DETECTED+=(0); SELECTED+=(0); fi
+# 3: Cloudflare WARP + Hot
+LABELS+=("Cloudflare WARP + Hot")
+DESCRIPTIONS+=("Menu bar: VPN + thermal monitor")
+if [ -d "/Applications/Cloudflare WARP.app" ] || [ -d "/Applications/Hot.app" ]; then DETECTED+=(1); SELECTED+=(1); else DETECTED+=(0); SELECTED+=(0); fi
 
-# 4: sui-move-analyzer
-LABELS+=("sui-move-analyzer")
-DESCRIPTIONS+=("~/.cargo/bin/sui-move-analyzer")
-if [ -f "$HOME/.cargo/bin/sui-move-analyzer" ]; then DETECTED+=(1); SELECTED+=(1); else DETECTED+=(0); SELECTED+=(0); fi
+# 4: Google Chrome
+LABELS+=("Google Chrome")
+DESCRIPTIONS+=("Browser")
+if [ -d "/Applications/Google Chrome.app" ]; then DETECTED+=(1); SELECTED+=(1); else DETECTED+=(0); SELECTED+=(0); fi
 
-# 5: Oh My Zsh
+# 5: OrbStack
+LABELS+=("OrbStack")
+DESCRIPTIONS+=("Docker & Linux VM runtime")
+if [ -d "/Applications/OrbStack.app" ]; then DETECTED+=(1); SELECTED+=(1); else DETECTED+=(0); SELECTED+=(0); fi
+
+# 6: Oh My Zsh
 LABELS+=("Oh My Zsh")
 DESCRIPTIONS+=("~/.oh-my-zsh")
 if [ -d "$HOME/.oh-my-zsh" ]; then DETECTED+=(1); SELECTED+=(1); else DETECTED+=(0); SELECTED+=(0); fi
 
-# 6: suiup + Sui
+# 7: NVM
+LABELS+=("NVM")
+DESCRIPTIONS+=("~/.nvm")
+if [ -d "$HOME/.nvm" ]; then DETECTED+=(1); SELECTED+=(1); else DETECTED+=(0); SELECTED+=(0); fi
+
+# 8: Bun
+LABELS+=("Bun")
+DESCRIPTIONS+=("~/.bun")
+if [ -d "$HOME/.bun" ]; then DETECTED+=(1); SELECTED+=(1); else DETECTED+=(0); SELECTED+=(0); fi
+
+# 9: Rust
+LABELS+=("Rust")
+DESCRIPTIONS+=("~/.cargo, ~/.rustup")
+if [ -d "$HOME/.cargo" ] || [ -d "$HOME/.rustup" ]; then DETECTED+=(1); SELECTED+=(1); else DETECTED+=(0); SELECTED+=(0); fi
+
+# 10: suiup + Sui
 LABELS+=("suiup + Sui")
 DESCRIPTIONS+=("~/.local/bin/sui*, ~/.sui")
 if [ -f "$HOME/.local/bin/suiup" ] || [ -d "$HOME/.sui" ]; then DETECTED+=(1); SELECTED+=(1); else DETECTED+=(0); SELECTED+=(0); fi
 
-# 7: Deep Clean
+# 11: sui-move-analyzer
+LABELS+=("sui-move-analyzer")
+DESCRIPTIONS+=("~/.cargo/bin/sui-move-analyzer")
+if [ -f "$HOME/.cargo/bin/sui-move-analyzer" ]; then DETECTED+=(1); SELECTED+=(1); else DETECTED+=(0); SELECTED+=(0); fi
+
+# 12: SSH Keys (iCloud)
+LABELS+=("SSH Keys (iCloud)")
+DESCRIPTIONS+=("~/.ssh symlink only")
+if [ -L "$HOME/.ssh" ]; then DETECTED+=(1); SELECTED+=(1); else DETECTED+=(0); SELECTED+=(0); fi
+
+# 13: Deep Clean
 LABELS+=("Deep Clean")
 DESCRIPTIONS+=(".cache, .local, .npm, .wakatime, .gitconfig")
 DETECTED+=(1); SELECTED+=(1)
@@ -105,7 +131,7 @@ draw_menu() {
   echo ""
   for (( i=0; i<_total; i++ )); do
     local _num; _num=$(printf "%d" $((i + 1)))
-    local _label; _label=$(printf "%-18s" "${LABELS[$i]}")
+    local _label; _label=$(printf "%-22s" "${LABELS[$i]}")
     if [ "${DETECTED[$i]}" = "0" ]; then
       echo -e "    ${DIM}${_num}. [ ] ${_label} —  not found${NC}"
     elif [ "${SELECTED[$i]}" = "1" ]; then
@@ -150,10 +176,10 @@ while true; do
     echo -e "\n  ${YELLOW}⏭️  Uninstallation cancelled.${NC}"
     exit 0
   fi
-  # Dependency: Rust (3) selected → auto-select sui-move-analyzer (4) if detected
-  [ "${SELECTED[3]}" = "1" ] && [ "${DETECTED[4]}" = "1" ] && SELECTED[4]=1
-  # Deselect Rust (3) → auto-deselect sui-move-analyzer (4)
-  [ "${SELECTED[3]}" = "0" ] && SELECTED[4]=0
+  # Dependency: Rust (9) selected → auto-select sui-move-analyzer (11) if detected
+  [ "${SELECTED[9]}" = "1" ] && [ "${DETECTED[11]}" = "1" ] && SELECTED[11]=1
+  # Deselect Rust (9) → auto-deselect sui-move-analyzer (11)
+  [ "${SELECTED[9]}" = "0" ] && SELECTED[11]=0
 done
 
 # ========== Confirmation Summary ==========
@@ -213,67 +239,94 @@ for _d in "$HOME/.config"/*; do
 done
 done_msg "Symlinks removed"
 
-# ========== Homebrew Packages (index 0) ==========
+# ========== Homebrew Formulae (index 0) ==========
 if [ "${SELECTED[0]}" = "1" ]; then
-  step "Removing Homebrew packages"
+  step "Removing Homebrew formulae"
   for _pkg in "${BREW_FORMULAE[@]}"; do
     if brew list "$_pkg" &>/dev/null; then
       brew uninstall --ignore-dependencies "$_pkg" && done_msg "Removed $_pkg" || warn_msg "Failed to remove $_pkg"
     fi
   done
-  for _pkg in "${BREW_CASKS[@]}"; do
-    if brew list --cask "$_pkg" &>/dev/null; then
-      brew uninstall --cask "$_pkg" && done_msg "Removed $_pkg" || warn_msg "Failed to remove $_pkg"
-    fi
-  done
-  done_msg "Homebrew packages done"
+  done_msg "Homebrew formulae done"
 fi
 
-# ========== NVM (index 1) ==========
+# ========== Yabai + Skhd (index 1) ==========
 if [ "${SELECTED[1]}" = "1" ]; then
+  step "Removing Yabai + Skhd"
+  for _pkg in yabai skhd; do
+    if brew list "$_pkg" &>/dev/null; then
+      brew uninstall --ignore-dependencies "$_pkg" && done_msg "Removed $_pkg" || warn_msg "Failed to remove $_pkg"
+    fi
+  done
+fi
+
+# ========== Ghostty + Nerd Font (index 2) ==========
+if [ "${SELECTED[2]}" = "1" ]; then
+  step "Removing Ghostty + Nerd Font"
+  for _cask in ghostty font-jetbrains-mono-nerd-font; do
+    if brew list --cask "$_cask" &>/dev/null; then
+      brew uninstall --cask "$_cask" && done_msg "Removed $_cask" || warn_msg "Failed to remove $_cask"
+    fi
+  done
+fi
+
+# ========== Cloudflare WARP + Hot (index 3) ==========
+if [ "${SELECTED[3]}" = "1" ]; then
+  step "Removing Cloudflare WARP + Hot"
+  for _cask in cloudflare-warp hot; do
+    if brew list --cask "$_cask" &>/dev/null; then
+      brew uninstall --cask "$_cask" && done_msg "Removed $_cask" || warn_msg "Failed to remove $_cask"
+    fi
+  done
+fi
+
+# ========== Google Chrome (index 4) ==========
+if [ "${SELECTED[4]}" = "1" ]; then
+  step "Removing Google Chrome"
+  if brew list --cask google-chrome &>/dev/null; then
+    brew uninstall --cask google-chrome && done_msg "Google Chrome removed" || warn_msg "Failed to remove Google Chrome"
+  fi
+fi
+
+# ========== OrbStack (index 5) ==========
+if [ "${SELECTED[5]}" = "1" ]; then
+  step "Removing OrbStack"
+  if brew list --cask orbstack &>/dev/null; then
+    brew uninstall --cask orbstack && done_msg "OrbStack removed" || warn_msg "Failed to remove OrbStack"
+  fi
+fi
+
+# ========== Oh My Zsh (index 6) ==========
+if [ "${SELECTED[6]}" = "1" ]; then
+  step "Removing Oh My Zsh"
+  rm -rf "$HOME/.oh-my-zsh"
+  done_msg "Oh My Zsh removed"
+fi
+
+# ========== NVM (index 7) ==========
+if [ "${SELECTED[7]}" = "1" ]; then
   step "Removing NVM"
   rm -rf "$HOME/.nvm"
   done_msg "NVM removed"
 fi
 
-# ========== Bun (index 2) ==========
-if [ "${SELECTED[2]}" = "1" ]; then
+# ========== Bun (index 8) ==========
+if [ "${SELECTED[8]}" = "1" ]; then
   step "Removing Bun"
   rm -rf "$HOME/.bun"
   done_msg "Bun removed"
 fi
 
-# ========== Rust (index 3) ==========
-if [ "${SELECTED[3]}" = "1" ]; then
+# ========== Rust (index 9) ==========
+if [ "${SELECTED[9]}" = "1" ]; then
   step "Removing Rust"
   rm -rf "$HOME/.cargo"
   rm -rf "$HOME/.rustup"
   done_msg "Rust removed"
 fi
 
-# ========== sui-move-analyzer (index 4) ==========
-if [ "${SELECTED[4]}" = "1" ]; then
-  step "Removing sui-move-analyzer"
-  rm -f "$HOME/.cargo/bin/sui-move-analyzer"
-  done_msg "sui-move-analyzer removed"
-fi
-
-# ========== Oh My Zsh (index 5) ==========
-if [ "${SELECTED[5]}" = "1" ]; then
-  step "Removing Oh My Zsh"
-  rm -rf "$HOME/.oh-my-zsh"
-  done_msg "Oh My Zsh removed"
-fi
-
-# ========== Cache Files (always) ==========
-step "Cleaning up cache files"
-rm -f "$HOME"/.zcompdump*
-rm -f "$HOME/.node_repl_history"
-rm -rf "$HOME/.config/github-copilot" 2>/dev/null || true
-done_msg "Cache files removed"
-
-# ========== suiup + Sui (index 6) ==========
-if [ "${SELECTED[6]}" = "1" ]; then
+# ========== suiup + Sui (index 10) ==========
+if [ "${SELECTED[10]}" = "1" ]; then
   step "Removing suiup + Sui"
   rm -f "$HOME/.local/bin/suiup"
   done_msg "suiup removed"
@@ -289,8 +342,33 @@ if [ "${SELECTED[6]}" = "1" ]; then
   done
 fi
 
-# ========== Deep Clean (index 7) ==========
-if [ "${SELECTED[7]}" = "1" ]; then
+# ========== sui-move-analyzer (index 11) ==========
+if [ "${SELECTED[11]}" = "1" ]; then
+  step "Removing sui-move-analyzer"
+  rm -f "$HOME/.cargo/bin/sui-move-analyzer"
+  done_msg "sui-move-analyzer removed"
+fi
+
+# ========== SSH Keys (index 12) ==========
+if [ "${SELECTED[12]}" = "1" ]; then
+  step "Removing SSH Keys symlink"
+  if [ -L "$HOME/.ssh" ]; then
+    rm -f "$HOME/.ssh"
+    done_msg "~/.ssh symlink removed (keys in iCloud are untouched)"
+  else
+    done_msg "~/.ssh is not a symlink, skipping"
+  fi
+fi
+
+# ========== Cache Files (always) ==========
+step "Cleaning up cache files"
+rm -f "$HOME"/.zcompdump*
+rm -f "$HOME/.node_repl_history"
+rm -rf "$HOME/.config/github-copilot" 2>/dev/null || true
+done_msg "Cache files removed"
+
+# ========== Deep Clean (index 13) ==========
+if [ "${SELECTED[13]}" = "1" ]; then
   step "Deep cleaning residue files"
 
   # XDG directories
