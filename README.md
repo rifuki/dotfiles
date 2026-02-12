@@ -32,7 +32,7 @@ bash ~/.dotfiles/uninstall-brew.sh
 | [Neovim](https://neovim.io) | Text editor |
 | [Tmux](https://github.com/tmux/tmux) | Terminal multiplexer |
 | [Oh My Zsh](https://ohmyz.sh) | Zsh framework |
-| [Spaceship](https://spaceship-prompt.sh) | Zsh prompt |
+| [Starship](https://starship.rs) | Cross-shell prompt |
 | [NVM](https://github.com/nvm-sh/nvm) | Node version manager (Node 24) |
 | [Bun](https://bun.sh) | JavaScript runtime & package manager |
 | [Rust](https://rustup.rs) | Rust toolchain (stable) |
@@ -43,12 +43,18 @@ bash ~/.dotfiles/uninstall-brew.sh
 | [gh](https://cli.github.com) | GitHub CLI |
 | [trash](https://github.com/sindresorhus/trash-cli) | Safe `rm` replacement |
 | [htop](https://htop.dev) | Process viewer |
+| [ripgrep](https://github.com/BurntSushi/ripgrep) | Fast search tool |
 | [neofetch](https://github.com/dylanaraps/neofetch) | System info |
+| [OrbStack](https://orbstack.dev) | Docker & Linux VM runtime |
+| [Cloudflare WARP](https://one.one.one.one) | VPN client |
+| [Hot](https://formulae.brew.sh/cask/hot) | Menu bar thermal monitor |
+| [Google Chrome](https://www.google.com/chrome) | Browser |
+| [JetBrainsMono Nerd Font](https://www.nerdfonts.com) | Patched developer font |
 
 ### Configs
 - `nvim` — NvChad-based config with LSP, Treesitter, and plugins
 - `tmux` — Catppuccin theme, TPM plugins
-- `spaceship` — Custom prompt config
+- `starship` — Custom prompt config
 - `ghostty` — Terminal emulator config
 - `yabai` + `skhd` — Tiling window manager + hotkeys
 - `neofetch` — System info display
@@ -75,9 +81,10 @@ After install, manually set up Yabai and Skhd:
 ## Re-run / Update
 
 Re-running `install.sh` is safe:
+- Interactive checklist lets you pick which components to install
+- Already-installed tools are detected and shown in the menu
 - Local config changes are **backed up** to `~/.config/backup-TIMESTAMP/`
 - Dotfiles are **restored** to the latest remote state
-- All tools are skipped if already installed
 
 ## Structure
 
@@ -86,7 +93,7 @@ Re-running `install.sh` is safe:
 ├── .config/
 │   ├── nvim/
 │   ├── tmux/
-│   ├── spaceship/
+│   ├── starship/
 │   ├── ghostty/
 │   ├── yabai/
 │   ├── skhd/

@@ -1,128 +1,296 @@
 #!/bin/bash
 set -e
 
-# ========== OS Check ==========
-if [[ "$(uname)" != "Darwin" ]]; then
-  echo "❌ This script is for macOS only. Detected non-macOS system — aborting!"
-  exit 1
-fi
+# ========== Colors ==========
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[0;33m'
+BLUE='\033[0;34m'
+CYAN='\033[0;36m'
+BOLD='\033[1m'
+DIM='\033[2m'
+NC='\033[0m'
 
-# ========== Confirm Helper ==========
+# ========== Helpers ==========
+step()     { echo -e "\n${BOLD}${CYAN}  ◆ $1${NC}"; }
+done_msg() { echo -e "  ${GREEN}✔${NC} $1"; }
+info_msg() { echo -e "  ${BLUE}▸${NC} $1"; }
+warn_msg() { echo -e "  ${YELLOW}▸${NC} $1"; }
+fail_msg() { echo -e "  ${RED}✖${NC} $1"; }
+
 confirm() {
-  # $1 = prompt message
   local _ans
   if [ -t 0 ] || [ -c /dev/tty ]; then
-    printf "%s [y/n]: " "$1"
+    printf "    %s [y/n]: " "$1"
     read -r _ans < /dev/tty
     case "${_ans}" in
       [yY]|[yY][eE][sS]) return 0 ;;
       *) return 1 ;;
     esac
   fi
-  return 1  # non-interactive: default no
+  return 1
 }
 
-# ========== Welcome Banner ==========
-cat << 'EOF'
-================================================
-     dotfiles installer — macOS
-================================================
-This script will:
-  • Clone/update dotfiles to ~/.dotfiles
-  • Back up any existing configs to ~/.config/backup-TIMESTAMP
-  • Install: Xcode CLT, Homebrew, Neovim, Tmux, Oh My Zsh,
-             NVM (Node 24), Bun, Rust, Yazi, gh, trash, htop, neofetch,
-             JetBrainsMono Nerd Font, ripgrep, OrbStack, Starship
-  • Set up dotfiles symlinks
-  • Configure git (optional, interactive)
-  • Optionally install sui-move-analyzer in tmux background
-================================================
-EOF
+# ========== OS Check ==========
+if [[ "$(uname)" != "Darwin" ]]; then
+  echo -e "${RED}❌ This script is for macOS only.${NC}"
+  exit 1
+fi
 
-if ! confirm "Proceed with installation?"; then
-  echo "⏭️  Installation cancelled."
-  exit 0
+# ========== TTY Check ==========
+if [ ! -t 0 ] && [ ! -c /dev/tty ]; then
+  echo -e "${RED}❌ This script requires an interactive terminal.${NC}"
+  exit 1
+fi
+
+# ========== Xcode Command Line Tools (PREREQUISITE) ==========
+step "Checking Xcode Command Line Tools"
+if ! command -v xcode-select &>/dev/null || ! xcode-select -p &>/dev/null; then
+  warn_msg "Xcode CLT not found"
+  info_msg "Installing Xcode Command Line Tools..."
+  xcode-select --install
+  echo ""
+  echo -e "    ${YELLOW}⚠️  Please follow the popup to install Xcode CLT.${NC}"
+  echo -e "    ${YELLOW}⚠️  This may take 5-10 minutes.${NC}"
+  echo -e "    ${YELLOW}⚠️  The script will continue automatically when done.${NC}"
+  echo ""
+
+  # Poll for installation completion (max 30 minutes)
+  _timeout=1800
+  _elapsed=0
+  while [ $_elapsed -lt $_timeout ]; do
+    if xcode-select -p &>/dev/null; then
+      done_msg "Xcode CLT installation detected!"
+      break
+    fi
+    sleep 5
+    ((_elapsed += 5))
+    if [ $((_elapsed % 30)) -eq 0 ]; then
+      echo -e "    ${DIM}Still waiting for Xcode CLT... ($_elapsed/${_timeout}s)${NC}"
+    fi
+  done
+
+  if ! xcode-select -p &>/dev/null; then
+    fail_msg "Xcode CLT installation timeout or failed"
+    echo -e "    ${DIM}Please install manually and re-run this script${NC}"
+    exit 1
+  fi
+else
+  done_msg "Xcode CLT already installed"
 fi
 
 echo ""
 
-# ========== Xcode Command Line Tools ==========
-echo "==> Checking Xcode Command Line Tools (CLT)..."
-if ! command -v xcode-select &>/dev/null || ! xcode-select -p &>/dev/null; then
-  echo "⚠️  Xcode CLT not found!"
-  echo "==> Installing Xcode Command Line Tools..."
-  xcode-select --install
-  echo ""
-  echo "✅ Installation request sent."
-  echo "👉 Please follow the popup instructions to install Xcode CLT."
-  echo "👉 Once installed, re-run this script to continue."
-  exit 0
-else
-  echo "✅ Xcode CLT already installed"
-fi
+# ========== Detect Current State ==========
+LABELS=()
+DESCRIPTIONS=()
+SELECTED=()
+STATUS=()
 
-# ========== Clone Dotfiles Repo ==========
+# 0: Homebrew Formulae
+LABELS+=("Homebrew Formulae")
+DESCRIPTIONS+=("neovim, tmux, trash, htop, ripgrep, starship, neofetch, yazi, gh")
+SELECTED+=(1)
+_fi=0; _ft=9
+for _cmd in nvim tmux trash htop rg starship neofetch yazi gh; do
+  command -v "$_cmd" &>/dev/null && ((_fi++)) || true
+done
+if [ "$_fi" = "$_ft" ]; then STATUS+=("all installed")
+elif [ "$_fi" -gt 0 ]; then STATUS+=("${_fi}/${_ft} installed")
+else STATUS+=(""); fi
+
+# 1: Ghostty + Font
+LABELS+=("Ghostty + Nerd Font")
+DESCRIPTIONS+=("Ghostty terminal + JetBrainsMono")
+SELECTED+=(1)
+[ -d "/Applications/Ghostty.app" ] && STATUS+=("installed") || STATUS+=("")
+
+# 2: OrbStack
+LABELS+=("OrbStack")
+DESCRIPTIONS+=("Docker & Linux VM runtime")
+SELECTED+=(1)
+[ -d "/Applications/OrbStack.app" ] && STATUS+=("installed") || STATUS+=("")
+
+# 3: Cloudflare WARP + Hot
+LABELS+=("Cloudflare WARP + Hot")
+DESCRIPTIONS+=("Menu bar: VPN + thermal monitor")
+SELECTED+=(1)
+[ -d "/Applications/Cloudflare WARP.app" ] && STATUS+=("installed") || STATUS+=("")
+
+# 4: Google Chrome
+LABELS+=("Google Chrome")
+DESCRIPTIONS+=("Browser")
+SELECTED+=(1)
+[ -d "/Applications/Google Chrome.app" ] && STATUS+=("installed") || STATUS+=("")
+
+# 5: Yabai + Skhd
+LABELS+=("Yabai + Skhd")
+DESCRIPTIONS+=("Tiling WM + hotkey daemon")
+SELECTED+=(1)
+command -v yabai &>/dev/null && STATUS+=("installed") || STATUS+=("")
+
+# 6: Oh My Zsh
+LABELS+=("Oh My Zsh")
+DESCRIPTIONS+=("Zsh framework + plugins")
+SELECTED+=(1)
+[ -d "$HOME/.oh-my-zsh" ] && STATUS+=("installed") || STATUS+=("")
+
+# 7: NVM + Node
+LABELS+=("NVM + Node 24")
+DESCRIPTIONS+=("Node Version Manager + Node.js")
+SELECTED+=(1)
+[ -d "$HOME/.nvm" ] && STATUS+=("installed") || STATUS+=("")
+
+# 8: Bun
+LABELS+=("Bun")
+DESCRIPTIONS+=("JavaScript runtime")
+SELECTED+=(1)
+[ -d "$HOME/.bun" ] && STATUS+=("installed") || STATUS+=("")
+
+# 9: Rust
+LABELS+=("Rust")
+DESCRIPTIONS+=("Rust toolchain via rustup")
+SELECTED+=(1)
+[ -f "$HOME/.cargo/bin/rustup" ] && STATUS+=("installed") || STATUS+=("")
+
+# 10: sui-move-analyzer
+LABELS+=("sui-move-analyzer")
+DESCRIPTIONS+=("Sui Move language server (~10min)")
+SELECTED+=(1)
+[ -f "$HOME/.cargo/bin/sui-move-analyzer" ] && STATUS+=("installed") || STATUS+=("")
+
+_total=${#LABELS[@]}
+
+# ========== Draw Menu ==========
+draw_menu() {
+  echo ""
+  echo -e "${BOLD}${CYAN}╔══════════════════════════════════════════════════╗${NC}"
+  echo -e "${BOLD}${CYAN}║           dotfiles installer — macOS             ║${NC}"
+  echo -e "${BOLD}${CYAN}╚══════════════════════════════════════════════════╝${NC}"
+  echo ""
+  echo -e "  ${BOLD}Select components to install:${NC}"
+  echo ""
+  for (( i=0; i<_total; i++ )); do
+    local _num; _num=$(printf "%2d" $((i + 1)))
+    local _label; _label=$(printf "%-22s" "${LABELS[$i]}")
+    local _status=""
+    [ -n "${STATUS[$i]}" ] && _status=" ${GREEN}(${STATUS[$i]})${NC}"
+    if [ "${SELECTED[$i]}" = "1" ]; then
+      echo -e "    ${GREEN}${_num}. [x] ${_label}${NC} ${DIM}${DESCRIPTIONS[$i]}${NC}${_status}"
+    else
+      echo -e "    ${_num}. [ ] ${_label} ${DIM}${DESCRIPTIONS[$i]}${NC}${_status}"
+    fi
+  done
+  echo ""
+  echo -e "  ${DIM}Always included:${NC}"
+  echo -e "    ${DIM}• Xcode CLT, Homebrew, Dotfiles repo${NC}"
+  echo -e "    ${DIM}• Backup, Symlinks, Shell cleanup, Git config${NC}"
+  echo ""
+  echo -e "  ${DIM}Enter number to toggle  |  ${NC}${BOLD}a${NC}${DIM} = all  |  ${NC}${BOLD}n${NC}${DIM} = none  |  ${NC}${BOLD}Enter${NC}${DIM} = continue${NC}"
+  echo ""
+}
+
+# ========== Interactive Loop ==========
+while true; do
+  clear 2>/dev/null || true
+  draw_menu
+
+  printf "  > "
+  read -r _input < /dev/tty
+
+  if [[ "$_input" =~ ^[0-9]+$ ]] && [ "$_input" -ge 1 ] && [ "$_input" -le "$_total" ]; then
+    _idx=$((_input - 1))
+    [ "${SELECTED[$_idx]}" = "1" ] && SELECTED[$_idx]=0 || SELECTED[$_idx]=1
+  elif [[ "$_input" = [aA] ]]; then
+    for (( i=0; i<_total; i++ )); do SELECTED[$i]=1; done
+  elif [[ "$_input" = [nN] ]]; then
+    for (( i=0; i<_total; i++ )); do SELECTED[$i]=0; done
+  elif [ -z "$_input" ]; then
+    break
+  fi
+done
+
+# ========== Confirmation ==========
+echo ""
+echo -e "  ${BOLD}Will be installed:${NC}"
+for (( i=0; i<_total; i++ )); do
+  if [ "${SELECTED[$i]}" = "1" ]; then
+    echo -e "    ${GREEN}+${NC} ${LABELS[$i]}  ${DIM}${DESCRIPTIONS[$i]}${NC}"
+  fi
+done
+echo -e "    ${GREEN}+${NC} Xcode CLT, Homebrew, Dotfiles, Symlinks  ${DIM}(always)${NC}"
+echo ""
+
+printf "  ${BOLD}Proceed with installation?${NC} [y/n]: "
+read -r _confirm < /dev/tty
+case "$_confirm" in
+  [yY]|[yY][eE][sS]) ;;
+  *)
+    echo -e "\n  ${YELLOW}⏭️  Installation cancelled.${NC}"
+    exit 0
+    ;;
+esac
+
+echo ""
+
+# ══════════════════════════════════════════════════
+#  ALWAYS: Core setup
+# ══════════════════════════════════════════════════
+
+# ========== Dotfiles Repo ==========
+step "Checking dotfiles repository"
 DOTFILES_DIR="$HOME/.dotfiles"
 DOTFILES_REPO="https://github.com/rifuki/dotfiles.git"
 
-# Check if running from within a git repo
 _script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 if [ -d "$_script_dir/.git" ] && git -C "$_script_dir" rev-parse --git-dir > /dev/null 2>&1; then
-  # Running from cloned repo — must be in $HOME/.dotfiles
   if [ "$_script_dir" != "$DOTFILES_DIR" ]; then
-    echo "❌ Error: install.sh must be run from $HOME/.dotfiles"
-    echo "   Found at: $_script_dir"
-    echo ""
-    echo "   Either:"
-    echo "   1. Run: curl -fsSL https://dotfiles.rifuki.dev/macos/install.sh | bash"
-    echo "   2. Or move repo: mv $_script_dir $DOTFILES_DIR && bash $DOTFILES_DIR/install.sh"
+    fail_msg "install.sh must be run from $HOME/.dotfiles"
+    echo -e "    ${DIM}Found at: $_script_dir${NC}"
+    echo -e "    ${DIM}1. curl -fsSL https://dotfiles.rifuki.dev/macos/install.sh | bash${NC}"
+    echo -e "    ${DIM}2. mv $_script_dir $DOTFILES_DIR && bash $DOTFILES_DIR/install.sh${NC}"
     exit 1
   fi
-  echo "✅ Running from: $DOTFILES_DIR"
+  done_msg "Running from: $DOTFILES_DIR"
 else
-  # Not in a repo, clone if needed
   if [ ! -d "$DOTFILES_DIR/.git" ]; then
-    echo "==> Cloning dotfiles repo..."
+    info_msg "Cloning dotfiles repo..."
     git clone --branch macos "$DOTFILES_REPO" "$DOTFILES_DIR"
-    echo "✅ Dotfiles cloned to $DOTFILES_DIR"
+    done_msg "Cloned to $DOTFILES_DIR"
   else
-    echo "✅ Dotfiles repo already exists, pulling latest..."
-    git -C "$DOTFILES_DIR" pull --ff-only 2>/dev/null || echo "⚠️  Could not pull dotfiles (local changes?)"
+    done_msg "Repo exists, pulling latest..."
+    git -C "$DOTFILES_DIR" pull --ff-only 2>/dev/null || warn_msg "Could not pull"
   fi
 fi
 
-# ========== Backup Existing Configs ==========
-# Must happen before any tool install (OMZ/bun may create .zshrc)
-echo "==> Checking for existing configs..."
-echo "    Any existing (non-symlinked) configs will be moved to:"
-echo "    ~/.config/backup-TIMESTAMP/"
+# ========== Backup ==========
+step "Checking for existing configs"
 BACKUP_DIR="$HOME/.config/backup-$(date +%Y%m%d-%H%M%S)"
 _did_backup=0
 for _d in "$DOTFILES_DIR/.config"/*/; do
   _name="$(basename "$_d")"
   _p="$HOME/.config/$_name"
   if [ -d "$_p" ] && [ ! -L "$_p" ]; then
-    [ "$_did_backup" = "0" ] && mkdir -p "$BACKUP_DIR" && echo "==> Backing up existing configs to $BACKUP_DIR..."
+    [ "$_did_backup" = "0" ] && mkdir -p "$BACKUP_DIR"
     mv "$_p" "$BACKUP_DIR/"
     _did_backup=1
   fi
 done
 for _f in "$HOME/.zshrc" "$HOME/.hyper.js"; do
   if [ -f "$_f" ] && [ ! -L "$_f" ]; then
-    [ "$_did_backup" = "0" ] && mkdir -p "$BACKUP_DIR" && echo "==> Backing up existing configs to $BACKUP_DIR..."
+    [ "$_did_backup" = "0" ] && mkdir -p "$BACKUP_DIR"
     mv "$_f" "$BACKUP_DIR/"
     _did_backup=1
   fi
 done
-[ "$_did_backup" = "1" ] && echo "✅ Backups created" || echo "✅ No existing configs to backup"
+[ "$_did_backup" = "1" ] && done_msg "Backed up to: $BACKUP_DIR" || done_msg "No existing configs to backup"
 
-# Re-run case: backup changed + untracked files, then restore to original repo state
 for _d in "$DOTFILES_DIR/.config"/*/; do
   _name="$(basename "$_d")"
   _p="$HOME/.config/$_name"
   if git -C "$DOTFILES_DIR" status --porcelain ".config/$_name" 2>/dev/null | grep -q .; then
     if [ -L "$_p" ] || [ -e "$_p" ]; then
-      [ "$_did_backup" = "0" ] && mkdir -p "$BACKUP_DIR/.config" && echo "==> Local changes detected, backing up to $BACKUP_DIR..."
+      [ "$_did_backup" = "0" ] && mkdir -p "$BACKUP_DIR/.config"
       cp -rL "$_p" "$BACKUP_DIR/.config/" 2>/dev/null || true
       _did_backup=1
     fi
@@ -131,268 +299,253 @@ done
 for _f in .zshrc .hyper.js; do
   if git -C "$DOTFILES_DIR" status --porcelain "$_f" 2>/dev/null | grep -q .; then
     if [ -L "$HOME/$_f" ] || [ -e "$HOME/$_f" ]; then
-      [ "$_did_backup" = "0" ] && mkdir -p "$BACKUP_DIR" && echo "==> Local changes detected, backing up to $BACKUP_DIR..."
+      [ "$_did_backup" = "0" ] && mkdir -p "$BACKUP_DIR"
       cp -rL "$HOME/$_f" "$BACKUP_DIR/" 2>/dev/null || true
       _did_backup=1
     fi
   fi
 done
-
 if [ "$_did_backup" = "1" ]; then
-  echo "✅ Local changes backed up to: $BACKUP_DIR"
-  echo "==> Restoring dotfiles to original repo state..."
+  done_msg "Local changes backed up"
+  info_msg "Restoring to remote state..."
   git -C "$DOTFILES_DIR" restore . 2>/dev/null || git -C "$DOTFILES_DIR" checkout -- . 2>/dev/null || true
   git -C "$DOTFILES_DIR" clean -fd 2>/dev/null || true
-  echo "✅ Dotfiles restored to remote state"
+  done_msg "Dotfiles restored"
 fi
 
 # ========== Homebrew ==========
+step "Checking Homebrew"
 if ! command -v brew &>/dev/null; then
-  echo "==> Installing Homebrew..."
-
-  # Temporarily disable exit on error
+  info_msg "Installing Homebrew..."
   set +e
   /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
   BREW_RESULT=$?
   set -e
-
   if [ $BREW_RESULT -ne 0 ]; then
-    echo "❌ Homebrew installation failed (likely due to password prompt in non-interactive mode)"
-    echo ""
-    echo "Please install Homebrew manually:"
-    echo "  /bin/bash -c \"\$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)\""
-    echo ""
-    echo "Then re-run this script to continue:"
-    echo "  curl -fsSL https://dotfiles.rifuki.dev/macos/install.sh | bash"
+    fail_msg "Homebrew installation failed"
+    echo -e "    ${DIM}Install manually, then re-run this script${NC}"
     exit 1
   fi
-
   eval "$(/opt/homebrew/bin/brew shellenv bash)"
-  echo "✅ Homebrew installed"
+  done_msg "Homebrew installed"
 else
-  echo "✅ Homebrew already installed: $(brew --version | head -1)"
+  done_msg "Homebrew already installed: $(brew --version | head -1)"
 fi
 
-# ========== Neovim ==========
-if ! command -v nvim &>/dev/null; then
-  echo "==> Installing Neovim..."
-  brew install neovim
-  echo "✅ Neovim $(nvim --version | head -1) installed"
-else
-  echo "✅ Neovim already installed: $(nvim --version | head -1)"
+# ══════════════════════════════════════════════════
+#  SELECTED: Optional components
+# ══════════════════════════════════════════════════
+
+# ========== 0: Homebrew Formulae ==========
+if [ "${SELECTED[0]}" = "1" ]; then
+  step "Installing Homebrew formulae"
+  _formulae=(
+    "neovim:nvim"
+    "tmux:tmux"
+    "trash:trash"
+    "htop:htop"
+    "ripgrep:rg"
+    "starship:starship"
+    "neofetch:neofetch"
+    "yazi:yazi"
+    "gh:gh"
+  )
+  for _entry in "${_formulae[@]}"; do
+    IFS=':' read -r _pkg _cmd <<< "$_entry"
+    if ! command -v "$_cmd" &>/dev/null; then
+      info_msg "Installing ${_pkg}..."
+      brew install "$_pkg"
+      done_msg "${_pkg} installed"
+    else
+      done_msg "${_pkg} already installed"
+    fi
+  done
 fi
 
-# ========== Tmux ==========
-if ! command -v tmux &>/dev/null; then
-  echo "==> Installing Tmux..."
-  brew install tmux
-  echo "✅ Tmux installed"
-else
-  echo "✅ Tmux already installed: $(tmux -V)"
+# ========== 1: Ghostty + Font ==========
+if [ "${SELECTED[1]}" = "1" ]; then
+  step "Installing Ghostty + Nerd Font"
+  if [ ! -d "/Applications/Ghostty.app" ]; then
+    info_msg "Installing Ghostty..."
+    brew install --cask ghostty
+    done_msg "Ghostty installed"
+  else
+    done_msg "Ghostty already installed"
+  fi
+  if ! brew list --cask font-jetbrains-mono-nerd-font &>/dev/null && \
+     ! ls "$HOME/Library/Fonts/JetBrainsMono"*"NerdFont"* &>/dev/null 2>&1; then
+    info_msg "Installing JetBrainsMono Nerd Font..."
+    brew install --cask font-jetbrains-mono-nerd-font
+    done_msg "JetBrainsMono Nerd Font installed"
+  else
+    done_msg "JetBrainsMono Nerd Font already installed"
+  fi
 fi
 
-# ========== Trash (safe rm) ==========
-if ! command -v trash &>/dev/null; then
-  echo "==> Installing trash..."
-  brew install trash
-  echo "✅ trash installed"
-else
-  echo "✅ trash already installed"
+# ========== 2: OrbStack ==========
+if [ "${SELECTED[2]}" = "1" ]; then
+  step "Installing OrbStack"
+  if [ ! -d "/Applications/OrbStack.app" ]; then
+    info_msg "Installing OrbStack..."
+    brew install --cask orbstack
+    done_msg "OrbStack installed"
+  else
+    done_msg "OrbStack already installed"
+  fi
 fi
 
-# ========== Htop ==========
-if ! command -v htop &>/dev/null; then
-  echo "==> Installing htop..."
-  brew install htop
-  echo "✅ htop installed"
-else
-  echo "✅ htop already installed: $(htop --version | head -1)"
+# ========== 3: Cloudflare WARP + Hot ==========
+if [ "${SELECTED[3]}" = "1" ]; then
+  step "Installing menu bar apps"
+  if [ ! -d "/Applications/Cloudflare WARP.app" ]; then
+    info_msg "Installing Cloudflare WARP..."
+    brew install --cask cloudflare-warp
+    done_msg "Cloudflare WARP installed"
+  else
+    done_msg "Cloudflare WARP already installed"
+  fi
+  if [ ! -d "/Applications/Hot.app" ]; then
+    info_msg "Installing Hot..."
+    brew install --cask hot
+    done_msg "Hot installed"
+  else
+    done_msg "Hot already installed"
+  fi
 fi
 
-# ========== Ripgrep ==========
-if ! command -v rg &>/dev/null; then
-  echo "==> Installing ripgrep..."
-  brew install ripgrep
-  echo "✅ ripgrep installed"
-else
-  echo "✅ ripgrep already installed: $(rg --version | head -1)"
+# ========== 4: Google Chrome ==========
+if [ "${SELECTED[4]}" = "1" ]; then
+  step "Installing Google Chrome"
+  if [ ! -d "/Applications/Google Chrome.app" ]; then
+    info_msg "Installing Google Chrome..."
+    brew install --cask google-chrome
+    done_msg "Google Chrome installed"
+  else
+    done_msg "Google Chrome already installed"
+  fi
 fi
 
-# ========== Starship ==========
-if ! command -v starship &>/dev/null; then
-  echo "==> Installing Starship..."
-  brew install starship
-  echo "✅ Starship $(starship --version | head -1) installed"
-else
-  echo "✅ Starship already installed: $(starship --version | head -1)"
+# ========== 5: Yabai + Skhd ==========
+if [ "${SELECTED[5]}" = "1" ]; then
+  step "Installing window manager"
+  if ! command -v yabai &>/dev/null; then
+    info_msg "Installing Yabai..."
+    brew install asmvik/formulae/yabai
+    done_msg "Yabai installed"
+  else
+    done_msg "Yabai already installed"
+  fi
+  if ! command -v skhd &>/dev/null; then
+    info_msg "Installing Skhd..."
+    brew install asmvik/formulae/skhd
+    done_msg "Skhd installed"
+  else
+    done_msg "Skhd already installed"
+  fi
 fi
 
-# ========== Neofetch ==========
-if ! command -v neofetch &>/dev/null; then
-  echo "==> Installing neofetch..."
-  brew install neofetch
-  echo "✅ neofetch installed"
-else
-  echo "✅ neofetch already installed: $(neofetch --version)"
+# ========== 6: Oh My Zsh ==========
+if [ "${SELECTED[6]}" = "1" ]; then
+  step "Setting up Oh My Zsh"
+  if [ ! -d "$HOME/.oh-my-zsh" ]; then
+    info_msg "Installing Oh My Zsh..."
+    RUNZSH=no KEEP_ZSHRC=yes CHSH=no bash -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)" || {
+      fail_msg "Oh My Zsh installation failed!"
+      exit 1
+    }
+    done_msg "Oh My Zsh installed"
+  else
+    done_msg "Oh My Zsh already installed"
+  fi
+  ZSH_CUSTOM="$HOME/.oh-my-zsh/custom"
+  info_msg "Checking plugins..."
+  [[ ! -d "$ZSH_CUSTOM/plugins/zsh-autosuggestions" ]] && \
+    git clone https://github.com/zsh-users/zsh-autosuggestions "$ZSH_CUSTOM/plugins/zsh-autosuggestions"
+  [[ ! -d "$ZSH_CUSTOM/plugins/zsh-syntax-highlighting" ]] && \
+    git clone https://github.com/zsh-users/zsh-syntax-highlighting.git "$ZSH_CUSTOM/plugins/zsh-syntax-highlighting"
+  done_msg "Plugins ready"
 fi
 
-# ========== Yazi ==========
-if ! command -v yazi &>/dev/null; then
-  echo "==> Installing yazi..."
-  brew install yazi
-  echo "✅ yazi installed"
-else
-  echo "✅ yazi already installed: $(yazi --version)"
+# ========== 7: NVM + Node ==========
+if [ "${SELECTED[7]}" = "1" ]; then
+  step "Setting up NVM + Node 24"
+  export NVM_DIR="$HOME/.nvm"
+  if [ ! -d "$NVM_DIR" ]; then
+    info_msg "Installing NVM..."
+    curl -fsSL https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.3/install.sh | PROFILE=/dev/null bash
+    [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
+    done_msg "NVM installed"
+  else
+    done_msg "NVM already installed"
+    [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
+  fi
+  if ! nvm ls 24 &>/dev/null; then
+    info_msg "Installing Node.js 24..."
+    nvm install 24
+    done_msg "Node.js 24 installed"
+  else
+    done_msg "Node.js 24 already installed"
+  fi
+  nvm use 24
 fi
 
-# ========== Ghostty ==========
-if [ ! -d "/Applications/Ghostty.app" ]; then
-  echo "==> Installing Ghostty..."
-  brew install --cask ghostty
-  echo "✅ Ghostty $(ghostty --version | head -1) installed"
-else
-  echo "✅ Ghostty already installed: $(ghostty --version | head -1)"
+# ========== 8: Bun ==========
+if [ "${SELECTED[8]}" = "1" ]; then
+  step "Setting up Bun"
+  if [ ! -d "$HOME/.bun" ]; then
+    info_msg "Installing Bun..."
+    curl -fsSL https://bun.sh/install | bash
+    done_msg "Bun installed"
+  else
+    done_msg "Bun already installed: $("$HOME/.bun/bin/bun" --version)"
+  fi
 fi
 
-# ========== JetBrainsMono Nerd Font ==========
-if ! brew list --cask font-jetbrains-mono-nerd-font &>/dev/null && \
-   ! ls "$HOME/Library/Fonts/JetBrainsMono"*"NerdFont"* &>/dev/null 2>&1; then
-  echo "==> Installing JetBrainsMono Nerd Font..."
-  brew install --cask font-jetbrains-mono-nerd-font
-  echo "✅ JetBrainsMono Nerd Font installed"
-else
-  echo "✅ JetBrainsMono Nerd Font already installed"
+# ========== 9: Rust ==========
+if [ "${SELECTED[9]}" = "1" ]; then
+  step "Setting up Rust"
+  if [ ! -f "$HOME/.cargo/bin/rustup" ]; then
+    info_msg "Installing Rust (stable)..."
+    curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --default-toolchain stable --no-modify-path
+    source "$HOME/.cargo/env"
+    done_msg "Rust installed"
+  else
+    done_msg "Rust already installed: $("$HOME/.cargo/bin/rustc" --version)"
+  fi
 fi
 
-# ========== OrbStack ==========
-if [ ! -d "/Applications/OrbStack.app" ]; then
-  echo "==> Installing OrbStack..."
-  brew install --cask orbstack
-  echo "✅ OrbStack installed"
-else
-  echo "✅ OrbStack already installed"
-fi
+# ══════════════════════════════════════════════════
+#  ALWAYS: Finalize
+# ══════════════════════════════════════════════════
 
-# ========== GitHub CLI ==========
-if ! command -v gh &>/dev/null; then
-  echo "==> Installing GitHub CLI..."
-  brew install gh
-  echo "✅ gh installed"
-else
-  echo "✅ gh already installed: $(gh --version | head -1)"
-fi
-
-# ========== Yabai ==========
-if ! command -v yabai &>/dev/null; then
-  echo "==> Installing Yabai..."
-  brew install asmvik/formulae/yabai
-  echo "✅ Yabai $(yabai --version)"
-else
-  echo "✅ Yabai already installed: $(yabai --version)"
-fi
-
-# ========== Skhd ==========
-if ! command -v skhd &>/dev/null; then
-  echo "==> Installing Skhd..."
-  brew install asmvik/formulae/skhd
-  echo "✅ Skhd $(skhd --version)"
-else
-  echo "✅ Skhd already installed: $(skhd --version)"
-fi
-
-# ========== Oh My Zsh ==========
-if [ ! -d "$HOME/.oh-my-zsh" ]; then
-  echo "==> Installing Oh My Zsh..."
-  RUNZSH=no KEEP_ZSHRC=yes CHSH=no bash -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)" || {
-    echo "❌ Oh My Zsh installation failed!"
-    exit 1
-  }
-fi
-
-ZSH_CUSTOM="$HOME/.oh-my-zsh/custom"
-
-echo "==> Installing Oh My Zsh plugins..."
-[[ ! -d "$ZSH_CUSTOM/plugins/zsh-autosuggestions" ]] && \
-  git clone https://github.com/zsh-users/zsh-autosuggestions "$ZSH_CUSTOM/plugins/zsh-autosuggestions"
-
-[[ ! -d "$ZSH_CUSTOM/plugins/zsh-syntax-highlighting" ]] && \
-  git clone https://github.com/zsh-users/zsh-syntax-highlighting.git "$ZSH_CUSTOM/plugins/zsh-syntax-highlighting"
-
-echo "✅ Oh My Zsh plugins installed"
-
-# ========== NVM ==========
-export NVM_DIR="$HOME/.nvm"
-
-if [ ! -d "$NVM_DIR" ]; then
-  echo "==> Installing NVM..."
-  curl -fsSL https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.3/install.sh | PROFILE=/dev/null bash
-  [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
-else
-  echo "✅ NVM already installed, loading..."
-  [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
-fi
-
-if ! nvm ls 24 &>/dev/null; then
-  echo "==> Installing Node.js 24 via NVM..."
-  nvm install 24
-else
-  echo "✅ Node.js 24 already installed."
-fi
-
-nvm use 24
-
-# ========== Bun ==========
-if [ ! -d "$HOME/.bun" ]; then
-  echo "==> Installing Bun..."
-  curl -fsSL https://bun.sh/install | bash
-  echo "✅ Bun installed"
-else
-  echo "✅ Bun already installed: $("$HOME/.bun/bin/bun" --version)"
-fi
-
-# ========== Rust ==========
-if [ ! -f "$HOME/.cargo/bin/rustup" ]; then
-  echo "==> Installing Rust (stable)..."
-  curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --default-toolchain stable --no-modify-path
-  source "$HOME/.cargo/env"
-  echo "✅ Rust $("$HOME/.cargo/bin/rustc" --version) installed"
-else
-  echo "✅ Rust already installed: $("$HOME/.cargo/bin/rustc" --version)"
-fi
-
-# ========== Dotfiles Symlink ==========
-echo "==> Setting up dotfiles symlinks..."
-# When run via curl/process-substitution, BASH_SOURCE is not a real file path
+# ========== Symlinks ==========
+step "Setting up dotfiles symlinks"
 _src="${BASH_SOURCE[0]:-}"
 if [[ "$_src" == /* ]] && [[ -f "$_src" ]]; then
   REPO_DIR="$(cd "$(dirname "$_src")" && pwd)"
 else
   REPO_DIR="$DOTFILES_DIR"
 fi
-
-# Remove old symlinks (fresh start)
 for _d in "$REPO_DIR/.config"/*/; do
   rm -f "$HOME/.config/$(basename "$_d")"
 done
 rm -f "$HOME/.zshrc" "$HOME/.hyper.js"
-
-# Create symlinks
 mkdir -p "$HOME/.config"
 for _d in "$REPO_DIR/.config"/*/; do
   _name="$(basename "$_d")"
   ln -sf "$REPO_DIR/.config/$_name" "$HOME/.config/$_name"
+  done_msg "~/.config/$_name"
 done
 ln -sf "$REPO_DIR/.zshrc" "$HOME/.zshrc"
+done_msg "~/.zshrc"
 ln -sf "$REPO_DIR/.hyper.js" "$HOME/.hyper.js"
-
-echo "✅ Dotfiles symlinked"
+done_msg "~/.hyper.js"
 
 # ========== Hush Login ==========
-[ ! -f "$HOME/.hushlogin" ] && touch "$HOME/.hushlogin" && echo "✅ .hushlogin created (suppresses 'Last login' message)"
+[ ! -f "$HOME/.hushlogin" ] && touch "$HOME/.hushlogin" && done_msg ".hushlogin created"
 
-# ========== Cleanup Shell Profiles ==========
-# Remove entries added by installers (cargo, nvm) — everything is in .zshrc
-echo "==> Cleaning up shell profile files..."
+# ========== Shell Cleanup ==========
+step "Cleaning up shell profiles"
 for _f in "$HOME/.zprofile" "$HOME/.zshenv" "$HOME/.profile" "$HOME/.bash_profile" "$HOME/.bashrc"; do
   [ -f "$_f" ] || continue
   grep -qE 'cargo/env|NVM_DIR|nvm\.sh|bun\.sh|BUN_INSTALL|_bun' "$_f" 2>/dev/null || continue
@@ -402,103 +555,96 @@ for _f in "$HOME/.zprofile" "$HOME/.zshenv" "$HOME/.profile" "$HOME/.bash_profil
   else
     rm -f "${_f}.tmp" "$_f"
   fi
-  echo "   Cleaned: $_f"
+  done_msg "Cleaned: $(basename "$_f")"
 done
-echo "✅ Shell profiles cleaned"
+done_msg "Shell profiles clean"
 
-# ========== Tmux Plugin Manager ==========
-TPM_DIR="$HOME/.config/tmux/plugins/tpm"
-if [ ! -d "$TPM_DIR" ]; then
-  echo "==> Installing TPM..."
-  git clone https://github.com/tmux-plugins/tpm "$TPM_DIR"
-fi
-echo "==> Installing Tmux plugins..."
-if [ -x "$TPM_DIR/bin/install_plugins" ]; then
-  "$TPM_DIR/bin/install_plugins"
-else
-  echo "⚠️ TPM install_plugins not found, skipping..."
+# ========== Tmux Plugins ==========
+if command -v tmux &>/dev/null; then
+  step "Setting up Tmux plugins"
+  TPM_DIR="$HOME/.config/tmux/plugins/tpm"
+  if [ ! -d "$TPM_DIR" ]; then
+    info_msg "Installing TPM..."
+    git clone https://github.com/tmux-plugins/tpm "$TPM_DIR"
+    done_msg "TPM installed"
+  else
+    done_msg "TPM already installed"
+  fi
+  if [ -x "$TPM_DIR/bin/install_plugins" ]; then
+    "$TPM_DIR/bin/install_plugins"
+    done_msg "Tmux plugins installed"
+  else
+    warn_msg "TPM install_plugins not found"
+  fi
 fi
 
 # ========== Git Config ==========
+step "Checking Git config"
 GIT_NAME_SET=$(git config --global user.name 2>/dev/null || true)
 GIT_EMAIL_SET=$(git config --global user.email 2>/dev/null || true)
 if [ -z "$GIT_NAME_SET" ] || [ -z "$GIT_EMAIL_SET" ]; then
-  echo "==> Configuring Git..."
-  if [ -t 0 ] || [ -c /dev/tty ]; then
-    if confirm "Configure Git user name and email?"; then
-      printf "   Enter your Git name: " && read -r GIT_NAME < /dev/tty
-      printf "   Enter your Git email: " && read -r GIT_EMAIL < /dev/tty
-      git config --global user.name "$GIT_NAME"
-      git config --global user.email "$GIT_EMAIL"
-      echo "✅ Git config set"
-    else
-      echo "⏭️  Git config skipped"
-    fi
+  if confirm "Configure Git user name and email?"; then
+    printf "    Enter your Git name: " && read -r GIT_NAME < /dev/tty
+    printf "    Enter your Git email: " && read -r GIT_EMAIL < /dev/tty
+    git config --global user.name "$GIT_NAME"
+    git config --global user.email "$GIT_EMAIL"
+    done_msg "Git config set"
   else
-    echo "⚠️  Git config skipped (no terminal available)"
+    warn_msg "Git config skipped"
   fi
 else
-  echo "✅ Git already configured: $GIT_NAME_SET <$GIT_EMAIL_SET>"
+  done_msg "Git configured: $GIT_NAME_SET <$GIT_EMAIL_SET>"
 fi
 
-# ========== Set Zsh as Default Shell ==========
+# ========== Default Shell ==========
 if [ "$SHELL" != "$(which zsh)" ]; then
-  echo "==> Setting zsh as default shell..."
-  chsh -s "$(which zsh)" || echo "⚠️  chsh failed. Run: chsh -s $(which zsh)"
+  step "Setting zsh as default shell"
+  chsh -s "$(which zsh)" || warn_msg "chsh failed"
 fi
 
-# ========== Sui Move Analyzer ==========
-if [ ! -f "$HOME/.cargo/bin/sui-move-analyzer" ]; then
-  SUI_INSTALL="no"
-  if [ -t 0 ] || [ -c /dev/tty ]; then
-    if confirm "Install sui-move-analyzer in background? (takes ~10min)"; then
-      SUI_INSTALL="yes"
+# ========== 10: sui-move-analyzer ==========
+if [ "${SELECTED[10]}" = "1" ]; then
+  step "Checking sui-move-analyzer"
+  if [ ! -f "$HOME/.cargo/bin/sui-move-analyzer" ]; then
+    if command -v cargo &>/dev/null; then
+      if tmux has-session -t sui-install 2>/dev/null; then
+        warn_msg "Session 'sui-install' already running"
+        echo -e "  ${DIM}Monitor:  tmux attach -t sui-install${NC}"
+      else
+        info_msg "Spawning in tmux background session..."
+        tmux new-session -d -s sui-install -n "sui-move-analyzer" \
+          "cargo install --git https://github.com/movebit/sui-move-analyzer.git sui-move-analyzer; \
+           echo ''; \
+           echo '✅ sui-move-analyzer installed!'; \
+           read -r _dummy"
+        done_msg "Install started in background"
+        echo -e "  ${DIM}Monitor:  tmux attach -t sui-install${NC}"
+        echo -e "  ${DIM}Detach:   Ctrl+b then d${NC}"
+      fi
+    else
+      warn_msg "Rust not installed, skipping sui-move-analyzer"
     fi
   else
-    echo "⚠️  Skipping sui-move-analyzer (no terminal available)."
+    done_msg "sui-move-analyzer already installed"
   fi
-
-  if [ "$SUI_INSTALL" = "yes" ]; then
-    echo "==> Spawning sui-move-analyzer install in tmux background session..."
-    tmux new-session -d -s sui-install -n "sui-move-analyzer" \
-      "cargo install --git https://github.com/movebit/sui-move-analyzer.git sui-move-analyzer; \
-       echo ''; \
-       echo '✅ sui-move-analyzer installed! You can close this window.'; \
-       read -r _dummy"
-    echo "✅ Install started in background!"
-    echo "   Monitor progress : tmux attach -t sui-install"
-    echo "   Detach from tmux : Ctrl+b then d"
-  else
-    echo "⏭️  Skipping sui-move-analyzer."
-    echo "   To install later, run:"
-    echo "   cargo install --git https://github.com/movebit/sui-move-analyzer.git sui-move-analyzer"
-  fi
-else
-  echo "✅ sui-move-analyzer already installed"
 fi
-
-# ========== Post-Installation Setup ==========
-echo ""
-echo "================================================"
-echo "✅ Installation Complete!"
-echo "================================================"
-echo ""
-echo "🔧 Post-Installation Steps:"
-echo ""
-echo "Yabai:"
-echo "  1. Configure scripting addition (if using SIP disabled):"
-echo "     echo \"\$(whoami) ALL=(root) NOPASSWD: sha256:\$(shasum -a 256 \$(which yabai) | cut -d \" \" -f 1) \$(which yabai) --load-sa\" | sudo tee /private/etc/sudoers.d/yabai"
-echo "  2. Make sure yabairc has: yabai -m signal --add event=dock_did_restart action='sudo yabai --load-sa'"
-echo "  3. Run: yabai --start-service"
-echo "  4. When prompted, allow Yabai in System Settings → Privacy & Security → Accessibility"
-echo ""
-echo "Skhd:"
-echo "  1. Run: skhd --start-service"
-echo "  2. When prompted, allow Skhd in System Settings → Privacy & Security → Accessibility"
-echo "  3. Disable 'Secure Keyboard Entry' in Terminal/other apps if needed"
-echo ""
 
 # ========== Done ==========
 echo ""
-echo "✅ Setup complete!"
-echo "👉 Please restart your terminal or run: exec zsh"
+echo -e "${BOLD}${GREEN}╔══════════════════════════════════════════════════╗${NC}"
+echo -e "${BOLD}${GREEN}║           ✓ Installation complete!               ║${NC}"
+echo -e "${BOLD}${GREEN}╚══════════════════════════════════════════════════╝${NC}"
+echo ""
+if [ "${SELECTED[5]}" = "1" ]; then
+  echo -e "  ${CYAN}Yabai:${NC}"
+  echo -e "    ${DIM}1. echo \"\$(whoami) ALL=(root) NOPASSWD: sha256:\$(shasum -a 256 \$(which yabai) | cut -d \" \" -f 1) \$(which yabai) --load-sa\" | sudo tee /private/etc/sudoers.d/yabai${NC}"
+  echo -e "    ${DIM}2. yabai --start-service${NC}"
+  echo -e "    ${DIM}3. Allow in System Settings > Privacy & Security > Accessibility${NC}"
+  echo ""
+  echo -e "  ${CYAN}Skhd:${NC}"
+  echo -e "    ${DIM}1. skhd --start-service${NC}"
+  echo -e "    ${DIM}2. Allow in System Settings > Privacy & Security > Accessibility${NC}"
+  echo ""
+fi
+echo -e "  ${DIM}👉 Restart your terminal or run: exec zsh${NC}"
+echo ""
