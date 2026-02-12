@@ -171,6 +171,13 @@ DESCRIPTIONS+=("Sui Move language server (~10min)")
 SELECTED+=(1)
 [ -f "$HOME/.cargo/bin/sui-move-analyzer" ] && STATUS+=("installed") || STATUS+=("")
 
+# 12: macOS Defaults
+LABELS+=("macOS Defaults")
+DESCRIPTIONS+=("Key repeat, Finder tweaks, no smart quotes")
+SELECTED+=(1)
+_press_hold=$(defaults read -g ApplePressAndHoldEnabled 2>/dev/null || echo "1")
+[ "$_press_hold" = "0" ] && STATUS+=("applied") || STATUS+=("")
+
 _total=${#LABELS[@]}
 
 # ========== Draw Menu ==========
@@ -595,6 +602,12 @@ if [ "${SELECTED[10]}" = "1" ]; then
   else
     done_msg "Rust already installed: $("$HOME/.cargo/bin/rustc" --version)"
   fi
+fi
+
+# ========== 12: macOS Defaults ==========
+if [ "${SELECTED[12]}" = "1" ]; then
+  step "Applying macOS defaults"
+  bash "$DOTFILES_DIR/macos-defaults.sh"
 fi
 
 # ══════════════════════════════════════════════════
