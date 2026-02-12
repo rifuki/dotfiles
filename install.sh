@@ -449,11 +449,25 @@ if [ "${SELECTED[5]}" = "1" ]; then
 
     # Auto-detect .ssh in iCloud
     if [ -d "$_icloud_base" ]; then
-      _found=$(find "$_icloud_base" -maxdepth 3 -type d -name ".ssh" 2>/dev/null | head -1)
-      if [ -n "$_found" ]; then
-        info_msg "Found .ssh at: $_found"
+      _ssh_results=()
+      while IFS= read -r _line; do
+        _ssh_results+=("$_line")
+      done < <(find "$_icloud_base" -maxdepth 3 -type d -name ".ssh" 2>/dev/null)
+
+      if [ ${#_ssh_results[@]} -eq 1 ]; then
+        info_msg "Found .ssh at: ${_ssh_results[0]}"
         if confirm "Use this path?"; then
-          _ssh_path="$_found"
+          _ssh_path="${_ssh_results[0]}"
+        fi
+      elif [ ${#_ssh_results[@]} -gt 1 ]; then
+        info_msg "Found ${#_ssh_results[@]} .ssh folders in iCloud:"
+        for (( _si=0; _si<${#_ssh_results[@]}; _si++ )); do
+          echo -e "    ${BOLD}$((_si + 1)).${NC} ${_ssh_results[$_si]}"
+        done
+        printf "    Pick a number (or Enter to skip): "
+        read -r _pick < /dev/tty
+        if [[ "$_pick" =~ ^[0-9]+$ ]] && [ "$_pick" -ge 1 ] && [ "$_pick" -le ${#_ssh_results[@]} ]; then
+          _ssh_path="${_ssh_results[$((_pick - 1))]}"
         fi
       fi
     fi
@@ -480,6 +494,11 @@ if [ "${SELECTED[5]}" = "1" ]; then
       if [ -n "$_ssh_path" ]; then
         ln -sf "$_ssh_path" "$HOME/.ssh"
         chmod 700 "$HOME/.ssh"
+
+        # Fix SSH permissions
+        find "$HOME/.ssh" -type f ! -name "*.pub" ! -name "known_hosts*" -exec chmod 600 {} \; 2>/dev/null || true
+        find "$HOME/.ssh" -type f -name "*.pub" -exec chmod 644 {} \; 2>/dev/null || true
+
         done_msg "~/.ssh → $_ssh_path"
       fi
     elif [ -n "$_ssh_path" ]; then
