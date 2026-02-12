@@ -4,7 +4,7 @@ set -e
 # ========== Packages ==========
 BREW_FORMULAE=(neovim tmux trash htop neofetch yazi gh ripgrep starship yabai skhd)
 BREW_CASKS=(ghostty orbstack cloudflare-warp hot google-chrome font-jetbrains-mono-nerd-font)
-TOOL_NAMES=(nvim starship ghostty yazi tmux neofetch wakatime orbstack yabai skhd sui gh ripgrep trash htop hot)
+TOOL_NAMES=(nvim starship ghostty yazi tmux neofetch wakatime orbstack yabai skhd sui suiup walrus mvr gh ripgrep trash htop hot)
 
 # ========== Colors ==========
 RED='\033[0;31m'
@@ -279,6 +279,11 @@ if [ "${SELECTED[6]}" = "1" ]; then
   done
   rm -rf "$HOME/.sui"
   done_msg "~/.sui removed"
+  for _xdir in "$HOME/.cache" "$HOME/.local/share" "$HOME/.local/state" "$HOME/.config"; do
+    for _bin in suiup sui walrus mvr; do
+      [ -e "$_xdir/$_bin" ] && rm -rf "$_xdir/$_bin" && done_msg "Removed $_xdir/$_bin" || true
+    done
+  done
 fi
 
 # ========== Deep Clean (index 7) ==========
@@ -286,7 +291,7 @@ if [ "${SELECTED[7]}" = "1" ]; then
   step "Deep cleaning residue files"
 
   # XDG directories
-  for _dir in "$HOME/.cache" "$HOME/.local/share" "$HOME/.local/state"; do
+  for _dir in "$HOME/.cache" "$HOME/.local/share" "$HOME/.local/state" "$HOME/.config"; do
     for _tool in "${TOOL_NAMES[@]}"; do
       if [ -e "$_dir/$_tool" ]; then
         rm -rf "$_dir/$_tool"
@@ -295,8 +300,7 @@ if [ "${SELECTED[7]}" = "1" ]; then
     done
   done
 
-  # Tool config in .config
-  rm -rf "$HOME/.config/gh"
+  # Tool config in .config (not covered by TOOL_NAMES)
   rm -rf "$HOME/.config/git"
 
   # Dotfiles in $HOME

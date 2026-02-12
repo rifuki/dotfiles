@@ -111,23 +111,23 @@ DESCRIPTIONS+=("Ghostty terminal + JetBrainsMono")
 SELECTED+=(1)
 [ -d "/Applications/Ghostty.app" ] && STATUS+=("installed") || STATUS+=("")
 
-# 3: OrbStack
-LABELS+=("OrbStack")
-DESCRIPTIONS+=("Docker & Linux VM runtime")
-SELECTED+=(1)
-[ -d "/Applications/OrbStack.app" ] && STATUS+=("installed") || STATUS+=("")
-
-# 4: Cloudflare WARP + Hot
+# 3: Cloudflare WARP + Hot
 LABELS+=("Cloudflare WARP + Hot")
 DESCRIPTIONS+=("Menu bar: VPN + thermal monitor")
 SELECTED+=(1)
 [ -d "/Applications/Cloudflare WARP.app" ] && STATUS+=("installed") || STATUS+=("")
 
-# 5: Google Chrome
+# 4: Google Chrome
 LABELS+=("Google Chrome")
 DESCRIPTIONS+=("Browser")
 SELECTED+=(1)
 [ -d "/Applications/Google Chrome.app" ] && STATUS+=("installed") || STATUS+=("")
+
+# 5: OrbStack
+LABELS+=("OrbStack")
+DESCRIPTIONS+=("Docker & Linux VM runtime")
+SELECTED+=(1)
+[ -d "/Applications/OrbStack.app" ] && STATUS+=("installed") || STATUS+=("")
 
 # 6: Oh My Zsh
 LABELS+=("Oh My Zsh")
@@ -430,20 +430,8 @@ if [ "${SELECTED[2]}" = "1" ]; then
   fi
 fi
 
-# ========== 3: OrbStack ==========
+# ========== 3: Cloudflare WARP + Hot ==========
 if [ "${SELECTED[3]}" = "1" ]; then
-  step "Installing OrbStack"
-  if [ ! -d "/Applications/OrbStack.app" ]; then
-    info_msg "Installing OrbStack..."
-    brew install --cask orbstack
-    done_msg "OrbStack installed"
-  else
-    done_msg "OrbStack already installed"
-  fi
-fi
-
-# ========== 4: Cloudflare WARP + Hot ==========
-if [ "${SELECTED[4]}" = "1" ]; then
   step "Installing menu bar apps"
   if [ ! -d "/Applications/Cloudflare WARP.app" ]; then
     info_msg "Installing Cloudflare WARP..."
@@ -461,8 +449,8 @@ if [ "${SELECTED[4]}" = "1" ]; then
   fi
 fi
 
-# ========== 5: Google Chrome ==========
-if [ "${SELECTED[5]}" = "1" ]; then
+# ========== 4: Google Chrome ==========
+if [ "${SELECTED[4]}" = "1" ]; then
   step "Installing Google Chrome"
   if [ ! -d "/Applications/Google Chrome.app" ]; then
     info_msg "Installing Google Chrome..."
@@ -470,6 +458,18 @@ if [ "${SELECTED[5]}" = "1" ]; then
     done_msg "Google Chrome installed"
   else
     done_msg "Google Chrome already installed"
+  fi
+fi
+
+# ========== 5: OrbStack ==========
+if [ "${SELECTED[5]}" = "1" ]; then
+  step "Installing OrbStack"
+  if [ ! -d "/Applications/OrbStack.app" ]; then
+    info_msg "Installing OrbStack..."
+    brew install --cask orbstack
+    done_msg "OrbStack installed"
+  else
+    done_msg "OrbStack already installed"
   fi
 fi
 
