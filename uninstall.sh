@@ -3,7 +3,7 @@ set -e
 
 # ========== Packages ==========
 BREW_FORMULAE=(neovim tmux trash htop neofetch yazi gh ripgrep starship)
-TOOL_NAMES=(nvim starship ghostty yazi tmux neofetch wakatime orbstack yabai skhd solana anchor sui suiup walrus mvr gh ripgrep trash htop hot)
+TOOL_NAMES=(nvim starship ghostty yazi tmux neofetch wakatime orbstack yabai skhd solana anchor claude gemini sui suiup walrus mvr gh ripgrep trash htop hot)
 
 # ========== Colors ==========
 RED='\033[0;31m'
@@ -113,12 +113,17 @@ LABELS+=("sui-move-analyzer")
 DESCRIPTIONS+=("~/.cargo/bin/sui-move-analyzer")
 if [ -f "$HOME/.cargo/bin/sui-move-analyzer" ]; then DETECTED+=(1); SELECTED+=(1); else DETECTED+=(0); SELECTED+=(0); fi
 
-# 13: SSH Keys (iCloud)
+# 13: AI CLI Tools
+LABELS+=("AI CLI Tools")
+DESCRIPTIONS+=("Claude Code + Gemini CLI")
+if command -v claude &>/dev/null || command -v gemini &>/dev/null; then DETECTED+=(1); SELECTED+=(1); else DETECTED+=(0); SELECTED+=(0); fi
+
+# 14: SSH Keys (iCloud)
 LABELS+=("SSH Keys (iCloud)")
 DESCRIPTIONS+=("~/.ssh symlink only")
 if [ -L "$HOME/.ssh" ]; then DETECTED+=(1); SELECTED+=(1); else DETECTED+=(0); SELECTED+=(0); fi
 
-# 14: Deep Clean
+# 15: Deep Clean
 LABELS+=("Deep Clean")
 DESCRIPTIONS+=(".cache, .local, .npm, .wakatime, .gitconfig")
 DETECTED+=(1); SELECTED+=(1)
@@ -368,8 +373,24 @@ if [ "${SELECTED[12]}" = "1" ]; then
   done_msg "sui-move-analyzer removed"
 fi
 
-# ========== SSH Keys (index 13) ==========
+# ========== AI CLI Tools (index 13) ==========
 if [ "${SELECTED[13]}" = "1" ]; then
+  step "Removing AI CLI Tools"
+  if brew list --cask claude-code &>/dev/null; then
+    brew uninstall --cask claude-code && done_msg "Claude Code removed" || warn_msg "Failed to remove Claude Code"
+  fi
+  rm -f "$HOME/.local/bin/claude"
+  rm -rf "$HOME/.local/share/claude"
+  done_msg "Claude Code files removed"
+  if brew list gemini-cli &>/dev/null; then
+    brew uninstall gemini-cli && done_msg "Gemini CLI removed" || warn_msg "Failed to remove Gemini CLI"
+  fi
+  rm -rf "$HOME/.gemini"
+  done_msg "Gemini CLI files removed"
+fi
+
+# ========== SSH Keys (index 14) ==========
+if [ "${SELECTED[14]}" = "1" ]; then
   step "Removing SSH Keys symlink"
   if [ -L "$HOME/.ssh" ]; then
     rm -f "$HOME/.ssh"
@@ -386,8 +407,8 @@ rm -f "$HOME/.node_repl_history"
 rm -rf "$HOME/.config/github-copilot" 2>/dev/null || true
 done_msg "Cache files removed"
 
-# ========== Deep Clean (index 14) ==========
-if [ "${SELECTED[14]}" = "1" ]; then
+# ========== Deep Clean (index 15) ==========
+if [ "${SELECTED[15]}" = "1" ]; then
   step "Deep cleaning residue files"
 
   # XDG directories
@@ -414,6 +435,8 @@ if [ "${SELECTED[14]}" = "1" ]; then
   rm -rf "$HOME/.npm"
   rm -rf "$HOME/.orbstack"
   rm -rf "$HOME/OrbStack"
+  rm -rf "$HOME/.claude"
+  rm -f "$HOME/.claude.json"
   rm -f "$HOME/.viminfo"
 
   done_msg "Residue files removed"

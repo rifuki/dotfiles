@@ -169,7 +169,7 @@ SELECTED+=(1)
 LABELS+=("Solana + AVM")
 DESCRIPTIONS+=("Solana CLI + Anchor Version Manager")
 SELECTED+=(1)
-command -v solana &>/dev/null && STATUS+=("installed") || STATUS+=("")
+if command -v solana &>/dev/null || [ -f "$HOME/.local/share/solana/install/active_release/bin/solana" ]; then STATUS+=("installed"); else STATUS+=(""); fi
 
 # 11: suiup + Sui Testnet
 LABELS+=("suiup + Sui Testnet")
@@ -183,7 +183,15 @@ DESCRIPTIONS+=("Sui Move language server (~10min)")
 SELECTED+=(1)
 [ -f "$HOME/.cargo/bin/sui-move-analyzer" ] && STATUS+=("installed") || STATUS+=("")
 
-# 13: SSH Keys (iCloud)
+# 13: AI CLI Tools
+LABELS+=("AI CLI Tools")
+DESCRIPTIONS+=("Claude Code + Gemini CLI")
+SELECTED+=(1)
+if command -v claude &>/dev/null && command -v gemini &>/dev/null; then STATUS+=("installed")
+elif command -v claude &>/dev/null || command -v gemini &>/dev/null; then STATUS+=("partial")
+else STATUS+=(""); fi
+
+# 14: SSH Keys (iCloud)
 LABELS+=("SSH Keys (iCloud)")
 DESCRIPTIONS+=("Symlink ~/.ssh from iCloud Drive")
 _icloud_base="$HOME/Library/Mobile Documents/com~apple~CloudDocs"
@@ -195,7 +203,7 @@ else
   SELECTED+=(0); STATUS+=("iCloud not found")
 fi
 
-# 14: macOS Defaults
+# 15: macOS Defaults
 LABELS+=("macOS Defaults")
 DESCRIPTIONS+=("Key repeat, Finder tweaks, no smart quotes")
 SELECTED+=(1)
@@ -583,15 +591,14 @@ fi
 if [ "${SELECTED[10]}" = "1" ]; then
   step "Installing Solana + AVM"
   _solana_bin="$HOME/.local/share/solana/install/active_release/bin"
-  if ! command -v solana &>/dev/null; then
+  if [ ! -f "$_solana_bin/solana" ]; then
     info_msg "Installing Solana CLI..."
     sh -c "$(curl -sSfL https://release.anza.xyz/stable/install)"
-    export PATH="$_solana_bin:$PATH"
-    done_msg "Solana CLI installed: $(solana --version 2>/dev/null | head -1)"
+    done_msg "Solana CLI installed: $("$_solana_bin/solana" --version 2>/dev/null | head -1)"
   else
-    export PATH="$_solana_bin:$PATH"
-    done_msg "Solana CLI already installed: $(solana --version 2>/dev/null | head -1)"
+    done_msg "Solana CLI already installed: $("$_solana_bin/solana" --version 2>/dev/null | head -1)"
   fi
+  export PATH="$_solana_bin:$PATH"
   if command -v cargo &>/dev/null; then
     if ! command -v avm &>/dev/null; then
       info_msg "Installing AVM (Anchor Version Manager)..."
@@ -637,8 +644,27 @@ if [ "${SELECTED[11]}" = "1" ]; then
   fi
 fi
 
-# ========== 13: SSH Keys (iCloud) ==========
+# ========== 13: AI CLI Tools ==========
 if [ "${SELECTED[13]}" = "1" ]; then
+  step "Installing AI CLI Tools"
+  if ! command -v claude &>/dev/null; then
+    info_msg "Installing Claude Code..."
+    brew install --cask claude-code
+    done_msg "Claude Code installed"
+  else
+    done_msg "Claude Code already installed"
+  fi
+  if ! command -v gemini &>/dev/null; then
+    info_msg "Installing Gemini CLI..."
+    brew install gemini-cli
+    done_msg "Gemini CLI installed"
+  else
+    done_msg "Gemini CLI already installed"
+  fi
+fi
+
+# ========== 14: SSH Keys (iCloud) ==========
+if [ "${SELECTED[14]}" = "1" ]; then
   step "Setting up SSH keys from iCloud"
   _icloud_base="$HOME/Library/Mobile Documents/com~apple~CloudDocs"
 
@@ -707,8 +733,8 @@ if [ "${SELECTED[13]}" = "1" ]; then
   fi
 fi
 
-# ========== 14: macOS Defaults ==========
-if [ "${SELECTED[14]}" = "1" ]; then
+# ========== 15: macOS Defaults ==========
+if [ "${SELECTED[15]}" = "1" ]; then
   step "Applying macOS defaults"
   bash "$DOTFILES_DIR/macos-defaults.sh"
 fi
