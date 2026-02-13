@@ -4,12 +4,20 @@ set -e
 # ========== Tool Names for Deep Clean ==========
 TOOL_NAMES=(nvim starship yazi tmux neofetch claude gemini gh ripgrep htop)
 
-# ========== Colors ==========
-RED='\033[0;31m'
-GREEN='\033[0;32m'
-YELLOW='\033[0;33m'
-BLUE='\033[0;34m'
-CYAN='\033[0;36m'
+# ========== Colors (Miku Cyberpunk Theme — VPS variant) ==========
+# Cyan: #00D9FF | Green: #50FA7B | Magenta: #FF79C6 | Purple: #BD93F9
+# Teal: #01CBC6 | Orange: #FFB86C | Peach: #F0CAA4 | Gray: #6C757D
+CYAN='\033[38;2;0;217;255m'
+GREEN='\033[38;2;80;250;123m'
+MAGENTA='\033[38;2;255;121;198m'
+PURPLE='\033[38;2;189;147;249m'
+TEAL='\033[38;2;1;203;198m'
+ORANGE='\033[38;2;255;184;108m'
+PEACH='\033[38;2;240;202;164m'
+GRAY='\033[38;2;108;117;125m'
+RED='\033[38;2;255;85;85m'
+YELLOW='\033[38;2;241;250;140m'
+WHITE='\033[38;2;239;241;244m'
 BOLD='\033[1m'
 DIM='\033[2m'
 NC='\033[0m'
@@ -29,7 +37,7 @@ fi
 # ========== Helpers ==========
 step()     { echo -e "\n${BOLD}${CYAN}  ◆ $1${NC}"; }
 done_msg() { echo -e "  ${GREEN}✔${NC} $1"; }
-warn_msg() { echo -e "  ${YELLOW}▸${NC} $1"; }
+warn_msg() { echo -e "  ${PEACH}▸${NC} $1"; }
 
 # ========== Detect Installed Components ==========
 LABELS=()
@@ -113,13 +121,13 @@ _total=${#LABELS[@]}
 # ========== Draw Menu ==========
 draw_menu() {
   echo ""
-  echo -e "${BOLD}${CYAN}╔══════════════════════════════════════════════════╗${NC}"
-  echo -e "${BOLD}${CYAN}║           dotfiles uninstaller — VPS             ║${NC}"
-  echo -e "${BOLD}${CYAN}╚══════════════════════════════════════════════════╝${NC}"
+  echo -e "${BOLD}${MAGENTA}╔══════════════════════════════════════════════════╗${NC}"
+  echo -e "${BOLD}${MAGENTA}║           dotfiles uninstaller — VPS             ║${NC}"
+  echo -e "${BOLD}${MAGENTA}╚══════════════════════════════════════════════════╝${NC}"
   echo ""
-  echo -e "  ${YELLOW}⚠${NC}  ${DIM}Recommended: Close all terminal sessions before proceeding${NC}"
+  echo -e "  ${PEACH}⚠${NC}  ${DIM}Recommended: Close all terminal sessions before proceeding${NC}"
   echo ""
-  echo -e "  ${BOLD}Select components to remove:${NC}"
+  echo -e "  ${BOLD}${CYAN}Select components to remove:${NC}"
   echo ""
   for (( i=0; i<_total; i++ )); do
     local _num; _num=$(printf "%2d" $((i + 1)))
@@ -127,17 +135,17 @@ draw_menu() {
     if [ "${DETECTED[$i]}" = "0" ]; then
       echo -e "    ${DIM}${_num}. [ ] ${_label} —  not found${NC}"
     elif [ "${SELECTED[$i]}" = "1" ]; then
-      echo -e "    ${GREEN}${_num}. [x] ${_label}${NC} ${DIM}${DESCRIPTIONS[$i]}${NC}"
+      echo -e "    ${CYAN}${_num}. [x] ${_label}${NC} ${DIM}${DESCRIPTIONS[$i]}${NC}"
     else
-      echo -e "    ${_num}. [ ] ${_label} ${DIM}${DESCRIPTIONS[$i]}${NC}"
+      echo -e "    ${GRAY}${_num}. [ ] ${_label}${NC} ${DIM}${DESCRIPTIONS[$i]}${NC}"
     fi
   done
   echo ""
-  echo -e "  ${DIM}Always removed:${NC}"
+  echo -e "  ${GRAY}Always removed:${NC}"
   echo -e "    ${DIM}• Dotfiles symlinks (.zshrc, .config/*)${NC}"
   echo -e "    ${DIM}• Cache files (.zcompdump, .node_repl_history)${NC}"
   echo ""
-  echo -e "  ${DIM}Enter number to toggle  |  ${NC}${BOLD}a${NC}${DIM} = all  |  ${NC}${BOLD}n${NC}${DIM} = none  |  ${NC}${BOLD}Enter${NC}${DIM} = continue  |  ${NC}${BOLD}q${NC}${DIM} = quit${NC}"
+  echo -e "  ${GRAY}Enter number to toggle  |  ${NC}${BOLD}${CYAN}a${NC}${GRAY} = all  |  ${NC}${BOLD}${CYAN}n${NC}${GRAY} = none  |  ${NC}${BOLD}${CYAN}Enter${NC}${GRAY} = continue  |  ${NC}${BOLD}${CYAN}q${NC}${GRAY} = quit${NC}"
   echo ""
 }
 
@@ -172,7 +180,7 @@ done
 
 # ========== Confirmation Summary ==========
 echo ""
-echo -e "  ${BOLD}Will be removed:${NC}"
+echo -e "  ${BOLD}${MAGENTA}Will be removed:${NC}"
 for (( i=0; i<_total; i++ )); do
   if [ "${SELECTED[$i]}" = "1" ]; then
     echo -e "    ${RED}✗${NC} ${LABELS[$i]}  ${DIM}${DESCRIPTIONS[$i]}${NC}"
@@ -182,7 +190,7 @@ echo -e "    ${RED}✗${NC} Dotfiles symlinks"
 echo -e "    ${RED}✗${NC} Cache files"
 echo ""
 
-printf "  ${BOLD}Proceed with uninstallation?${NC} [y/n]: "
+printf "  ${BOLD}${MAGENTA}Proceed with uninstallation?${NC} [y/n]: "
 read -r _confirm < /dev/tty
 case "$_confirm" in
   [yY]|[yY][eE][sS]) ;;
@@ -420,9 +428,9 @@ fi
 
 # ========== Done ==========
 echo ""
-echo -e "${BOLD}${GREEN}╔══════════════════════════════════════════════════╗${NC}"
-echo -e "${BOLD}${GREEN}║           ✓ Uninstallation complete!             ║${NC}"
-echo -e "${BOLD}${GREEN}╚══════════════════════════════════════════════════╝${NC}"
+echo -e "${BOLD}${MAGENTA}╔══════════════════════════════════════════════════╗${NC}"
+echo -e "${BOLD}${MAGENTA}║           ✓ Uninstallation complete!             ║${NC}"
+echo -e "${BOLD}${MAGENTA}╚══════════════════════════════════════════════════╝${NC}"
 echo ""
 [ "$_did_backup" = "1" ] && echo -e "  ${CYAN}📦${NC} Backup: ${CYAN}$UNINSTALL_BACKUP_DIR${NC}"
 echo -e "  ${DIM}👉 Restart your terminal or run: exec bash${NC}"

@@ -1,12 +1,20 @@
 #!/bin/bash
 set -e
 
-# ========== Colors ==========
-RED='\033[0;31m'
-GREEN='\033[0;32m'
-YELLOW='\033[0;33m'
-BLUE='\033[0;34m'
-CYAN='\033[0;36m'
+# ========== Colors (Miku Cyberpunk Theme — VPS variant) ==========
+# Cyan: #00D9FF | Green: #50FA7B | Magenta: #FF79C6 | Purple: #BD93F9
+# Teal: #01CBC6 | Orange: #FFB86C | Peach: #F0CAA4 | Gray: #6C757D
+CYAN='\033[38;2;0;217;255m'
+GREEN='\033[38;2;80;250;123m'
+MAGENTA='\033[38;2;255;121;198m'
+PURPLE='\033[38;2;189;147;249m'
+TEAL='\033[38;2;1;203;198m'
+ORANGE='\033[38;2;255;184;108m'
+PEACH='\033[38;2;240;202;164m'
+GRAY='\033[38;2;108;117;125m'
+RED='\033[38;2;255;85;85m'
+YELLOW='\033[38;2;241;250;140m'
+WHITE='\033[38;2;239;241;244m'
 BOLD='\033[1m'
 DIM='\033[2m'
 NC='\033[0m'
@@ -14,8 +22,8 @@ NC='\033[0m'
 # ========== Helpers ==========
 step()     { echo -e "\n${BOLD}${CYAN}  ◆ $1${NC}"; }
 done_msg() { echo -e "  ${GREEN}✔${NC} $1"; }
-info_msg() { echo -e "  ${BLUE}▸${NC} $1"; }
-warn_msg() { echo -e "  ${YELLOW}▸${NC} $1"; }
+info_msg() { echo -e "  ${CYAN}▸${NC} $1"; }
+warn_msg() { echo -e "  ${PEACH}▸${NC} $1"; }
 fail_msg() { echo -e "  ${RED}✖${NC} $1"; }
 
 confirm() {
@@ -137,30 +145,30 @@ _total=${#LABELS[@]}
 # ========== Draw Menu ==========
 draw_menu() {
   echo ""
-  echo -e "${BOLD}${CYAN}╔══════════════════════════════════════════════════╗${NC}"
-  echo -e "${BOLD}${CYAN}║            dotfiles installer — VPS              ║${NC}"
-  echo -e "${BOLD}${CYAN}╚══════════════════════════════════════════════════╝${NC}"
+  echo -e "${BOLD}${MAGENTA}╔══════════════════════════════════════════════════╗${NC}"
+  echo -e "${BOLD}${MAGENTA}║            dotfiles installer — VPS              ║${NC}"
+  echo -e "${BOLD}${MAGENTA}╚══════════════════════════════════════════════════╝${NC}"
   echo ""
-  echo -e "  ${BOLD}Select components to install:${NC}"
+  echo -e "  ${BOLD}${CYAN}Select components to install:${NC}"
   echo ""
   for (( i=0; i<_total; i++ )); do
     local _num; _num=$(printf "%2d" $((i + 1)))
     local _label; _label=$(printf "%-22s" "${LABELS[$i]}")
     local _status=""
-    [ -n "${STATUS[$i]}" ] && _status=" ${GREEN}(${STATUS[$i]})${NC}"
+    [ -n "${STATUS[$i]}" ] && _status=" ${TEAL}(${STATUS[$i]})${NC}"
     if [ "${SELECTED[$i]}" = "1" ]; then
-      echo -e "    ${GREEN}${_num}. [x] ${_label}${NC} ${DIM}${DESCRIPTIONS[$i]}${NC}${_status}"
+      echo -e "    ${CYAN}${_num}. [x] ${_label}${NC} ${DIM}${DESCRIPTIONS[$i]}${NC}${_status}"
     else
-      echo -e "    ${_num}. [ ] ${_label} ${DIM}${DESCRIPTIONS[$i]}${NC}${_status}"
+      echo -e "    ${GRAY}${_num}. [ ] ${_label}${NC} ${DIM}${DESCRIPTIONS[$i]}${NC}${_status}"
     fi
   done
   echo ""
-  echo -e "  ${DIM}Always included:${NC}"
+  echo -e "  ${GRAY}Always included:${NC}"
   echo -e "    ${DIM}• System update, Dotfiles repo${NC}"
   echo -e "    ${DIM}• Backup, Symlinks, Shell cleanup, Git config${NC}"
   echo -e "    ${DIM}• Zsh as default shell + bashrc fallback${NC}"
   echo ""
-  echo -e "  ${DIM}Enter number to toggle  |  ${NC}${BOLD}a${NC}${DIM} = all  |  ${NC}${BOLD}n${NC}${DIM} = none  |  ${NC}${BOLD}Enter${NC}${DIM} = continue  |  ${NC}${BOLD}q${NC}${DIM} = quit${NC}"
+  echo -e "  ${GRAY}Enter number to toggle  |  ${NC}${BOLD}${CYAN}a${NC}${GRAY} = all  |  ${NC}${BOLD}${CYAN}n${NC}${GRAY} = none  |  ${NC}${BOLD}${CYAN}Enter${NC}${GRAY} = continue  |  ${NC}${BOLD}${CYAN}q${NC}${GRAY} = quit${NC}"
   echo ""
 }
 
@@ -193,7 +201,7 @@ done
 
 # ========== Confirmation ==========
 echo ""
-echo -e "  ${BOLD}Will be installed:${NC}"
+echo -e "  ${BOLD}${MAGENTA}Will be installed:${NC}"
 for (( i=0; i<_total; i++ )); do
   if [ "${SELECTED[$i]}" = "1" ]; then
     echo -e "    ${GREEN}+${NC} ${LABELS[$i]}  ${DIM}${DESCRIPTIONS[$i]}${NC}"
@@ -202,7 +210,7 @@ done
 echo -e "    ${GREEN}+${NC} System update, Dotfiles, Symlinks  ${DIM}(always)${NC}"
 echo ""
 
-printf "  ${BOLD}Proceed with installation?${NC} [y/n]: "
+printf "  ${BOLD}${MAGENTA}Proceed with installation?${NC} [y/n]: "
 read -r _confirm < /dev/tty
 case "$_confirm" in
   [yY]|[yY][eE][sS]) ;;
@@ -687,9 +695,9 @@ fi
 
 # ========== Done ==========
 echo ""
-echo -e "${BOLD}${GREEN}╔══════════════════════════════════════════════════╗${NC}"
-echo -e "${BOLD}${GREEN}║           ✓ Installation complete!               ║${NC}"
-echo -e "${BOLD}${GREEN}╚══════════════════════════════════════════════════╝${NC}"
+echo -e "${BOLD}${MAGENTA}╔══════════════════════════════════════════════════╗${NC}"
+echo -e "${BOLD}${MAGENTA}║           ✓ Installation complete!               ║${NC}"
+echo -e "${BOLD}${MAGENTA}╚══════════════════════════════════════════════════╝${NC}"
 echo ""
 echo -e "  ${DIM}👉 Restart your terminal or run: exec zsh${NC}"
 echo ""
