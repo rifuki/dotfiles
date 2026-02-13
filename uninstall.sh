@@ -3,7 +3,7 @@ set -e
 
 # ========== Packages ==========
 BREW_FORMULAE=(neovim tmux trash htop neofetch yazi gh ripgrep starship)
-TOOL_NAMES=(nvim starship ghostty yazi tmux neofetch wakatime orbstack yabai skhd sui suiup walrus mvr gh ripgrep trash htop hot)
+TOOL_NAMES=(nvim starship ghostty yazi tmux neofetch wakatime orbstack yabai skhd solana anchor sui suiup walrus mvr gh ripgrep trash htop hot)
 
 # ========== Colors ==========
 RED='\033[0;31m'
@@ -98,22 +98,27 @@ LABELS+=("Rust")
 DESCRIPTIONS+=("~/.cargo, ~/.rustup")
 if [ -d "$HOME/.cargo" ] || [ -d "$HOME/.rustup" ]; then DETECTED+=(1); SELECTED+=(1); else DETECTED+=(0); SELECTED+=(0); fi
 
-# 10: suiup + Sui
+# 10: Solana + AVM
+LABELS+=("Solana + AVM")
+DESCRIPTIONS+=("~/.local/share/solana, ~/.avm")
+if command -v solana &>/dev/null || [ -d "$HOME/.local/share/solana" ]; then DETECTED+=(1); SELECTED+=(1); else DETECTED+=(0); SELECTED+=(0); fi
+
+# 11: suiup + Sui
 LABELS+=("suiup + Sui")
 DESCRIPTIONS+=("~/.local/bin/sui*, ~/.sui")
 if [ -f "$HOME/.local/bin/suiup" ] || [ -d "$HOME/.sui" ]; then DETECTED+=(1); SELECTED+=(1); else DETECTED+=(0); SELECTED+=(0); fi
 
-# 11: sui-move-analyzer
+# 12: sui-move-analyzer
 LABELS+=("sui-move-analyzer")
 DESCRIPTIONS+=("~/.cargo/bin/sui-move-analyzer")
 if [ -f "$HOME/.cargo/bin/sui-move-analyzer" ]; then DETECTED+=(1); SELECTED+=(1); else DETECTED+=(0); SELECTED+=(0); fi
 
-# 12: SSH Keys (iCloud)
+# 13: SSH Keys (iCloud)
 LABELS+=("SSH Keys (iCloud)")
 DESCRIPTIONS+=("~/.ssh symlink only")
 if [ -L "$HOME/.ssh" ]; then DETECTED+=(1); SELECTED+=(1); else DETECTED+=(0); SELECTED+=(0); fi
 
-# 13: Deep Clean
+# 14: Deep Clean
 LABELS+=("Deep Clean")
 DESCRIPTIONS+=(".cache, .local, .npm, .wakatime, .gitconfig")
 DETECTED+=(1); SELECTED+=(1)
@@ -176,10 +181,12 @@ while true; do
     echo -e "\n  ${YELLOW}⏭️  Uninstallation cancelled.${NC}"
     exit 0
   fi
-  # Dependency: Rust (9) selected → auto-select sui-move-analyzer (11) if detected
-  [ "${SELECTED[9]}" = "1" ] && [ "${DETECTED[11]}" = "1" ] && SELECTED[11]=1
-  # Deselect Rust (9) → auto-deselect sui-move-analyzer (11)
-  [ "${SELECTED[9]}" = "0" ] && SELECTED[11]=0
+  # Dependency: Rust (9) selected → auto-select Solana AVM (10) and sui-move-analyzer (12) if detected
+  [ "${SELECTED[9]}" = "1" ] && [ "${DETECTED[10]}" = "1" ] && SELECTED[10]=1
+  [ "${SELECTED[9]}" = "1" ] && [ "${DETECTED[12]}" = "1" ] && SELECTED[12]=1
+  # Deselect Rust (9) → auto-deselect Solana AVM (10) and sui-move-analyzer (12)
+  [ "${SELECTED[9]}" = "0" ] && SELECTED[10]=0
+  [ "${SELECTED[9]}" = "0" ] && SELECTED[12]=0
 done
 
 # ========== Confirmation Summary ==========
@@ -325,8 +332,20 @@ if [ "${SELECTED[9]}" = "1" ]; then
   done_msg "Rust removed"
 fi
 
-# ========== suiup + Sui (index 10) ==========
+# ========== Solana + AVM (index 10) ==========
 if [ "${SELECTED[10]}" = "1" ]; then
+  step "Removing Solana + AVM"
+  rm -rf "$HOME/.local/share/solana"
+  rm -rf "$HOME/.config/solana"
+  rm -rf "$HOME/.cache/solana"
+  done_msg "Solana CLI removed"
+  rm -rf "$HOME/.avm"
+  rm -f "$HOME/.cargo/bin/avm" "$HOME/.cargo/bin/anchor"
+  done_msg "AVM + Anchor removed"
+fi
+
+# ========== suiup + Sui (index 11) ==========
+if [ "${SELECTED[11]}" = "1" ]; then
   step "Removing suiup + Sui"
   rm -f "$HOME/.local/bin/suiup"
   done_msg "suiup removed"
@@ -342,15 +361,15 @@ if [ "${SELECTED[10]}" = "1" ]; then
   done
 fi
 
-# ========== sui-move-analyzer (index 11) ==========
-if [ "${SELECTED[11]}" = "1" ]; then
+# ========== sui-move-analyzer (index 12) ==========
+if [ "${SELECTED[12]}" = "1" ]; then
   step "Removing sui-move-analyzer"
   rm -f "$HOME/.cargo/bin/sui-move-analyzer"
   done_msg "sui-move-analyzer removed"
 fi
 
-# ========== SSH Keys (index 12) ==========
-if [ "${SELECTED[12]}" = "1" ]; then
+# ========== SSH Keys (index 13) ==========
+if [ "${SELECTED[13]}" = "1" ]; then
   step "Removing SSH Keys symlink"
   if [ -L "$HOME/.ssh" ]; then
     rm -f "$HOME/.ssh"
@@ -367,8 +386,8 @@ rm -f "$HOME/.node_repl_history"
 rm -rf "$HOME/.config/github-copilot" 2>/dev/null || true
 done_msg "Cache files removed"
 
-# ========== Deep Clean (index 13) ==========
-if [ "${SELECTED[13]}" = "1" ]; then
+# ========== Deep Clean (index 14) ==========
+if [ "${SELECTED[14]}" = "1" ]; then
   step "Deep cleaning residue files"
 
   # XDG directories
@@ -394,6 +413,7 @@ if [ "${SELECTED[13]}" = "1" ]; then
   rm -rf "$HOME/.wakatime"
   rm -rf "$HOME/.npm"
   rm -rf "$HOME/.orbstack"
+  rm -rf "$HOME/OrbStack"
   rm -f "$HOME/.viminfo"
 
   done_msg "Residue files removed"

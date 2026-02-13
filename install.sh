@@ -165,19 +165,25 @@ DESCRIPTIONS+=("Rust toolchain via rustup")
 SELECTED+=(1)
 [ -f "$HOME/.cargo/bin/rustup" ] && STATUS+=("installed") || STATUS+=("")
 
-# 10: suiup + Sui Testnet
+# 10: Solana + AVM
+LABELS+=("Solana + AVM")
+DESCRIPTIONS+=("Solana CLI + Anchor Version Manager")
+SELECTED+=(1)
+command -v solana &>/dev/null && STATUS+=("installed") || STATUS+=("")
+
+# 11: suiup + Sui Testnet
 LABELS+=("suiup + Sui Testnet")
 DESCRIPTIONS+=("Sui version manager + latest testnet binary")
 SELECTED+=(1)
 [ -f "$HOME/.local/bin/suiup" ] && STATUS+=("installed") || STATUS+=("")
 
-# 11: sui-move-analyzer
+# 12: sui-move-analyzer
 LABELS+=("sui-move-analyzer")
 DESCRIPTIONS+=("Sui Move language server (~10min)")
 SELECTED+=(1)
 [ -f "$HOME/.cargo/bin/sui-move-analyzer" ] && STATUS+=("installed") || STATUS+=("")
 
-# 12: SSH Keys (iCloud)
+# 13: SSH Keys (iCloud)
 LABELS+=("SSH Keys (iCloud)")
 DESCRIPTIONS+=("Symlink ~/.ssh from iCloud Drive")
 _icloud_base="$HOME/Library/Mobile Documents/com~apple~CloudDocs"
@@ -189,7 +195,7 @@ else
   SELECTED+=(0); STATUS+=("iCloud not found")
 fi
 
-# 13: macOS Defaults
+# 14: macOS Defaults
 LABELS+=("macOS Defaults")
 DESCRIPTIONS+=("Key repeat, Finder tweaks, no smart quotes")
 SELECTED+=(1)
@@ -248,10 +254,13 @@ while true; do
     echo -e "\n  ${YELLOW}⏭️  Installation cancelled.${NC}"
     exit 0
   fi
-  # Dependency: sui-move-analyzer (11) requires Rust (9)
-  [ "${SELECTED[11]}" = "1" ] && SELECTED[9]=1
-  # Deselect Rust (9) → auto-deselect sui-move-analyzer (11)
-  [ "${SELECTED[9]}" = "0" ] && SELECTED[11]=0
+  # Dependency: Solana + AVM (10) requires Rust (9)
+  [ "${SELECTED[10]}" = "1" ] && SELECTED[9]=1
+  # Dependency: sui-move-analyzer (12) requires Rust (9)
+  [ "${SELECTED[12]}" = "1" ] && SELECTED[9]=1
+  # Deselect Rust (9) → auto-deselect Solana AVM (10) and sui-move-analyzer (12)
+  [ "${SELECTED[9]}" = "0" ] && SELECTED[10]=0
+  [ "${SELECTED[9]}" = "0" ] && SELECTED[12]=0
 done
 
 # ========== Confirmation ==========
@@ -570,8 +579,42 @@ if [ "${SELECTED[9]}" = "1" ]; then
   fi
 fi
 
-# ========== 10: suiup + Sui Testnet ==========
+# ========== 10: Solana + AVM ==========
 if [ "${SELECTED[10]}" = "1" ]; then
+  step "Installing Solana + AVM"
+  _solana_bin="$HOME/.local/share/solana/install/active_release/bin"
+  if ! command -v solana &>/dev/null; then
+    info_msg "Installing Solana CLI..."
+    sh -c "$(curl -sSfL https://release.anza.xyz/stable/install)"
+    export PATH="$_solana_bin:$PATH"
+    done_msg "Solana CLI installed: $(solana --version 2>/dev/null | head -1)"
+  else
+    export PATH="$_solana_bin:$PATH"
+    done_msg "Solana CLI already installed: $(solana --version 2>/dev/null | head -1)"
+  fi
+  if command -v cargo &>/dev/null; then
+    if ! command -v avm &>/dev/null; then
+      info_msg "Installing AVM (Anchor Version Manager)..."
+      cargo install --git https://github.com/coral-xyz/anchor avm --locked --force
+      done_msg "AVM installed"
+    else
+      done_msg "AVM already installed"
+    fi
+    if ! command -v anchor &>/dev/null; then
+      info_msg "Installing Anchor (latest)..."
+      avm install latest
+      avm use latest
+      done_msg "Anchor installed: $(anchor --version 2>/dev/null)"
+    else
+      done_msg "Anchor already installed: $(anchor --version 2>/dev/null)"
+    fi
+  else
+    warn_msg "Rust not installed, skipping AVM + Anchor"
+  fi
+fi
+
+# ========== 11: suiup + Sui Testnet ==========
+if [ "${SELECTED[11]}" = "1" ]; then
   step "Installing suiup + Sui Testnet"
   if [ ! -f "$HOME/.local/bin/suiup" ]; then
     info_msg "Installing suiup..."
@@ -594,8 +637,8 @@ if [ "${SELECTED[10]}" = "1" ]; then
   fi
 fi
 
-# ========== 12: SSH Keys (iCloud) ==========
-if [ "${SELECTED[12]}" = "1" ]; then
+# ========== 13: SSH Keys (iCloud) ==========
+if [ "${SELECTED[13]}" = "1" ]; then
   step "Setting up SSH keys from iCloud"
   _icloud_base="$HOME/Library/Mobile Documents/com~apple~CloudDocs"
 
@@ -664,8 +707,8 @@ if [ "${SELECTED[12]}" = "1" ]; then
   fi
 fi
 
-# ========== 13: macOS Defaults ==========
-if [ "${SELECTED[13]}" = "1" ]; then
+# ========== 14: macOS Defaults ==========
+if [ "${SELECTED[14]}" = "1" ]; then
   step "Applying macOS defaults"
   bash "$DOTFILES_DIR/macos-defaults.sh"
 fi
@@ -704,8 +747,8 @@ done_msg "~/.hyper.js"
 step "Cleaning up shell profiles"
 for _f in "$HOME/.zprofile" "$HOME/.zshenv" "$HOME/.profile" "$HOME/.bash_profile" "$HOME/.bashrc"; do
   [ -f "$_f" ] || continue
-  grep -qE 'cargo/env|NVM_DIR|nvm\.sh|bun\.sh|BUN_INSTALL|_bun' "$_f" 2>/dev/null || continue
-  grep -vE 'cargo/env|NVM_DIR|nvm\.sh|bun\.sh|BUN_INSTALL|_bun|Added by.*installer' "$_f" > "${_f}.tmp" || true
+  grep -qE 'cargo/env|NVM_DIR|nvm\.sh|bun\.sh|BUN_INSTALL|_bun|solana/install' "$_f" 2>/dev/null || continue
+  grep -vE 'cargo/env|NVM_DIR|nvm\.sh|bun\.sh|BUN_INSTALL|_bun|solana/install|Added by.*installer' "$_f" > "${_f}.tmp" || true
   if [ -s "${_f}.tmp" ]; then
     mv "${_f}.tmp" "$_f"
   else
@@ -758,8 +801,8 @@ if [ "$SHELL" != "$(which zsh)" ]; then
   chsh -s "$(which zsh)" || warn_msg "chsh failed"
 fi
 
-# ========== 11: sui-move-analyzer ==========
-if [ "${SELECTED[11]}" = "1" ]; then
+# ========== 12: sui-move-analyzer ==========
+if [ "${SELECTED[12]}" = "1" ]; then
   step "Checking sui-move-analyzer"
   if [ ! -f "$HOME/.cargo/bin/sui-move-analyzer" ]; then
     if command -v cargo &>/dev/null; then
