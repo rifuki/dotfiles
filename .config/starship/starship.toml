@@ -4,16 +4,23 @@ format = '$time$username$directory$git_branch$git_status$line_break$character'
 
 [time]
 disabled = false
-format = '[$time]($style) with '
+format = '[$time](bold #00D9FF) [with](bold #6C757D) '
 time_format = '%H:%M:%S'
 
 [username]
 show_always = true
-format = '[$user]($style) in '
+format = '[$user](bold #00D9FF) [in](bold #6C757D) '
 
 [directory]
 truncate_to_repo = false
+format = '[$path](bold #50FA7B) '
+
+[git_branch]
+format = '[on](bold #6C757D) [$symbol](bold #eff1f4)[$branch](bold #FF79C6) '
+
+[git_status]
+format = '[$all_status$ahead_behind](#f0caa4)'
 
 [character]
-success_symbol = '[❯](bold blue)'
-error_symbol = '[❯](bold red)'
+success_symbol = '[❯](bold #00D9FF)'
+error_symbol = '[❯](bold #FF5555)'

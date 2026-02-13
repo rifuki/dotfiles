@@ -18,6 +18,16 @@ fpath=($HOME/.docker/completions $fpath)
 export ZSH="$HOME/.oh-my-zsh"
 ZSH_THEME=""
 
+# Syntax highlighting styles (must be set before plugin loads)
+typeset -A ZSH_HIGHLIGHT_STYLES
+ZSH_HIGHLIGHT_STYLES[default]='fg=#FFFFFF'
+ZSH_HIGHLIGHT_STYLES[arg0]='fg=#00D9FF,bold'
+ZSH_HIGHLIGHT_STYLES[command]='fg=#00D9FF,bold'
+ZSH_HIGHLIGHT_STYLES[function]='fg=#00D9FF,bold'
+ZSH_HIGHLIGHT_STYLES[builtin]='fg=#BD93F9,bold'
+ZSH_HIGHLIGHT_STYLES[alias]='fg=#01CBC6,bold'
+ZSH_HIGHLIGHT_STYLES[path]='fg=#FFB86C'
+
 plugins=(
     git
     zsh-autosuggestions
