@@ -21,3 +21,7 @@
 .config/nvim/lazy-lock.json
 .config/tmux/plugins/
 .config/spaceship/*.zwc
+
+# But not .claude and its contents
+!.claude/
+!.claude/**

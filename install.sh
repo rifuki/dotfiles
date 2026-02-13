@@ -99,16 +99,19 @@ DESCRIPTIONS=()
 SELECTED=()
 STATUS=()
 
-# 0: Homebrew Formulae
-LABELS+=("Homebrew Formulae")
-DESCRIPTIONS+=("neovim, tmux, trash, htop, ripgrep, starship, neofetch, yazi, gh")
+# 0: Homebrew Formulae + Nerd Font
+LABELS+=("Homebrew Formulae + Nerd Font")
+DESCRIPTIONS+=("neovim, tmux, trash, htop, ripgrep, starship, neofetch, yazi, gh, JetBrainsMono")
 SELECTED+=(1)
 _fi=0; _ft=9
 for _cmd in nvim tmux trash htop rg starship neofetch yazi gh; do
   command -v "$_cmd" &>/dev/null && ((_fi++)) || true
 done
-if [ "$_fi" = "$_ft" ]; then STATUS+=("all installed")
-elif [ "$_fi" -gt 0 ]; then STATUS+=("${_fi}/${_ft} installed")
+if brew list --cask font-jetbrains-mono-nerd-font &>/dev/null || ls "$HOME/Library/Fonts/JetBrainsMono"*"NerdFont"* &>/dev/null 2>&1; then
+  ((_fi++))
+fi
+if [ "$_fi" -eq 10 ]; then STATUS+=("all installed")
+elif [ "$_fi" -gt 0 ]; then STATUS+=("${_fi}/10 installed")
 else STATUS+=(""); fi
 
 # 1: Yabai + Skhd
@@ -117,9 +120,9 @@ DESCRIPTIONS+=("Tiling WM + hotkey daemon")
 SELECTED+=(1)
 command -v yabai &>/dev/null && STATUS+=("installed") || STATUS+=("")
 
-# 2: Ghostty + Font
-LABELS+=("Ghostty + Nerd Font")
-DESCRIPTIONS+=("Ghostty terminal + JetBrainsMono")
+# 2: Ghostty
+LABELS+=("Ghostty")
+DESCRIPTIONS+=("Ghostty terminal")
 SELECTED+=(1)
 [ -d "/Applications/Ghostty.app" ] && STATUS+=("installed") || STATUS+=("")
 
@@ -147,11 +150,11 @@ DESCRIPTIONS+=("Zsh framework + plugins")
 SELECTED+=(1)
 [ -d "$HOME/.oh-my-zsh" ] && STATUS+=("installed") || STATUS+=("")
 
-# 7: NVM + Node
-LABELS+=("NVM + Node 24")
-DESCRIPTIONS+=("Node Version Manager + Node.js")
+# 7: Rust
+LABELS+=("Rust")
+DESCRIPTIONS+=("Rust toolchain via rustup")
 SELECTED+=(1)
-[ -d "$HOME/.nvm" ] && STATUS+=("installed") || STATUS+=("")
+[ -f "$HOME/.cargo/bin/rustup" ] && STATUS+=("installed") || STATUS+=("")
 
 # 8: Bun
 LABELS+=("Bun")
@@ -159,11 +162,11 @@ DESCRIPTIONS+=("JavaScript runtime")
 SELECTED+=(1)
 [ -d "$HOME/.bun" ] && STATUS+=("installed") || STATUS+=("")
 
-# 9: Rust
-LABELS+=("Rust")
-DESCRIPTIONS+=("Rust toolchain via rustup")
+# 9: NVM + Node
+LABELS+=("NVM + Node 24")
+DESCRIPTIONS+=("Node Version Manager + Node.js")
 SELECTED+=(1)
-[ -f "$HOME/.cargo/bin/rustup" ] && STATUS+=("installed") || STATUS+=("")
+[ -d "$HOME/.nvm" ] && STATUS+=("installed") || STATUS+=("")
 
 # 10: Solana + AVM
 LABELS+=("Solana + AVM")
@@ -262,13 +265,13 @@ while true; do
     echo -e "\n  ${YELLOW}⏭️  Installation cancelled.${NC}"
     exit 0
   fi
-  # Dependency: Solana + AVM (10) requires Rust (9)
-  [ "${SELECTED[10]}" = "1" ] && SELECTED[9]=1
-  # Dependency: sui-move-analyzer (12) requires Rust (9)
-  [ "${SELECTED[12]}" = "1" ] && SELECTED[9]=1
-  # Deselect Rust (9) → auto-deselect Solana AVM (10) and sui-move-analyzer (12)
-  [ "${SELECTED[9]}" = "0" ] && SELECTED[10]=0
-  [ "${SELECTED[9]}" = "0" ] && SELECTED[12]=0
+  # Dependency: Solana + AVM (10) requires Rust (7)
+  [ "${SELECTED[10]}" = "1" ] && SELECTED[7]=1
+  # Dependency: sui-move-analyzer (12) requires Rust (7)
+  [ "${SELECTED[12]}" = "1" ] && SELECTED[7]=1
+  # Deselect Rust (7) → auto-deselect Solana AVM (10) and sui-move-analyzer (12)
+  [ "${SELECTED[7]}" = "0" ] && SELECTED[10]=0
+  [ "${SELECTED[7]}" = "0" ] && SELECTED[12]=0
 done
 
 # ========== Confirmation ==========
@@ -397,9 +400,9 @@ fi
 #  SELECTED: Optional components
 # ══════════════════════════════════════════════════
 
-# ========== 0: Homebrew Formulae ==========
+# ========== 0: Homebrew Formulae + Nerd Font ==========
 if [ "${SELECTED[0]}" = "1" ]; then
-  step "Installing Homebrew formulae"
+  step "Installing Homebrew formulae + Nerd Font"
   _formulae=(
     "neovim:nvim"
     "tmux:tmux"
@@ -421,6 +424,14 @@ if [ "${SELECTED[0]}" = "1" ]; then
       done_msg "${_pkg} already installed"
     fi
   done
+  if ! brew list --cask font-jetbrains-mono-nerd-font &>/dev/null && \
+     ! ls "$HOME/Library/Fonts/JetBrainsMono"*"NerdFont"* &>/dev/null 2>&1; then
+    info_msg "Installing JetBrainsMono Nerd Font..."
+    brew install --cask font-jetbrains-mono-nerd-font
+    done_msg "JetBrainsMono Nerd Font installed"
+  else
+    done_msg "JetBrainsMono Nerd Font already installed"
+  fi
 fi
 
 # ========== 1: Yabai + Skhd ==========
@@ -442,23 +453,15 @@ if [ "${SELECTED[1]}" = "1" ]; then
   fi
 fi
 
-# ========== 2: Ghostty + Font ==========
+# ========== 2: Ghostty ==========
 if [ "${SELECTED[2]}" = "1" ]; then
-  step "Installing Ghostty + Nerd Font"
+  step "Installing Ghostty"
   if [ ! -d "/Applications/Ghostty.app" ]; then
     info_msg "Installing Ghostty..."
     brew install --cask ghostty
     done_msg "Ghostty installed"
   else
     done_msg "Ghostty already installed"
-  fi
-  if ! brew list --cask font-jetbrains-mono-nerd-font &>/dev/null && \
-     ! ls "$HOME/Library/Fonts/JetBrainsMono"*"NerdFont"* &>/dev/null 2>&1; then
-    info_msg "Installing JetBrainsMono Nerd Font..."
-    brew install --cask font-jetbrains-mono-nerd-font
-    done_msg "JetBrainsMono Nerd Font installed"
-  else
-    done_msg "JetBrainsMono Nerd Font already installed"
   fi
 fi
 
@@ -531,8 +534,41 @@ if [ "${SELECTED[6]}" = "1" ]; then
   done_msg "Plugins ready"
 fi
 
-# ========== 7: NVM + Node ==========
+# ========== 7: Rust ==========
 if [ "${SELECTED[7]}" = "1" ]; then
+  step "Setting up Rust"
+  if [ ! -f "$HOME/.cargo/bin/rustup" ]; then
+    info_msg "Installing Rust (stable)..."
+    curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --default-toolchain stable --no-modify-path
+    source "$HOME/.cargo/env"
+    done_msg "Rust installed"
+  else
+    source "$HOME/.cargo/env" 2>/dev/null || true
+    if ! "$HOME/.cargo/bin/rustup" show active-toolchain &>/dev/null; then
+      info_msg "No default toolchain found, setting stable..."
+      "$HOME/.cargo/bin/rustup" default stable
+      done_msg "Rust stable toolchain set"
+    else
+      done_msg "Rust already installed: $("$HOME/.cargo/bin/rustc" --version)"
+    fi
+  fi
+fi
+
+# ========== 8: Bun ==========
+if [ "${SELECTED[8]}" = "1" ]; then
+  step "Setting up Bun"
+  if [ ! -f "$HOME/.bun/bin/bun" ]; then
+    info_msg "Installing Bun..."
+    curl -fsSL https://bun.sh/install | bash
+    git -C "$DOTFILES_DIR" restore .zshrc 2>/dev/null || true
+    done_msg "Bun installed"
+  else
+    done_msg "Bun already installed: $("$HOME/.bun/bin/bun" --version)"
+  fi
+fi
+
+# ========== 9: NVM + Node ==========
+if [ "${SELECTED[9]}" = "1" ]; then
   step "Setting up NVM + Node 24"
   export NVM_DIR="$HOME/.nvm"
   if [ ! -s "$NVM_DIR/nvm.sh" ]; then
@@ -552,39 +588,6 @@ if [ "${SELECTED[7]}" = "1" ]; then
     done_msg "Node.js 24 already installed"
   fi
   nvm use 24
-fi
-
-# ========== 8: Bun ==========
-if [ "${SELECTED[8]}" = "1" ]; then
-  step "Setting up Bun"
-  if [ ! -f "$HOME/.bun/bin/bun" ]; then
-    info_msg "Installing Bun..."
-    curl -fsSL https://bun.sh/install | bash
-    git -C "$DOTFILES_DIR" restore .zshrc 2>/dev/null || true
-    done_msg "Bun installed"
-  else
-    done_msg "Bun already installed: $("$HOME/.bun/bin/bun" --version)"
-  fi
-fi
-
-# ========== 9: Rust ==========
-if [ "${SELECTED[9]}" = "1" ]; then
-  step "Setting up Rust"
-  if [ ! -f "$HOME/.cargo/bin/rustup" ]; then
-    info_msg "Installing Rust (stable)..."
-    curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --default-toolchain stable --no-modify-path
-    source "$HOME/.cargo/env"
-    done_msg "Rust installed"
-  else
-    source "$HOME/.cargo/env" 2>/dev/null || true
-    if ! "$HOME/.cargo/bin/rustup" show active-toolchain &>/dev/null; then
-      info_msg "No default toolchain found, setting stable..."
-      "$HOME/.cargo/bin/rustup" default stable
-      done_msg "Rust stable toolchain set"
-    else
-      done_msg "Rust already installed: $("$HOME/.cargo/bin/rustc" --version)"
-    fi
-  fi
 fi
 
 # ========== 10: Solana + AVM ==========
@@ -660,6 +663,12 @@ if [ "${SELECTED[13]}" = "1" ]; then
     done_msg "Gemini CLI installed"
   else
     done_msg "Gemini CLI already installed"
+  fi
+  # Claude statusline
+  mkdir -p "$HOME/.claude"
+  if [ -f "$DOTFILES_DIR/.claude/statusline-command.sh" ]; then
+    ln -sf "$DOTFILES_DIR/.claude/statusline-command.sh" "$HOME/.claude/statusline-command.sh"
+    done_msg "~/.claude/statusline-command.sh"
   fi
 fi
 

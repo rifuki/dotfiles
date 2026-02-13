@@ -38,15 +38,18 @@ DESCRIPTIONS=()
 SELECTED=()
 DETECTED=()
 
-# 0: Homebrew Formulae
+# 0: Homebrew Formulae + Nerd Font
 _brew_count=0
 if command -v brew &>/dev/null; then
   for _pkg in "${BREW_FORMULAE[@]}"; do
     brew list "$_pkg" &>/dev/null && ((_brew_count++)) || true
   done
+  if brew list --cask font-jetbrains-mono-nerd-font &>/dev/null; then
+    ((_brew_count++))
+  fi
 fi
-LABELS+=("Homebrew Formulae")
-DESCRIPTIONS+=("${_brew_count}/${#BREW_FORMULAE[@]} found")
+LABELS+=("Homebrew Formulae + Nerd Font")
+DESCRIPTIONS+=("${_brew_count}/$((${#BREW_FORMULAE[@]} + 1)) found")
 if [ "$_brew_count" -gt 0 ]; then
   DETECTED+=(1); SELECTED+=(1)
 else
@@ -58,9 +61,9 @@ LABELS+=("Yabai + Skhd")
 DESCRIPTIONS+=("Tiling WM + hotkey daemon")
 if command -v yabai &>/dev/null || command -v skhd &>/dev/null; then DETECTED+=(1); SELECTED+=(0); else DETECTED+=(0); SELECTED+=(0); fi
 
-# 2: Ghostty + Nerd Font
-LABELS+=("Ghostty + Nerd Font")
-DESCRIPTIONS+=("Ghostty terminal + JetBrainsMono")
+# 2: Ghostty
+LABELS+=("Ghostty")
+DESCRIPTIONS+=("Ghostty terminal")
 if [ -d "/Applications/Ghostty.app" ]; then DETECTED+=(1); SELECTED+=(1); else DETECTED+=(0); SELECTED+=(0); fi
 
 # 3: Cloudflare WARP + Hot
@@ -83,20 +86,20 @@ LABELS+=("Oh My Zsh")
 DESCRIPTIONS+=("~/.oh-my-zsh")
 if [ -d "$HOME/.oh-my-zsh" ]; then DETECTED+=(1); SELECTED+=(1); else DETECTED+=(0); SELECTED+=(0); fi
 
-# 7: NVM
-LABELS+=("NVM")
-DESCRIPTIONS+=("~/.nvm")
-if [ -d "$HOME/.nvm" ]; then DETECTED+=(1); SELECTED+=(1); else DETECTED+=(0); SELECTED+=(0); fi
+# 7: Rust
+LABELS+=("Rust")
+DESCRIPTIONS+=("~/.cargo, ~/.rustup")
+if [ -d "$HOME/.cargo" ] || [ -d "$HOME/.rustup" ]; then DETECTED+=(1); SELECTED+=(1); else DETECTED+=(0); SELECTED+=(0); fi
 
 # 8: Bun
 LABELS+=("Bun")
 DESCRIPTIONS+=("~/.bun")
 if [ -d "$HOME/.bun" ]; then DETECTED+=(1); SELECTED+=(1); else DETECTED+=(0); SELECTED+=(0); fi
 
-# 9: Rust
-LABELS+=("Rust")
-DESCRIPTIONS+=("~/.cargo, ~/.rustup")
-if [ -d "$HOME/.cargo" ] || [ -d "$HOME/.rustup" ]; then DETECTED+=(1); SELECTED+=(1); else DETECTED+=(0); SELECTED+=(0); fi
+# 9: NVM
+LABELS+=("NVM")
+DESCRIPTIONS+=("~/.nvm")
+if [ -d "$HOME/.nvm" ]; then DETECTED+=(1); SELECTED+=(1); else DETECTED+=(0); SELECTED+=(0); fi
 
 # 10: Solana + AVM
 LABELS+=("Solana + AVM")
@@ -188,12 +191,12 @@ while true; do
     echo -e "\n  ${YELLOW}⏭️  Uninstallation cancelled.${NC}"
     exit 0
   fi
-  # Dependency: Rust (9) selected → auto-select Solana AVM (10) and sui-move-analyzer (12) if detected
-  [ "${SELECTED[9]}" = "1" ] && [ "${DETECTED[10]}" = "1" ] && SELECTED[10]=1
-  [ "${SELECTED[9]}" = "1" ] && [ "${DETECTED[12]}" = "1" ] && SELECTED[12]=1
-  # Deselect Rust (9) → auto-deselect Solana AVM (10) and sui-move-analyzer (12)
-  [ "${SELECTED[9]}" = "0" ] && SELECTED[10]=0
-  [ "${SELECTED[9]}" = "0" ] && SELECTED[12]=0
+  # Dependency: Rust (7) selected → auto-select Solana AVM (10) and sui-move-analyzer (12) if detected
+  [ "${SELECTED[7]}" = "1" ] && [ "${DETECTED[10]}" = "1" ] && SELECTED[10]=1
+  [ "${SELECTED[7]}" = "1" ] && [ "${DETECTED[12]}" = "1" ] && SELECTED[12]=1
+  # Deselect Rust (7) → auto-deselect Solana AVM (10) and sui-move-analyzer (12)
+  [ "${SELECTED[7]}" = "0" ] && SELECTED[10]=0
+  [ "${SELECTED[7]}" = "0" ] && SELECTED[12]=0
 done
 
 # ========== Confirmation Summary ==========
@@ -253,15 +256,18 @@ for _d in "$HOME/.config"/*; do
 done
 done_msg "Symlinks removed"
 
-# ========== Homebrew Formulae (index 0) ==========
+# ========== Homebrew Formulae + Nerd Font (index 0) ==========
 if [ "${SELECTED[0]}" = "1" ]; then
-  step "Removing Homebrew formulae"
+  step "Removing Homebrew formulae + Nerd Font"
   for _pkg in "${BREW_FORMULAE[@]}"; do
     if brew list "$_pkg" &>/dev/null; then
       brew uninstall --ignore-dependencies "$_pkg" && done_msg "Removed $_pkg" || warn_msg "Failed to remove $_pkg"
     fi
   done
-  done_msg "Homebrew formulae done"
+  if brew list --cask font-jetbrains-mono-nerd-font &>/dev/null; then
+    brew uninstall --cask font-jetbrains-mono-nerd-font && done_msg "Removed JetBrainsMono Nerd Font" || warn_msg "Failed to remove font"
+  fi
+  done_msg "Homebrew formulae + font done"
 fi
 
 # ========== Yabai + Skhd (index 1) ==========
@@ -274,14 +280,12 @@ if [ "${SELECTED[1]}" = "1" ]; then
   done
 fi
 
-# ========== Ghostty + Nerd Font (index 2) ==========
+# ========== Ghostty (index 2) ==========
 if [ "${SELECTED[2]}" = "1" ]; then
-  step "Removing Ghostty + Nerd Font"
-  for _cask in ghostty font-jetbrains-mono-nerd-font; do
-    if brew list --cask "$_cask" &>/dev/null; then
-      brew uninstall --cask "$_cask" && done_msg "Removed $_cask" || warn_msg "Failed to remove $_cask"
-    fi
-  done
+  step "Removing Ghostty"
+  if brew list --cask ghostty &>/dev/null; then
+    brew uninstall --cask ghostty && done_msg "Removed ghostty" || warn_msg "Failed to remove ghostty"
+  fi
 fi
 
 # ========== Cloudflare WARP + Hot (index 3) ==========
@@ -317,11 +321,12 @@ if [ "${SELECTED[6]}" = "1" ]; then
   done_msg "Oh My Zsh removed"
 fi
 
-# ========== NVM (index 7) ==========
+# ========== Rust (index 7) ==========
 if [ "${SELECTED[7]}" = "1" ]; then
-  step "Removing NVM"
-  rm -rf "$HOME/.nvm"
-  done_msg "NVM removed"
+  step "Removing Rust"
+  rm -rf "$HOME/.cargo"
+  rm -rf "$HOME/.rustup"
+  done_msg "Rust removed"
 fi
 
 # ========== Bun (index 8) ==========
@@ -331,12 +336,11 @@ if [ "${SELECTED[8]}" = "1" ]; then
   done_msg "Bun removed"
 fi
 
-# ========== Rust (index 9) ==========
+# ========== NVM (index 9) ==========
 if [ "${SELECTED[9]}" = "1" ]; then
-  step "Removing Rust"
-  rm -rf "$HOME/.cargo"
-  rm -rf "$HOME/.rustup"
-  done_msg "Rust removed"
+  step "Removing NVM"
+  rm -rf "$HOME/.nvm"
+  done_msg "NVM removed"
 fi
 
 # ========== Solana + AVM (index 10) ==========
