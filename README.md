@@ -1,6 +1,6 @@
 # dotfiles
 
-Personal macOS dotfiles — batteries included.
+Personal macOS dotfiles — batteries included. ✨ Miku cyberpunk themed.
 
 ## Install
 
@@ -51,14 +51,29 @@ bash ~/.dotfiles/uninstall-brew.sh
 | [Google Chrome](https://www.google.com/chrome) | Browser |
 | [JetBrainsMono Nerd Font](https://www.nerdfonts.com) | Patched developer font |
 
+### Blockchain Tools (optional)
+| Tool | Description |
+|------|-------------|
+| [Solana](https://solana.com) | Solana CLI + development tools |
+| [Anchor](https://www.anchor-lang.com) | Solana framework (via AVM) |
+| [suiup](https://sui.io) | Sui version manager |
+| [sui-move-analyzer](https://github.com/movebit/sui-move-analyzer) | Sui Move LSP (~10min build) |
+
+### AI Tools (optional)
+| Tool | Description |
+|------|-------------|
+| [Claude Code](https://github.com/anthropics/claude-code) | AI-powered CLI (via Homebrew cask) |
+| [Gemini CLI](https://ai.google.dev) | Google Gemini CLI (via Homebrew) |
+
 ### Configs
 - `nvim` — NvChad-based config with LSP, Treesitter, and plugins
-- `tmux` — Catppuccin theme, TPM plugins
-- `starship` — Custom prompt config
+- `tmux` — Catppuccin Frappé theme, TPM plugins (resurrect, continuum, cpu, battery)
+- `starship` — Miku cyberpunk prompt theme (cyan/green/magenta palette)
 - `ghostty` — Terminal emulator config
 - `yabai` + `skhd` — Tiling window manager + hotkeys
-- `neofetch` — System info display
-- `.zshrc` — Shell config (PATH, aliases, plugins)
+- `neofetch` — Custom Miku ASCII art + system info
+- `.zshrc` — Miku-themed syntax highlighting, aliases, PATH setup
+- `.claude/` — Claude Code statusline integration with Starship colors
 
 ## Post-Installation (Yabai & Skhd)
 
@@ -91,18 +106,39 @@ Re-running `install.sh` is safe:
 ```
 ~/.dotfiles/
 ├── .config/
-│   ├── nvim/
-│   ├── tmux/
-│   ├── starship/
-│   ├── ghostty/
-│   ├── yabai/
-│   ├── skhd/
-│   └── neofetch/
-├── .zshrc
-├── .hyper.js
-├── install.sh
-├── uninstall.sh
-└── uninstall-brew.sh
+│   ├── nvim/          # NvChad config + LSP + plugins
+│   ├── tmux/          # Catppuccin theme + plugins
+│   ├── starship/      # Miku cyberpunk prompt
+│   ├── ghostty/       # Terminal config
+│   ├── yabai/         # Window manager
+│   ├── skhd/          # Hotkey daemon
+│   └── neofetch/      # Miku ASCII art + config
+├── .claude/
+│   └── statusline-command.sh  # Claude Code integration
+├── .zshrc             # Miku-themed shell config
+├── .hyper.js          # Hyper terminal config
+├── install.sh         # Interactive installer (Miku colors)
+├── uninstall.sh       # Interactive uninstaller (Miku colors)
+├── macos-defaults.sh  # macOS system defaults
+└── uninstall-brew.sh  # Complete Homebrew removal
 ```
 
 All configs are symlinked from `~/.dotfiles` to their respective locations in `$HOME`.
+
+## Theme
+
+**Miku Cyberpunk Color Palette** (used in Starship, Zsh, installer/uninstaller):
+- Cyan: `#00D9FF` — Commands, time, headers
+- Green: `#50FA7B` — Paths, success messages
+- Magenta: `#FF79C6` — Git branches, selected items
+- Purple: `#BD93F9` — Builtins
+- Teal: `#01CBC6` — Aliases
+- Orange: `#FFB86C` — Path alternates
+- Peach: `#F0CAA4` — Status, warnings
+- Gray: `#6C757D` — Secondary text
+
+Colors are consistent across:
+- `.zshrc` syntax highlighting
+- `starship.toml` prompt
+- `.claude/statusline-command.sh`
+- `install.sh` / `uninstall.sh` UI

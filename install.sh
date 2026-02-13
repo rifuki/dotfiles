@@ -1,12 +1,20 @@
 #!/bin/bash
 set -e
 
-# ========== Colors ==========
-RED='\033[0;31m'
-GREEN='\033[0;32m'
-YELLOW='\033[0;33m'
-BLUE='\033[0;34m'
-CYAN='\033[0;36m'
+# ========== Colors (Miku Cyberpunk Theme) ==========
+# Cyan: #00D9FF | Green: #50FA7B | Magenta: #FF79C6 | Purple: #BD93F9
+# Teal: #01CBC6 | Orange: #FFB86C | Peach: #F0CAA4 | Gray: #6C757D
+CYAN='\033[38;2;0;217;255m'
+GREEN='\033[38;2;80;250;123m'
+MAGENTA='\033[38;2;255;121;198m'
+PURPLE='\033[38;2;189;147;249m'
+TEAL='\033[38;2;1;203;198m'
+ORANGE='\033[38;2;255;184;108m'
+PEACH='\033[38;2;240;202;164m'
+GRAY='\033[38;2;108;117;125m'
+RED='\033[38;2;255;85;85m'
+YELLOW='\033[38;2;241;250;140m'
+WHITE='\033[38;2;239;241;244m'
 BOLD='\033[1m'
 DIM='\033[2m'
 NC='\033[0m'
@@ -14,8 +22,8 @@ NC='\033[0m'
 # ========== Helpers ==========
 step()     { echo -e "\n${BOLD}${CYAN}  ◆ $1${NC}"; }
 done_msg() { echo -e "  ${GREEN}✔${NC} $1"; }
-info_msg() { echo -e "  ${BLUE}▸${NC} $1"; }
-warn_msg() { echo -e "  ${YELLOW}▸${NC} $1"; }
+info_msg() { echo -e "  ${CYAN}▸${NC} $1"; }
+warn_msg() { echo -e "  ${PEACH}▸${NC} $1"; }
 fail_msg() { echo -e "  ${RED}✖${NC} $1"; }
 
 confirm() {
@@ -218,29 +226,29 @@ _total=${#LABELS[@]}
 # ========== Draw Menu ==========
 draw_menu() {
   echo ""
-  echo -e "${BOLD}${CYAN}╔══════════════════════════════════════════════════╗${NC}"
-  echo -e "${BOLD}${CYAN}║           dotfiles installer — macOS             ║${NC}"
-  echo -e "${BOLD}${CYAN}╚══════════════════════════════════════════════════╝${NC}"
+  echo -e "${BOLD}${MAGENTA}╔══════════════════════════════════════════════════╗${NC}"
+  echo -e "${BOLD}${MAGENTA}║           dotfiles installer — macOS             ║${NC}"
+  echo -e "${BOLD}${MAGENTA}╚══════════════════════════════════════════════════╝${NC}"
   echo ""
-  echo -e "  ${BOLD}Select components to install:${NC}"
+  echo -e "  ${BOLD}${GREEN}Select components to install:${NC}"
   echo ""
   for (( i=0; i<_total; i++ )); do
     local _num; _num=$(printf "%2d" $((i + 1)))
     local _label; _label=$(printf "%-22s" "${LABELS[$i]}")
     local _status=""
-    [ -n "${STATUS[$i]}" ] && _status=" ${GREEN}(${STATUS[$i]})${NC}"
+    [ -n "${STATUS[$i]}" ] && _status=" ${TEAL}(${STATUS[$i]})${NC}"
     if [ "${SELECTED[$i]}" = "1" ]; then
-      echo -e "    ${GREEN}${_num}. [x] ${_label}${NC} ${DIM}${DESCRIPTIONS[$i]}${NC}${_status}"
+      echo -e "    ${MAGENTA}${_num}. [x] ${_label}${NC} ${DIM}${DESCRIPTIONS[$i]}${NC}${_status}"
     else
-      echo -e "    ${_num}. [ ] ${_label} ${DIM}${DESCRIPTIONS[$i]}${NC}${_status}"
+      echo -e "    ${GRAY}${_num}. [ ] ${_label}${NC} ${DIM}${DESCRIPTIONS[$i]}${NC}${_status}"
     fi
   done
   echo ""
-  echo -e "  ${DIM}Always included:${NC}"
+  echo -e "  ${GRAY}Always included:${NC}"
   echo -e "    ${DIM}• Xcode CLT, Homebrew, Dotfiles repo${NC}"
   echo -e "    ${DIM}• Backup, Symlinks, Shell cleanup, Git config${NC}"
   echo ""
-  echo -e "  ${DIM}Enter number to toggle  |  ${NC}${BOLD}a${NC}${DIM} = all  |  ${NC}${BOLD}n${NC}${DIM} = none  |  ${NC}${BOLD}Enter${NC}${DIM} = continue  |  ${NC}${BOLD}q${NC}${DIM} = quit${NC}"
+  echo -e "  ${GRAY}Enter number to toggle  |  ${NC}${BOLD}${CYAN}a${NC}${GRAY} = all  |  ${NC}${BOLD}${CYAN}n${NC}${GRAY} = none  |  ${NC}${BOLD}${CYAN}Enter${NC}${GRAY} = continue  |  ${NC}${BOLD}${CYAN}q${NC}${GRAY} = quit${NC}"
   echo ""
 }
 
@@ -276,16 +284,16 @@ done
 
 # ========== Confirmation ==========
 echo ""
-echo -e "  ${BOLD}Will be installed:${NC}"
+echo -e "  ${BOLD}${GREEN}Will be installed:${NC}"
 for (( i=0; i<_total; i++ )); do
   if [ "${SELECTED[$i]}" = "1" ]; then
-    echo -e "    ${GREEN}+${NC} ${LABELS[$i]}  ${DIM}${DESCRIPTIONS[$i]}${NC}"
+    echo -e "    ${MAGENTA}+${NC} ${LABELS[$i]}  ${DIM}${DESCRIPTIONS[$i]}${NC}"
   fi
 done
-echo -e "    ${GREEN}+${NC} Xcode CLT, Homebrew, Dotfiles, Symlinks  ${DIM}(always)${NC}"
+echo -e "    ${MAGENTA}+${NC} Xcode CLT, Homebrew, Dotfiles, Symlinks  ${DIM}(always)${NC}"
 echo ""
 
-printf "  ${BOLD}Proceed with installation?${NC} [y/n]: "
+printf "  ${BOLD}${CYAN}Proceed with installation?${NC} ${GRAY}[y/n]:${NC} "
 read -r _confirm < /dev/tty
 case "$_confirm" in
   [yY]|[yY][eE][sS]) ;;
@@ -861,17 +869,17 @@ fi
 
 # ========== Done ==========
 echo ""
-echo -e "${BOLD}${GREEN}╔══════════════════════════════════════════════════╗${NC}"
-echo -e "${BOLD}${GREEN}║           ✓ Installation complete!               ║${NC}"
-echo -e "${BOLD}${GREEN}╚══════════════════════════════════════════════════╝${NC}"
+echo -e "${BOLD}${MAGENTA}╔══════════════════════════════════════════════════╗${NC}"
+echo -e "${BOLD}${MAGENTA}║           ✓ Installation complete!               ║${NC}"
+echo -e "${BOLD}${MAGENTA}╚══════════════════════════════════════════════════╝${NC}"
 echo ""
 if [ "${SELECTED[1]}" = "1" ]; then
-  echo -e "  ${CYAN}Yabai:${NC}"
+  echo -e "  ${MAGENTA}Yabai:${NC}"
   echo -e "    ${DIM}1. echo \"\$(whoami) ALL=(root) NOPASSWD: sha256:\$(shasum -a 256 \$(which yabai) | cut -d \" \" -f 1) \$(which yabai) --load-sa\" | sudo tee /private/etc/sudoers.d/yabai${NC}"
   echo -e "    ${DIM}2. yabai --start-service${NC}"
   echo -e "    ${DIM}3. Allow in System Settings > Privacy & Security > Accessibility${NC}"
   echo ""
-  echo -e "  ${YELLOW}⚠  For full Yabai features, partial SIP disable is required (2 reboots):${NC}"
+  echo -e "  ${PEACH}⚠  For full Yabai features, partial SIP disable is required (2 reboots):${NC}"
   if [[ "$(uname -m)" == "arm64" ]]; then
     echo -e "    ${DIM}1. Recovery Mode (hold power) → Utilities → Terminal:${NC}"
     echo -e "       ${DIM}csrutil enable --without fs --without debug --without nvram${NC}"
@@ -885,10 +893,10 @@ if [ "${SELECTED[1]}" = "1" ]; then
   fi
   echo -e "    ${DIM}Guide: https://github.com/asmvik/yabai/wiki/Disabling-System-Integrity-Protection${NC}"
   echo ""
-  echo -e "  ${CYAN}Skhd:${NC}"
+  echo -e "  ${MAGENTA}Skhd:${NC}"
   echo -e "    ${DIM}1. skhd --start-service${NC}"
   echo -e "    ${DIM}2. Allow in System Settings > Privacy & Security > Accessibility${NC}"
   echo ""
 fi
-echo -e "  ${DIM}👉 Restart your terminal or run: exec zsh${NC}"
+echo -e "  ${CYAN}👉 Restart your terminal or run: exec zsh${NC}"
 echo ""
