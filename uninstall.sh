@@ -56,7 +56,7 @@ fi
 # 1: Yabai + Skhd
 LABELS+=("Yabai + Skhd")
 DESCRIPTIONS+=("Tiling WM + hotkey daemon")
-if command -v yabai &>/dev/null || command -v skhd &>/dev/null; then DETECTED+=(1); SELECTED+=(1); else DETECTED+=(0); SELECTED+=(0); fi
+if command -v yabai &>/dev/null || command -v skhd &>/dev/null; then DETECTED+=(1); SELECTED+=(0); else DETECTED+=(0); SELECTED+=(0); fi
 
 # 2: Ghostty + Nerd Font
 LABELS+=("Ghostty + Nerd Font")
@@ -71,7 +71,7 @@ if [ -d "/Applications/Cloudflare WARP.app" ] || [ -d "/Applications/Hot.app" ];
 # 4: Google Chrome
 LABELS+=("Google Chrome")
 DESCRIPTIONS+=("Browser")
-if [ -d "/Applications/Google Chrome.app" ]; then DETECTED+=(1); SELECTED+=(1); else DETECTED+=(0); SELECTED+=(0); fi
+if [ -d "/Applications/Google Chrome.app" ]; then DETECTED+=(1); SELECTED+=(0); else DETECTED+=(0); SELECTED+=(0); fi
 
 # 5: OrbStack
 LABELS+=("OrbStack")
@@ -381,6 +381,9 @@ if [ "${SELECTED[13]}" = "1" ]; then
   fi
   rm -f "$HOME/.local/bin/claude"
   rm -rf "$HOME/.local/share/claude"
+  rm -rf "$HOME/.claude"
+  rm -f "$HOME/.claude.json"
+  rm -f "$HOME"/.claude.json.backup.*
   done_msg "Claude Code files removed"
   if brew list gemini-cli &>/dev/null; then
     brew uninstall gemini-cli && done_msg "Gemini CLI removed" || warn_msg "Failed to remove Gemini CLI"
@@ -434,7 +437,7 @@ if [ "${SELECTED[15]}" = "1" ]; then
   rm -rf "$HOME/.wakatime"
   rm -rf "$HOME/.npm"
   rm -rf "$HOME/.orbstack"
-  rm -rf "$HOME/OrbStack"
+  rm -rf "$HOME/OrbStack" 2>/dev/null || warn_msg "~/OrbStack: permission denied — remove manually"
   rm -rf "$HOME/.claude"
   rm -f "$HOME/.claude.json"
   rm -f "$HOME/.viminfo"

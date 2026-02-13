@@ -132,13 +132,13 @@ SELECTED+=(1)
 # 4: Google Chrome
 LABELS+=("Google Chrome")
 DESCRIPTIONS+=("Browser")
-SELECTED+=(1)
+SELECTED+=(0)
 [ -d "/Applications/Google Chrome.app" ] && STATUS+=("installed") || STATUS+=("")
 
 # 5: OrbStack
 LABELS+=("OrbStack")
 DESCRIPTIONS+=("Docker & Linux VM runtime")
-SELECTED+=(1)
+SELECTED+=(0)
 [ -d "/Applications/OrbStack.app" ] && STATUS+=("installed") || STATUS+=("")
 
 # 6: Oh My Zsh
