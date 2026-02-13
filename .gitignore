@@ -6,21 +6,19 @@
 
 # But not folders themselves, so we can whitelist
 !*/
-!setup*.sh
-!uninstall*.sh
+!install.sh
+!uninstall.sh
+!.zshrc
 
-# But not nvim and its contents
-!nvim/
-!nvim/**
-# Ignore nvim/lazy-lock.json, but not the directory
-nvim/lazy-lock.json
+# But not .config and its contents
+!.config/
+!.config/**
+# Ignore specific files
+.config/.git/
+.config/nvim/lazy-lock.json
+.config/tmux/plugins/
 
-# But not tmux and its contents
-!tmux/
-!tmux/**
-# Ignore tmux/plugins and its contents
-tmux/plugins/
-
-# But not spaceship and its contents
-!spaceship/
-!spaceship/**
+# But not .claude and its contents
+!.claude/
+!.claude/**
+.claude/settings.local.json

@@ -1,0 +1,695 @@
+#!/bin/bash
+set -e
+
+# ========== Colors ==========
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[0;33m'
+BLUE='\033[0;34m'
+CYAN='\033[0;36m'
+BOLD='\033[1m'
+DIM='\033[2m'
+NC='\033[0m'
+
+# ========== Helpers ==========
+step()     { echo -e "\n${BOLD}${CYAN}  ◆ $1${NC}"; }
+done_msg() { echo -e "  ${GREEN}✔${NC} $1"; }
+info_msg() { echo -e "  ${BLUE}▸${NC} $1"; }
+warn_msg() { echo -e "  ${YELLOW}▸${NC} $1"; }
+fail_msg() { echo -e "  ${RED}✖${NC} $1"; }
+
+confirm() {
+  local _ans
+  if [ -t 0 ] || [ -c /dev/tty ]; then
+    printf "    %s [y/n]: " "$1"
+    read -r _ans < /dev/tty
+    case "${_ans}" in
+      [yY]|[yY][eE][sS]) return 0 ;;
+      *) return 1 ;;
+    esac
+  fi
+  return 1
+}
+
+# ========== OS Check ==========
+if [[ "$(uname)" != "Linux" ]]; then
+  echo -e "${RED}❌ This script is for Linux only.${NC}"
+  exit 1
+fi
+if ! command -v apt &>/dev/null; then
+  echo -e "${RED}❌ This script requires apt (Debian/Ubuntu).${NC}"
+  exit 1
+fi
+
+# ========== TTY Check ==========
+if [ ! -t 0 ] && [ ! -c /dev/tty ]; then
+  echo -e "${RED}❌ This script requires an interactive terminal.${NC}"
+  exit 1
+fi
+
+echo ""
+
+# ========== Detect Current State ==========
+LABELS=()
+DESCRIPTIONS=()
+SELECTED=()
+STATUS=()
+
+# 0: APT Packages + Nerd Font
+LABELS+=("APT Packages + Nerd Font")
+DESCRIPTIONS+=("neovim, tmux, zsh, htop, ripgrep, neofetch, yazi, gh, JetBrainsMono")
+SELECTED+=(1)
+_fi=0
+for _cmd in nvim tmux zsh htop rg neofetch yazi gh; do
+  command -v "$_cmd" &>/dev/null && ((_fi++)) || true
+done
+if ls "$HOME/.local/share/fonts/JetBrainsMono"*"NerdFont"* &>/dev/null 2>&1; then
+  ((_fi++))
+fi
+if [ "$_fi" -eq 9 ]; then STATUS+=("all installed")
+elif [ "$_fi" -gt 0 ]; then STATUS+=("${_fi}/9 installed")
+else STATUS+=(""); fi
+
+# 1: Starship
+LABELS+=("Starship")
+DESCRIPTIONS+=("Cross-shell prompt theme")
+SELECTED+=(1)
+command -v starship &>/dev/null && STATUS+=("installed") || STATUS+=("")
+
+# 2: Oh My Zsh
+LABELS+=("Oh My Zsh")
+DESCRIPTIONS+=("Zsh framework + plugins")
+SELECTED+=(1)
+[ -d "$HOME/.oh-my-zsh" ] && STATUS+=("installed") || STATUS+=("")
+
+# 3: Rust
+LABELS+=("Rust")
+DESCRIPTIONS+=("Rust toolchain via rustup")
+SELECTED+=(1)
+[ -f "$HOME/.cargo/bin/rustup" ] && STATUS+=("installed") || STATUS+=("")
+
+# 4: Bun
+LABELS+=("Bun")
+DESCRIPTIONS+=("JavaScript runtime")
+SELECTED+=(1)
+[ -d "$HOME/.bun" ] && STATUS+=("installed") || STATUS+=("")
+
+# 5: NVM + Node 24
+LABELS+=("NVM + Node 24")
+DESCRIPTIONS+=("Node Version Manager + Node.js")
+SELECTED+=(1)
+[ -d "$HOME/.nvm" ] && STATUS+=("installed") || STATUS+=("")
+
+# 6: Docker
+LABELS+=("Docker")
+DESCRIPTIONS+=("Container engine + add user to docker group")
+SELECTED+=(1)
+command -v docker &>/dev/null && STATUS+=("installed") || STATUS+=("")
+
+# 7: AI CLI Tools
+LABELS+=("AI CLI Tools")
+DESCRIPTIONS+=("Claude Code + Gemini CLI (requires NVM)")
+SELECTED+=(1)
+if command -v claude &>/dev/null && command -v gemini &>/dev/null; then STATUS+=("installed")
+elif command -v claude &>/dev/null || command -v gemini &>/dev/null; then STATUS+=("partial")
+else STATUS+=(""); fi
+
+# 8: Swap (2GB)
+LABELS+=("Swap (2GB)")
+DESCRIPTIONS+=("Create 2GB swap file")
+SELECTED+=(1)
+[ -f /swapfile ] && STATUS+=("active") || STATUS+=("")
+
+# 9: fail2ban
+LABELS+=("fail2ban")
+DESCRIPTIONS+=("Intrusion prevention")
+SELECTED+=(1)
+command -v fail2ban-client &>/dev/null && STATUS+=("installed") || STATUS+=("")
+
+# 10: UFW
+LABELS+=("UFW")
+DESCRIPTIONS+=("Firewall (allow SSH + HTTP/S)")
+SELECTED+=(1)
+command -v ufw &>/dev/null && STATUS+=("installed") || STATUS+=("")
+
+_total=${#LABELS[@]}
+
+# ========== Draw Menu ==========
+draw_menu() {
+  echo ""
+  echo -e "${BOLD}${CYAN}╔══════════════════════════════════════════════════╗${NC}"
+  echo -e "${BOLD}${CYAN}║            dotfiles installer — VPS              ║${NC}"
+  echo -e "${BOLD}${CYAN}╚══════════════════════════════════════════════════╝${NC}"
+  echo ""
+  echo -e "  ${BOLD}Select components to install:${NC}"
+  echo ""
+  for (( i=0; i<_total; i++ )); do
+    local _num; _num=$(printf "%2d" $((i + 1)))
+    local _label; _label=$(printf "%-22s" "${LABELS[$i]}")
+    local _status=""
+    [ -n "${STATUS[$i]}" ] && _status=" ${GREEN}(${STATUS[$i]})${NC}"
+    if [ "${SELECTED[$i]}" = "1" ]; then
+      echo -e "    ${GREEN}${_num}. [x] ${_label}${NC} ${DIM}${DESCRIPTIONS[$i]}${NC}${_status}"
+    else
+      echo -e "    ${_num}. [ ] ${_label} ${DIM}${DESCRIPTIONS[$i]}${NC}${_status}"
+    fi
+  done
+  echo ""
+  echo -e "  ${DIM}Always included:${NC}"
+  echo -e "    ${DIM}• System update, Dotfiles repo${NC}"
+  echo -e "    ${DIM}• Backup, Symlinks, Shell cleanup, Git config${NC}"
+  echo -e "    ${DIM}• Zsh as default shell + bashrc fallback${NC}"
+  echo ""
+  echo -e "  ${DIM}Enter number to toggle  |  ${NC}${BOLD}a${NC}${DIM} = all  |  ${NC}${BOLD}n${NC}${DIM} = none  |  ${NC}${BOLD}Enter${NC}${DIM} = continue  |  ${NC}${BOLD}q${NC}${DIM} = quit${NC}"
+  echo ""
+}
+
+# ========== Interactive Loop ==========
+while true; do
+  clear 2>/dev/null || true
+  draw_menu
+
+  printf "  > "
+  read -r _input < /dev/tty
+
+  if [[ "$_input" =~ ^[0-9]+$ ]] && [ "$_input" -ge 1 ] && [ "$_input" -le "$_total" ]; then
+    _idx=$((_input - 1))
+    [ "${SELECTED[$_idx]}" = "1" ] && SELECTED[$_idx]=0 || SELECTED[$_idx]=1
+  elif [[ "$_input" = [aA] ]]; then
+    for (( i=0; i<_total; i++ )); do SELECTED[$i]=1; done
+  elif [[ "$_input" = [nN] ]]; then
+    for (( i=0; i<_total; i++ )); do SELECTED[$i]=0; done
+  elif [ -z "$_input" ]; then
+    break
+  elif [[ "$_input" = [qQ] ]]; then
+    echo -e "\n  ${YELLOW}⏭️  Installation cancelled.${NC}"
+    exit 0
+  fi
+  # Dependency: AI CLI Tools (7) requires NVM (5) for npm
+  [ "${SELECTED[7]}" = "1" ] && SELECTED[5]=1
+  # Deselect NVM (5) → auto-deselect AI CLI Tools (7)
+  [ "${SELECTED[5]}" = "0" ] && SELECTED[7]=0
+done
+
+# ========== Confirmation ==========
+echo ""
+echo -e "  ${BOLD}Will be installed:${NC}"
+for (( i=0; i<_total; i++ )); do
+  if [ "${SELECTED[$i]}" = "1" ]; then
+    echo -e "    ${GREEN}+${NC} ${LABELS[$i]}  ${DIM}${DESCRIPTIONS[$i]}${NC}"
+  fi
+done
+echo -e "    ${GREEN}+${NC} System update, Dotfiles, Symlinks  ${DIM}(always)${NC}"
+echo ""
+
+printf "  ${BOLD}Proceed with installation?${NC} [y/n]: "
+read -r _confirm < /dev/tty
+case "$_confirm" in
+  [yY]|[yY][eE][sS]) ;;
+  *)
+    echo -e "\n  ${YELLOW}⏭️  Installation cancelled.${NC}"
+    exit 0
+    ;;
+esac
+
+echo ""
+
+# ══════════════════════════════════════════════════
+#  ALWAYS: Core setup
+# ══════════════════════════════════════════════════
+
+# ========== System Update ==========
+step "Updating system packages"
+sudo apt update && sudo apt upgrade -y
+done_msg "System updated"
+
+# ========== Essential Tools ==========
+step "Installing essential tools"
+sudo apt install -y git curl wget unzip fontconfig software-properties-common
+done_msg "Essential tools ready"
+
+# ========== Dotfiles Repo ==========
+step "Checking dotfiles repository"
+DOTFILES_DIR="$HOME/.dotfiles"
+DOTFILES_REPO="https://github.com/rifuki/dotfiles.git"
+
+_script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+if [ -d "$_script_dir/.git" ] && git -C "$_script_dir" rev-parse --git-dir > /dev/null 2>&1; then
+  if [ "$_script_dir" != "$DOTFILES_DIR" ]; then
+    fail_msg "install.sh must be run from $HOME/.dotfiles"
+    echo -e "    ${DIM}Found at: $_script_dir${NC}"
+    echo -e "    ${DIM}1. curl -fsSL https://dotfiles.rifuki.dev/vps/install.sh | bash${NC}"
+    echo -e "    ${DIM}2. mv $_script_dir $DOTFILES_DIR && bash $DOTFILES_DIR/install.sh${NC}"
+    exit 1
+  fi
+  done_msg "Running from: $DOTFILES_DIR"
+else
+  if [ ! -d "$DOTFILES_DIR/.git" ]; then
+    info_msg "Cloning dotfiles repo..."
+    git clone --branch vps "$DOTFILES_REPO" "$DOTFILES_DIR"
+    done_msg "Cloned to $DOTFILES_DIR"
+  else
+    done_msg "Repo exists, pulling latest..."
+    git -C "$DOTFILES_DIR" pull --ff-only 2>/dev/null || warn_msg "Could not pull"
+  fi
+fi
+
+# ========== Backup ==========
+step "Checking for existing configs"
+BACKUP_DIR="$HOME/.config/backup-$(date +%Y%m%d-%H%M%S)"
+_did_backup=0
+for _d in "$DOTFILES_DIR/.config"/*/; do
+  _name="$(basename "$_d")"
+  _p="$HOME/.config/$_name"
+  if [ -d "$_p" ] && [ ! -L "$_p" ]; then
+    [ "$_did_backup" = "0" ] && mkdir -p "$BACKUP_DIR"
+    mv "$_p" "$BACKUP_DIR/"
+    _did_backup=1
+  fi
+done
+for _f in "$HOME/.zshrc"; do
+  if [ -f "$_f" ] && [ ! -L "$_f" ]; then
+    [ "$_did_backup" = "0" ] && mkdir -p "$BACKUP_DIR"
+    mv "$_f" "$BACKUP_DIR/"
+    _did_backup=1
+  fi
+done
+[ "$_did_backup" = "1" ] && done_msg "Backed up to: $BACKUP_DIR" || done_msg "No existing configs to backup"
+
+for _d in "$DOTFILES_DIR/.config"/*/; do
+  _name="$(basename "$_d")"
+  _p="$HOME/.config/$_name"
+  if git -C "$DOTFILES_DIR" status --porcelain ".config/$_name" 2>/dev/null | grep -q .; then
+    if [ -L "$_p" ] || [ -e "$_p" ]; then
+      [ "$_did_backup" = "0" ] && mkdir -p "$BACKUP_DIR/.config"
+      cp -rL "$_p" "$BACKUP_DIR/.config/" 2>/dev/null || true
+      _did_backup=1
+    fi
+  fi
+done
+for _f in .zshrc; do
+  if git -C "$DOTFILES_DIR" status --porcelain "$_f" 2>/dev/null | grep -q .; then
+    if [ -L "$HOME/$_f" ] || [ -e "$HOME/$_f" ]; then
+      [ "$_did_backup" = "0" ] && mkdir -p "$BACKUP_DIR"
+      cp -rL "$HOME/$_f" "$BACKUP_DIR/" 2>/dev/null || true
+      _did_backup=1
+    fi
+  fi
+done
+if [ "$_did_backup" = "1" ]; then
+  done_msg "Local changes backed up"
+  info_msg "Restoring to remote state..."
+  git -C "$DOTFILES_DIR" restore . 2>/dev/null || git -C "$DOTFILES_DIR" checkout -- . 2>/dev/null || true
+  git -C "$DOTFILES_DIR" clean -fd 2>/dev/null || true
+  done_msg "Dotfiles restored"
+fi
+
+# ══════════════════════════════════════════════════
+#  SELECTED: Optional components
+# ══════════════════════════════════════════════════
+
+# ========== 0: APT Packages + Nerd Font ==========
+if [ "${SELECTED[0]}" = "1" ]; then
+  step "Installing APT packages + Nerd Font"
+
+  # Neovim: latest stable from GitHub releases
+  if ! command -v nvim &>/dev/null; then
+    info_msg "Installing Neovim (latest stable)..."
+    _nvim_url="https://github.com/neovim/neovim/releases/latest/download/nvim-linux-x86_64.tar.gz"
+    curl -fsSL "$_nvim_url" -o /tmp/nvim.tar.gz
+    sudo tar -xzf /tmp/nvim.tar.gz -C /opt/
+    sudo ln -sf /opt/nvim-linux-x86_64/bin/nvim /usr/local/bin/nvim
+    rm -f /tmp/nvim.tar.gz
+    done_msg "Neovim installed"
+  else
+    done_msg "Neovim already installed: $(nvim --version | head -1)"
+  fi
+
+  # Standard apt packages
+  _apt_pkgs=("tmux" "zsh" "htop" "ripgrep" "neofetch")
+  for _pkg in "${_apt_pkgs[@]}"; do
+    if ! dpkg -s "$_pkg" &>/dev/null; then
+      info_msg "Installing ${_pkg}..."
+      sudo apt install -y "$_pkg"
+      done_msg "${_pkg} installed"
+    else
+      done_msg "${_pkg} already installed"
+    fi
+  done
+
+  # yazi: download binary from GitHub releases
+  if ! command -v yazi &>/dev/null; then
+    info_msg "Installing yazi..."
+    _yazi_url=$(curl -fsSL https://api.github.com/repos/sxyazi/yazi/releases/latest | grep -o '"browser_download_url": "[^"]*x86_64-unknown-linux-gnu.zip"' | cut -d'"' -f4)
+    if [ -n "$_yazi_url" ]; then
+      curl -fsSL "$_yazi_url" -o /tmp/yazi.zip
+      unzip -qo /tmp/yazi.zip -d /tmp/yazi-extract
+      sudo mv /tmp/yazi-extract/yazi-x86_64-unknown-linux-gnu/yazi /usr/local/bin/yazi
+      sudo chmod +x /usr/local/bin/yazi
+      rm -rf /tmp/yazi.zip /tmp/yazi-extract
+      done_msg "yazi installed"
+    else
+      warn_msg "Could not find yazi release URL"
+    fi
+  else
+    done_msg "yazi already installed"
+  fi
+
+  # gh: GitHub CLI via official apt repo
+  if ! command -v gh &>/dev/null; then
+    info_msg "Installing GitHub CLI..."
+    curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg | sudo dd of=/usr/share/keyrings/githubcli-archive-keyring.gpg
+    sudo chmod go+r /usr/share/keyrings/githubcli-archive-keyring.gpg
+    echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/githubcli-archive-keyring.gpg] https://cli.github.com/packages stable main" | sudo tee /etc/apt/sources.list.d/github-cli.list > /dev/null
+    sudo apt update
+    sudo apt install -y gh
+    done_msg "GitHub CLI installed"
+  else
+    done_msg "GitHub CLI already installed"
+  fi
+
+  # JetBrainsMono Nerd Font
+  if ! ls "$HOME/.local/share/fonts/JetBrainsMono"*"NerdFont"* &>/dev/null 2>&1; then
+    info_msg "Installing JetBrainsMono Nerd Font..."
+    _font_url=$(curl -fsSL https://api.github.com/repos/ryanoasis/nerd-fonts/releases/latest | grep -o '"browser_download_url": "[^"]*JetBrainsMono.zip"' | cut -d'"' -f4)
+    if [ -n "$_font_url" ]; then
+      mkdir -p "$HOME/.local/share/fonts"
+      curl -fsSL "$_font_url" -o /tmp/JetBrainsMono.zip
+      unzip -qo /tmp/JetBrainsMono.zip -d "$HOME/.local/share/fonts/"
+      fc-cache -fv > /dev/null 2>&1
+      rm -f /tmp/JetBrainsMono.zip
+      done_msg "JetBrainsMono Nerd Font installed"
+    else
+      warn_msg "Could not find font release URL"
+    fi
+  else
+    done_msg "JetBrainsMono Nerd Font already installed"
+  fi
+fi
+
+# ========== 1: Starship ==========
+if [ "${SELECTED[1]}" = "1" ]; then
+  step "Installing Starship"
+  if ! command -v starship &>/dev/null; then
+    info_msg "Installing Starship..."
+    curl -sS https://starship.rs/install.sh | sh -s -- -y
+    done_msg "Starship installed"
+  else
+    done_msg "Starship already installed: $(starship --version | head -1)"
+  fi
+fi
+
+# ========== 2: Oh My Zsh ==========
+if [ "${SELECTED[2]}" = "1" ]; then
+  step "Setting up Oh My Zsh"
+  if [ ! -f "$HOME/.oh-my-zsh/oh-my-zsh.sh" ]; then
+    info_msg "Installing Oh My Zsh..."
+    RUNZSH=no KEEP_ZSHRC=yes CHSH=no bash -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)" || {
+      fail_msg "Oh My Zsh installation failed!"
+      exit 1
+    }
+    done_msg "Oh My Zsh installed"
+  else
+    done_msg "Oh My Zsh already installed"
+  fi
+  ZSH_CUSTOM="$HOME/.oh-my-zsh/custom"
+  info_msg "Checking plugins..."
+  if [[ ! -f "$ZSH_CUSTOM/plugins/zsh-autosuggestions/zsh-autosuggestions.zsh" ]]; then
+    rm -rf "$ZSH_CUSTOM/plugins/zsh-autosuggestions" 2>/dev/null || true
+    git clone https://github.com/zsh-users/zsh-autosuggestions "$ZSH_CUSTOM/plugins/zsh-autosuggestions"
+  fi
+  if [[ ! -f "$ZSH_CUSTOM/plugins/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh" ]]; then
+    rm -rf "$ZSH_CUSTOM/plugins/zsh-syntax-highlighting" 2>/dev/null || true
+    git clone https://github.com/zsh-users/zsh-syntax-highlighting.git "$ZSH_CUSTOM/plugins/zsh-syntax-highlighting"
+  fi
+  done_msg "Plugins ready"
+fi
+
+# ========== 3: Rust ==========
+if [ "${SELECTED[3]}" = "1" ]; then
+  step "Setting up Rust"
+  if [ ! -f "$HOME/.cargo/bin/rustup" ]; then
+    info_msg "Installing Rust (stable)..."
+    curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --default-toolchain stable --no-modify-path
+    source "$HOME/.cargo/env"
+    done_msg "Rust installed"
+  else
+    source "$HOME/.cargo/env" 2>/dev/null || true
+    if ! "$HOME/.cargo/bin/rustup" show active-toolchain &>/dev/null; then
+      info_msg "No default toolchain found, setting stable..."
+      "$HOME/.cargo/bin/rustup" default stable
+      done_msg "Rust stable toolchain set"
+    else
+      done_msg "Rust already installed: $("$HOME/.cargo/bin/rustc" --version)"
+    fi
+  fi
+fi
+
+# ========== 4: Bun ==========
+if [ "${SELECTED[4]}" = "1" ]; then
+  step "Setting up Bun"
+  if [ ! -f "$HOME/.bun/bin/bun" ]; then
+    info_msg "Installing Bun..."
+    curl -fsSL https://bun.sh/install | bash
+    git -C "$DOTFILES_DIR" restore .zshrc 2>/dev/null || true
+    done_msg "Bun installed"
+  else
+    done_msg "Bun already installed: $("$HOME/.bun/bin/bun" --version)"
+  fi
+fi
+
+# ========== 5: NVM + Node ==========
+if [ "${SELECTED[5]}" = "1" ]; then
+  step "Setting up NVM + Node 24"
+  export NVM_DIR="$HOME/.nvm"
+  if [ ! -s "$NVM_DIR/nvm.sh" ]; then
+    info_msg "Installing NVM..."
+    curl -fsSL https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.3/install.sh | PROFILE=/dev/null bash
+    [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
+    done_msg "NVM installed"
+  else
+    done_msg "NVM already installed"
+    \. "$NVM_DIR/nvm.sh"
+  fi
+  if ! nvm ls 24 &>/dev/null; then
+    info_msg "Installing Node.js 24..."
+    nvm install 24
+    done_msg "Node.js 24 installed"
+  else
+    done_msg "Node.js 24 already installed"
+  fi
+  nvm use 24
+fi
+
+# ========== 6: Docker ==========
+if [ "${SELECTED[6]}" = "1" ]; then
+  step "Installing Docker"
+  if ! command -v docker &>/dev/null; then
+    info_msg "Installing Docker via get.docker.com..."
+    curl -fsSL https://get.docker.com | sh
+    done_msg "Docker installed"
+  else
+    done_msg "Docker already installed: $(docker --version)"
+  fi
+  if ! groups "$USER" | grep -q docker; then
+    info_msg "Adding $USER to docker group..."
+    sudo usermod -aG docker "$USER"
+    done_msg "Added to docker group (re-login to take effect)"
+  else
+    done_msg "$USER already in docker group"
+  fi
+fi
+
+# ========== 7: AI CLI Tools ==========
+if [ "${SELECTED[7]}" = "1" ]; then
+  step "Installing AI CLI Tools"
+  # Ensure npm is available
+  export NVM_DIR="$HOME/.nvm"
+  [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
+  if ! command -v npm &>/dev/null; then
+    warn_msg "npm not found — NVM/Node required for AI CLI Tools"
+  else
+    if ! command -v claude &>/dev/null; then
+      info_msg "Installing Claude Code..."
+      npm install -g @anthropic-ai/claude-code
+      done_msg "Claude Code installed"
+    else
+      done_msg "Claude Code already installed"
+    fi
+    if ! command -v gemini &>/dev/null; then
+      info_msg "Installing Gemini CLI..."
+      npm install -g @google/gemini-cli
+      done_msg "Gemini CLI installed"
+    else
+      done_msg "Gemini CLI already installed"
+    fi
+  fi
+  # Claude statusline
+  mkdir -p "$HOME/.claude"
+  if [ -f "$DOTFILES_DIR/.claude/statusline-command.sh" ]; then
+    ln -sf "$DOTFILES_DIR/.claude/statusline-command.sh" "$HOME/.claude/statusline-command.sh"
+    done_msg "~/.claude/statusline-command.sh"
+  fi
+fi
+
+# ========== 8: Swap ==========
+if [ "${SELECTED[8]}" = "1" ]; then
+  step "Setting up 2GB swap"
+  if [ ! -f /swapfile ]; then
+    info_msg "Creating 2GB swap file..."
+    sudo fallocate -l 2G /swapfile
+    sudo chmod 600 /swapfile
+    sudo mkswap /swapfile
+    sudo swapon /swapfile
+    echo '/swapfile none swap sw 0 0' | sudo tee -a /etc/fstab > /dev/null
+    done_msg "2GB swap created and enabled"
+  else
+    done_msg "Swap file already exists"
+  fi
+fi
+
+# ========== 9: fail2ban ==========
+if [ "${SELECTED[9]}" = "1" ]; then
+  step "Installing fail2ban"
+  if ! command -v fail2ban-client &>/dev/null; then
+    info_msg "Installing fail2ban..."
+    sudo apt install -y fail2ban
+    sudo systemctl enable fail2ban
+    sudo systemctl start fail2ban
+    done_msg "fail2ban installed and enabled"
+  else
+    done_msg "fail2ban already installed"
+  fi
+fi
+
+# ========== 10: UFW ==========
+if [ "${SELECTED[10]}" = "1" ]; then
+  step "Setting up UFW firewall"
+  if ! command -v ufw &>/dev/null; then
+    info_msg "Installing UFW..."
+    sudo apt install -y ufw
+  fi
+  sudo ufw allow OpenSSH
+  sudo ufw allow 80/tcp
+  sudo ufw allow 443/tcp
+  echo "y" | sudo ufw enable
+  done_msg "UFW enabled (SSH + HTTP/S allowed)"
+fi
+
+# ══════════════════════════════════════════════════
+#  ALWAYS: Finalize
+# ══════════════════════════════════════════════════
+
+# ========== Symlinks ==========
+step "Setting up dotfiles symlinks"
+_src="${BASH_SOURCE[0]:-}"
+if [[ "$_src" == /* ]] && [[ -f "$_src" ]]; then
+  REPO_DIR="$(cd "$(dirname "$_src")" && pwd)"
+else
+  REPO_DIR="$DOTFILES_DIR"
+fi
+for _d in "$REPO_DIR/.config"/*/; do
+  rm -f "$HOME/.config/$(basename "$_d")"
+done
+rm -f "$HOME/.zshrc"
+mkdir -p "$HOME/.config"
+for _d in "$REPO_DIR/.config"/*/; do
+  _name="$(basename "$_d")"
+  ln -sf "$REPO_DIR/.config/$_name" "$HOME/.config/$_name"
+  done_msg "~/.config/$_name"
+done
+ln -sf "$REPO_DIR/.zshrc" "$HOME/.zshrc"
+done_msg "~/.zshrc"
+
+# ========== Hush Login ==========
+[ ! -f "$HOME/.hushlogin" ] && touch "$HOME/.hushlogin" && done_msg ".hushlogin created"
+
+# ========== Shell Cleanup ==========
+step "Cleaning up shell profiles"
+for _f in "$HOME/.zprofile" "$HOME/.zshenv" "$HOME/.profile" "$HOME/.bash_profile" "$HOME/.bashrc"; do
+  [ -f "$_f" ] || continue
+  grep -qE 'cargo/env|NVM_DIR|nvm\.sh|bun\.sh|BUN_INSTALL|_bun' "$_f" 2>/dev/null || continue
+  grep -vE 'cargo/env|NVM_DIR|nvm\.sh|bun\.sh|BUN_INSTALL|_bun|Added by.*installer' "$_f" > "${_f}.tmp" || true
+  if [ -s "${_f}.tmp" ]; then
+    mv "${_f}.tmp" "$_f"
+  else
+    rm -f "${_f}.tmp" "$_f"
+  fi
+  done_msg "Cleaned: $(basename "$_f")"
+done
+done_msg "Shell profiles clean"
+
+# ========== Bashrc Fallback ==========
+step "Setting up bashrc fallback"
+_bashrc="$HOME/.bashrc"
+if [ -f "$_bashrc" ]; then
+  if ! grep -q 'exec zsh' "$_bashrc"; then
+    echo '' >> "$_bashrc"
+    echo '# Switch to zsh if available' >> "$_bashrc"
+    echo 'if [ -x "$(command -v zsh)" ]; then exec zsh; fi' >> "$_bashrc"
+    done_msg "Added zsh fallback to .bashrc"
+  else
+    done_msg "Bashrc fallback already set"
+  fi
+else
+  echo '# Switch to zsh if available' > "$_bashrc"
+  echo 'if [ -x "$(command -v zsh)" ]; then exec zsh; fi' >> "$_bashrc"
+  done_msg "Created .bashrc with zsh fallback"
+fi
+
+# ========== Tmux Plugins ==========
+if command -v tmux &>/dev/null; then
+  step "Setting up Tmux plugins"
+  TPM_DIR="$HOME/.config/tmux/plugins/tpm"
+  if [ ! -d "$TPM_DIR" ]; then
+    info_msg "Installing TPM..."
+    git clone https://github.com/tmux-plugins/tpm "$TPM_DIR"
+    done_msg "TPM installed"
+  else
+    done_msg "TPM already installed"
+  fi
+  if [ -x "$TPM_DIR/bin/install_plugins" ]; then
+    "$TPM_DIR/bin/install_plugins"
+    done_msg "Tmux plugins installed"
+  else
+    warn_msg "TPM install_plugins not found"
+  fi
+fi
+
+# ========== Git Config ==========
+step "Checking Git config"
+GIT_NAME_SET=$(git config --global user.name 2>/dev/null || true)
+GIT_EMAIL_SET=$(git config --global user.email 2>/dev/null || true)
+if [ -z "$GIT_NAME_SET" ] || [ -z "$GIT_EMAIL_SET" ]; then
+  if confirm "Configure Git user name and email?"; then
+    printf "    Enter your Git name: " && read -r GIT_NAME < /dev/tty
+    printf "    Enter your Git email: " && read -r GIT_EMAIL < /dev/tty
+    git config --global user.name "$GIT_NAME"
+    git config --global user.email "$GIT_EMAIL"
+    done_msg "Git config set"
+  else
+    warn_msg "Git config skipped"
+  fi
+else
+  done_msg "Git configured: $GIT_NAME_SET <$GIT_EMAIL_SET>"
+fi
+
+# ========== Default Shell ==========
+if [ "$SHELL" != "$(which zsh 2>/dev/null)" ]; then
+  step "Setting zsh as default shell"
+  if command -v zsh &>/dev/null; then
+    sudo chsh -s "$(which zsh)" "$USER" || warn_msg "chsh failed"
+    done_msg "Default shell set to zsh"
+  else
+    warn_msg "zsh not installed, skipping"
+  fi
+fi
+
+# ========== Done ==========
+echo ""
+echo -e "${BOLD}${GREEN}╔══════════════════════════════════════════════════╗${NC}"
+echo -e "${BOLD}${GREEN}║           ✓ Installation complete!               ║${NC}"
+echo -e "${BOLD}${GREEN}╚══════════════════════════════════════════════════╝${NC}"
+echo ""
+echo -e "  ${DIM}👉 Restart your terminal or run: exec zsh${NC}"
+echo ""
