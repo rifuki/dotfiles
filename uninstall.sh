@@ -137,6 +137,8 @@ draw_menu() {
   echo -e "${BOLD}${CYAN}║          dotfiles uninstaller — macOS            ║${NC}"
   echo -e "${BOLD}${CYAN}╚══════════════════════════════════════════════════╝${NC}"
   echo ""
+  echo -e "  ${YELLOW}⚠${NC}  ${DIM}Recommended: Close all terminal sessions and apps before proceeding${NC}"
+  echo ""
   echo -e "  ${BOLD}Select components to remove:${NC}"
   echo ""
   for (( i=0; i<_total; i++ )); do
@@ -414,12 +416,28 @@ done_msg "Cache files removed"
 if [ "${SELECTED[15]}" = "1" ]; then
   step "Deep cleaning residue files"
 
-  # XDG directories
+  # Kill running processes that might recreate files
+  for _proc in yazi neofetch; do
+    pkill -9 "$_proc" 2>/dev/null || true
+  done
+
+  # XDG directories - first pass
   for _dir in "$HOME/.cache" "$HOME/.local/share" "$HOME/.local/state" "$HOME/.config"; do
     for _tool in "${TOOL_NAMES[@]}"; do
       if [ -e "$_dir/$_tool" ]; then
         rm -rf "$_dir/$_tool"
         done_msg "Removed $_dir/$_tool"
+      fi
+    done
+  done
+
+  # Second pass: ensure .local subdirectories are fully cleaned
+  sleep 0.5  # Brief pause to catch any recreation attempts
+  for _dir in "$HOME/.cache" "$HOME/.local/share" "$HOME/.local/state" "$HOME/.config"; do
+    for _tool in "${TOOL_NAMES[@]}"; do
+      if [ -e "$_dir/$_tool" ]; then
+        rm -rf "$_dir/$_tool"
+        warn_msg "Re-removed $_dir/$_tool (was recreated by running process)"
       fi
     done
   done
