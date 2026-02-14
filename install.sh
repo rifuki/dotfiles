@@ -55,6 +55,12 @@ if [ ! -t 0 ] && [ ! -c /dev/tty ]; then
   exit 1
 fi
 
+# ========== Resume Mode (re-launched as custom user) ==========
+_RESUME_SEL=""
+[ "$1" = "--resume" ] && [ -n "$2" ] && _RESUME_SEL="$2"
+
+if [ -z "$_RESUME_SEL" ]; then
+
 # ========== Security Check: root / passwordless user ==========
 _is_root=0
 _user_no_password=0
@@ -346,6 +352,16 @@ if [ "$_did_backup" = "1" ]; then
   done_msg "Dotfiles restored"
 fi
 
+else
+  # ========== Resume Mode: load pre-selected state ==========
+  IFS=',' read -ra SELECTED <<< "$_RESUME_SEL"
+  DOTFILES_DIR="$HOME/.dotfiles"
+  DOTFILES_REPO="https://github.com/rifuki/dotfiles.git"
+  echo ""
+  echo -e "  ${BOLD}${CYAN}Resuming installation as $(whoami)...${NC}"
+  echo ""
+fi
+
 # ══════════════════════════════════════════════════
 #  SELECTED: Optional components
 # ══════════════════════════════════════════════════
@@ -414,34 +430,92 @@ if [ "${SELECTED[0]}" = "1" ]; then
     done_msg "Custom user $_custom_user is ready"
     info_msg "Login: ssh $_custom_user@<your-server>"
 
-    # Offer to delete/lock default cloud users with no password
+    # Auto-lock all passwordless default cloud users (no per-user prompt)
     _cloud_defaults=(ubuntu azureuser ec2-user admin centos fedora debian cloud)
     for _default_user in "${_cloud_defaults[@]}"; do
       if id "$_default_user" &>/dev/null && [ "$_default_user" != "$_custom_user" ]; then
         _pw_status=$(sudo passwd -S "$_default_user" 2>/dev/null | awk '{print $2}' || true)
+        _pw_empty=0
         if [ "$_pw_status" = "P" ]; then
           _pw_hash=$(sudo getent shadow "$_default_user" 2>/dev/null | cut -d: -f2 || true)
           case "$_pw_hash" in
             ""|"!"*|"*"|"!!"*) _pw_empty=1 ;;
-            *) _pw_empty=0 ;;
           esac
         else
           _pw_empty=1
         fi
         if [ "$_pw_empty" = "1" ]; then
-          warn_msg "User '$_default_user' (default cloud user) has no password — insecure!"
-          if confirm "Delete user '$_default_user' and its home directory? (recommended)"; then
-            sudo userdel -r "$_default_user" 2>/dev/null && done_msg "User '$_default_user' deleted" || warn_msg "Failed to delete '$_default_user'"
-          elif confirm "Lock user '$_default_user' to prevent login?"; then
-            sudo passwd -l "$_default_user"
-            done_msg "User '$_default_user' locked"
-          else
-            warn_msg "User '$_default_user' left as-is — consider deleting or locking it manually"
-          fi
+          sudo passwd -l "$_default_user" 2>/dev/null && \
+            done_msg "Locked passwordless user: $_default_user" || true
         fi
       fi
     done
+
+    # If other components selected, prompt: re-launch as new user or continue here
+    _other_sel=0
+    for (( _i=1; _i<${#SELECTED[@]}; _i++ )); do
+      [ "${SELECTED[$_i]}" = "1" ] && _other_sel=1 && break
+    done
+
+    if [ "$_other_sel" = "1" ]; then
+      echo ""
+      echo -e "  ${BOLD}${MAGENTA}╔══════════════════════════════════════════════════╗${NC}"
+      echo -e "  ${BOLD}${MAGENTA}║       ⚠  Where should components install?        ║${NC}"
+      echo -e "  ${BOLD}${MAGENTA}╚══════════════════════════════════════════════════╝${NC}"
+      echo ""
+      echo -e "    ${BOLD}${CYAN}[1]${NC} Re-launch as ${BOLD}${CYAN}$_custom_user${NC}  ${GREEN}← recommended${NC}"
+      echo -e "        ${DIM}→ NVM, dotfiles, zsh, etc. install into $_custom_user's \$HOME${NC}"
+      echo ""
+      echo -e "    ${BOLD}${YELLOW}[2]${NC} Continue as ${BOLD}${YELLOW}$USER${NC}  ${RED}← not recommended${NC}"
+      echo -e "        ${DIM}→ All apps install in $USER's \$HOME, not in $_custom_user's${NC}"
+      echo -e "        ${RED}▸ $_custom_user will NOT have these apps set up${NC}"
+      echo ""
+      while true; do
+        printf "  > "
+        read -r _launch_choice < /dev/tty
+        case "$_launch_choice" in
+          1)
+            _new_home=$(getent passwd "$_custom_user" | cut -d: -f6)
+            if [ ! -d "$_new_home/.dotfiles/.git" ]; then
+              info_msg "Cloning dotfiles for $_custom_user..."
+              sudo -u "$_custom_user" git clone --branch vps "$DOTFILES_REPO" "$_new_home/.dotfiles" 2>/dev/null || \
+                { sudo cp -r "$DOTFILES_DIR" "$_new_home/.dotfiles" && \
+                  sudo chown -R "$_custom_user:$_custom_user" "$_new_home/.dotfiles"; }
+              done_msg "Dotfiles ready for $_custom_user"
+            fi
+            _sel_str="0"
+            for (( _i=1; _i<${#SELECTED[@]}; _i++ )); do
+              _sel_str+=",${SELECTED[$_i]}"
+            done
+            echo ""
+            step "Re-launching installer as $_custom_user"
+            info_msg "All remaining components will install under $_custom_user's home"
+            exec sudo -H -u "$_custom_user" bash "$_new_home/.dotfiles/install.sh" --resume "$_sel_str"
+            ;;
+          2)
+            echo ""
+            echo -e "  ${RED}${BOLD}╔══════════════════════════════════════════════════╗${NC}"
+            echo -e "  ${RED}${BOLD}║  ⚠  WARNING: Continuing as $USER                 ║${NC}"
+            echo -e "  ${RED}${BOLD}╚══════════════════════════════════════════════════╝${NC}"
+            echo -e "  ${RED}▸ All selected apps will install in $USER's \$HOME${NC}"
+            echo -e "  ${RED}▸ $_custom_user will NOT have these tools in their environment${NC}"
+            echo -e "  ${RED}▸ Re-run install.sh as $_custom_user later to set up properly${NC}"
+            echo ""
+            _WARN_WRONG_USER=1
+            break
+            ;;
+          *)
+            echo -e "  ${YELLOW}Enter 1 or 2${NC}"
+            ;;
+        esac
+      done
+    fi
   fi
+fi
+
+if [ "${_WARN_WRONG_USER:-0}" = "1" ]; then
+  echo -e "  ${RED}${BOLD}⚠  Installing as $USER — these apps will NOT appear in the new custom user's home${NC}"
+  echo ""
 fi
 
 # ========== 1: APT Packages + Nerd Font ==========
