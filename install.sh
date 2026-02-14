@@ -81,8 +81,8 @@ STATUS=()
 # 0: Custom User
 LABELS+=("Custom User")
 DESCRIPTIONS+=("New user with password + sudo (secure alternative to default cloud user)")
-SELECTED+=(1)
 _found_user=""
+_found_user_has_pw=0
 while IFS=: read -r _u _ _uid _; do
   if [ "$_uid" -ge 1000 ] && [ "$_uid" -lt 65534 ]; then
     case "$_u" in
@@ -91,10 +91,27 @@ while IFS=: read -r _u _ _uid _; do
     esac
   fi
 done < /etc/passwd
-if [ "$_is_root" = "1" ]; then STATUS+=("running as root")
-elif [ "$_user_no_password" = "1" ]; then STATUS+=("$USER has no password")
-elif [ -n "$_found_user" ]; then STATUS+=("$_found_user")
-else STATUS+=(""); fi
+if [ -n "$_found_user" ]; then
+  _fu_pw_status=$(sudo passwd -S "$_found_user" 2>/dev/null | awk '{print $2}' || true)
+  if [ "$_fu_pw_status" = "P" ]; then
+    _fu_pw_hash=$(sudo getent shadow "$_found_user" 2>/dev/null | cut -d: -f2 || true)
+    case "$_fu_pw_hash" in
+      ""|"!"*|"*"|"!!"*) _found_user_has_pw=0 ;;
+      *) _found_user_has_pw=1 ;;
+    esac
+  fi
+fi
+if [ "$_is_root" = "1" ]; then
+  SELECTED+=(1); STATUS+=("running as root")
+elif [ "$_user_no_password" = "1" ]; then
+  SELECTED+=(1); STATUS+=("$USER has no password")
+elif [ -n "$_found_user" ] && [ "$_found_user_has_pw" = "1" ]; then
+  SELECTED+=(0); STATUS+=("$_found_user (ready)")
+elif [ -n "$_found_user" ]; then
+  SELECTED+=(1); STATUS+=("$_found_user (no password!)")
+else
+  SELECTED+=(1); STATUS+=("")
+fi
 
 # 1: APT Packages + Nerd Font
 LABELS+=("APT Packages + Nerd Font")
@@ -233,6 +250,9 @@ while true; do
     echo -e "\n  ${YELLOW}⏭️  Installation cancelled.${NC}"
     exit 0
   fi
+  # Dependency: dotfiles .zshrc requires Oh My Zsh (3) — must install with APT (1)
+  [ "${SELECTED[1]}" = "1" ] && SELECTED[3]=1
+  [ "${SELECTED[3]}" = "0" ] && SELECTED[1]=0
   # Dependency: AI CLI Tools (8) requires NVM (6) for npm
   [ "${SELECTED[8]}" = "1" ] && SELECTED[6]=1
   # Deselect NVM (6) → auto-deselect AI CLI Tools (8)
@@ -395,6 +415,7 @@ if [ "${SELECTED[0]}" = "1" ]; then
     done_msg "Added $_custom_user to sudo group"
 
     # Copy SSH authorized_keys from current user
+    _ssh_keys_copied=0
     if [ -f "$HOME/.ssh/authorized_keys" ]; then
       if confirm "Copy SSH authorized_keys from $USER to $_custom_user?"; then
         _new_ssh_dir="/home/$_custom_user/.ssh"
@@ -404,26 +425,46 @@ if [ "${SELECTED[0]}" = "1" ]; then
         sudo chmod 700 "$_new_ssh_dir"
         sudo chmod 600 "$_new_ssh_dir/authorized_keys"
         done_msg "SSH authorized_keys copied to $_custom_user"
+        _ssh_keys_copied=1
       fi
+    else
+      warn_msg "No authorized_keys found for $USER — SSH key copy skipped"
     fi
 
-    # SSH hardening: require publickey + password
-    if confirm "Require SSH key + password for $_custom_user? (AuthenticationMethods)"; then
+    # SSH hardening: only offered if SSH keys were actually copied
+    if [ "$_ssh_keys_copied" = "1" ]; then
+      if confirm "Require SSH key + password for $_custom_user? (AuthenticationMethods)"; then
+        _sshd="/etc/ssh/sshd_config"
+        # Enable PasswordAuthentication
+        if sudo grep -q "^#\?PasswordAuthentication" "$_sshd" 2>/dev/null; then
+          sudo sed -i 's/^#\?PasswordAuthentication.*/PasswordAuthentication yes/' "$_sshd"
+        else
+          echo "PasswordAuthentication yes" | sudo tee -a "$_sshd" > /dev/null
+        fi
+        # Append Match block only if not already present
+        if ! sudo grep -q "^Match User $_custom_user$" "$_sshd" 2>/dev/null; then
+          printf '\nMatch User %s\n    AuthenticationMethods publickey,password\n' "$_custom_user" | sudo tee -a "$_sshd" > /dev/null
+        fi
+        # Validate config then restart
+        if sudo sshd -t 2>/dev/null; then
+          sudo systemctl restart sshd 2>/dev/null || sudo service ssh restart 2>/dev/null || true
+          done_msg "SSH: requires publickey + password for $_custom_user"
+        else
+          warn_msg "sshd config test failed — manual check needed: sudo sshd -t"
+        fi
+      fi
+    else
+      # No keys copied — enable PasswordAuthentication so user can at least login via password
+      warn_msg "No SSH keys copied — enabling PasswordAuthentication so $_custom_user can login via password"
       _sshd="/etc/ssh/sshd_config"
-      # Enable PasswordAuthentication
       if sudo grep -q "^#\?PasswordAuthentication" "$_sshd" 2>/dev/null; then
         sudo sed -i 's/^#\?PasswordAuthentication.*/PasswordAuthentication yes/' "$_sshd"
       else
         echo "PasswordAuthentication yes" | sudo tee -a "$_sshd" > /dev/null
       fi
-      # Append Match block only if not already present
-      if ! sudo grep -q "^Match User $_custom_user$" "$_sshd" 2>/dev/null; then
-        printf '\nMatch User %s\n    AuthenticationMethods publickey,password\n' "$_custom_user" | sudo tee -a "$_sshd" > /dev/null
-      fi
-      # Validate config then restart
       if sudo sshd -t 2>/dev/null; then
         sudo systemctl restart sshd 2>/dev/null || sudo service ssh restart 2>/dev/null || true
-        done_msg "SSH: requires publickey + password for $_custom_user"
+        done_msg "PasswordAuthentication enabled — login: ssh $_custom_user@<your-server>"
       else
         warn_msg "sshd config test failed — manual check needed: sudo sshd -t"
       fi
