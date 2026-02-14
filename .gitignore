@@ -17,6 +17,8 @@
 !.config/
 !.config/**
 # Ignore specific files
+.DS_Store
+**/.DS_Store
 .config/.git/
 .config/nvim/lazy-lock.json
 .config/tmux/plugins/
