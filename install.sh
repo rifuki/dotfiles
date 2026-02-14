@@ -383,9 +383,11 @@ if [ "${SELECTED[0]}" = "1" ]; then
       done_msg "User $_custom_user already exists"
     fi
 
-    # Set password
+    # Set password (retry on mismatch)
     info_msg "Set password for $_custom_user:"
-    sudo passwd "$_custom_user"
+    until sudo passwd "$_custom_user"; do
+      warn_msg "Password mismatch or error — please try again"
+    done
     done_msg "Password set"
 
     # Add to sudo group
