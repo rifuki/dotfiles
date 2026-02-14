@@ -55,6 +55,15 @@ if [ ! -t 0 ] && [ ! -c /dev/tty ]; then
   exit 1
 fi
 
+# ========== Security Check: root / passwordless user ==========
+_is_root=0
+_user_no_password=0
+if [ "$EUID" = "0" ] || [ "$USER" = "root" ]; then
+  _is_root=1
+fi
+_cur_pw_status=$(sudo passwd -S "$USER" 2>/dev/null | awk '{print $2}' || true)
+[ "$_cur_pw_status" = "NP" ] && _user_no_password=1 || true
+
 echo ""
 
 # ========== Detect Current State ==========
@@ -63,7 +72,25 @@ DESCRIPTIONS=()
 SELECTED=()
 STATUS=()
 
-# 0: APT Packages + Nerd Font
+# 0: Custom User
+LABELS+=("Custom User")
+DESCRIPTIONS+=("New user with password + sudo (secure alternative to default cloud user)")
+SELECTED+=(1)
+_found_user=""
+while IFS=: read -r _u _ _uid _; do
+  if [ "$_uid" -ge 1000 ] && [ "$_uid" -lt 65534 ]; then
+    case "$_u" in
+      ubuntu|azureuser|ec2-user|admin|centos|fedora|debian|cloud) ;;
+      *) _found_user="$_u"; break ;;
+    esac
+  fi
+done < /etc/passwd
+if [ "$_is_root" = "1" ]; then STATUS+=("running as root")
+elif [ "$_user_no_password" = "1" ]; then STATUS+=("$USER has no password")
+elif [ -n "$_found_user" ]; then STATUS+=("$_found_user")
+else STATUS+=(""); fi
+
+# 1: APT Packages + Nerd Font
 LABELS+=("APT Packages + Nerd Font")
 DESCRIPTIONS+=("neovim, tmux, zsh, htop, ripgrep, neofetch, yazi, gh, JetBrainsMono")
 SELECTED+=(1)
@@ -78,43 +105,43 @@ if [ "$_fi" -eq 9 ]; then STATUS+=("all installed")
 elif [ "$_fi" -gt 0 ]; then STATUS+=("${_fi}/9 installed")
 else STATUS+=(""); fi
 
-# 1: Starship
+# 2: Starship
 LABELS+=("Starship")
 DESCRIPTIONS+=("Cross-shell prompt theme")
 SELECTED+=(1)
 command -v starship &>/dev/null && STATUS+=("installed") || STATUS+=("")
 
-# 2: Oh My Zsh
+# 3: Oh My Zsh
 LABELS+=("Oh My Zsh")
 DESCRIPTIONS+=("Zsh framework + plugins")
 SELECTED+=(1)
 [ -d "$HOME/.oh-my-zsh" ] && STATUS+=("installed") || STATUS+=("")
 
-# 3: Rust
+# 4: Rust
 LABELS+=("Rust")
 DESCRIPTIONS+=("Rust toolchain via rustup")
 SELECTED+=(1)
 [ -f "$HOME/.cargo/bin/rustup" ] && STATUS+=("installed") || STATUS+=("")
 
-# 4: Bun
+# 5: Bun
 LABELS+=("Bun")
 DESCRIPTIONS+=("JavaScript runtime")
 SELECTED+=(1)
 [ -d "$HOME/.bun" ] && STATUS+=("installed") || STATUS+=("")
 
-# 5: NVM + Node 24
+# 6: NVM + Node 24
 LABELS+=("NVM + Node 24")
 DESCRIPTIONS+=("Node Version Manager + Node.js")
 SELECTED+=(1)
 [ -d "$HOME/.nvm" ] && STATUS+=("installed") || STATUS+=("")
 
-# 6: Docker
+# 7: Docker
 LABELS+=("Docker")
 DESCRIPTIONS+=("Container engine + add user to docker group")
 SELECTED+=(1)
 command -v docker &>/dev/null && STATUS+=("installed") || STATUS+=("")
 
-# 7: AI CLI Tools
+# 8: AI CLI Tools
 LABELS+=("AI CLI Tools")
 DESCRIPTIONS+=("Claude Code + Gemini CLI (requires NVM)")
 SELECTED+=(1)
@@ -122,19 +149,19 @@ if command -v claude &>/dev/null && command -v gemini &>/dev/null; then STATUS+=
 elif command -v claude &>/dev/null || command -v gemini &>/dev/null; then STATUS+=("partial")
 else STATUS+=(""); fi
 
-# 8: Swap (2GB)
+# 9: Swap (2GB)
 LABELS+=("Swap (2GB)")
 DESCRIPTIONS+=("Create 2GB swap file")
 SELECTED+=(1)
 [ -f /swapfile ] && STATUS+=("active") || STATUS+=("")
 
-# 9: fail2ban
+# 10: fail2ban
 LABELS+=("fail2ban")
 DESCRIPTIONS+=("Intrusion prevention")
 SELECTED+=(1)
 command -v fail2ban-client &>/dev/null && STATUS+=("installed") || STATUS+=("")
 
-# 10: UFW
+# 11: UFW
 LABELS+=("UFW")
 DESCRIPTIONS+=("Firewall (allow SSH + HTTP/S)")
 SELECTED+=(1)
@@ -149,6 +176,13 @@ draw_menu() {
   echo -e "${BOLD}${MAGENTA}║            dotfiles installer — VPS              ║${NC}"
   echo -e "${BOLD}${MAGENTA}╚══════════════════════════════════════════════════╝${NC}"
   echo ""
+  if [ "$_is_root" = "1" ]; then
+    echo -e "  ${RED}${BOLD}⚠  Running as root!${NC}  ${DIM}It is strongly recommended to create a Custom User first.${NC}"
+    echo ""
+  elif [ "$_user_no_password" = "1" ]; then
+    echo -e "  ${YELLOW}${BOLD}⚠  User '${USER}' has no password!${NC}  ${DIM}Enable the Custom User option to create a secure user.${NC}"
+    echo ""
+  fi
   echo -e "  ${BOLD}${CYAN}Select components to install:${NC}"
   echo ""
   for (( i=0; i<_total; i++ )); do
@@ -193,10 +227,10 @@ while true; do
     echo -e "\n  ${YELLOW}⏭️  Installation cancelled.${NC}"
     exit 0
   fi
-  # Dependency: AI CLI Tools (7) requires NVM (5) for npm
-  [ "${SELECTED[7]}" = "1" ] && SELECTED[5]=1
-  # Deselect NVM (5) → auto-deselect AI CLI Tools (7)
-  [ "${SELECTED[5]}" = "0" ] && SELECTED[7]=0
+  # Dependency: AI CLI Tools (8) requires NVM (6) for npm
+  [ "${SELECTED[8]}" = "1" ] && SELECTED[6]=1
+  # Deselect NVM (6) → auto-deselect AI CLI Tools (8)
+  [ "${SELECTED[6]}" = "0" ] && SELECTED[8]=0
 done
 
 # ========== Confirmation ==========
@@ -316,8 +350,102 @@ fi
 #  SELECTED: Optional components
 # ══════════════════════════════════════════════════
 
-# ========== 0: APT Packages + Nerd Font ==========
+# ========== 0: Custom User ==========
 if [ "${SELECTED[0]}" = "1" ]; then
+  step "Setting up Custom User"
+  printf "    Enter new username (leave empty to skip): "
+  read -r _custom_user < /dev/tty
+  if [ -z "$_custom_user" ]; then
+    warn_msg "Custom user setup skipped"
+  else
+    # Create user if not exists
+    if ! id "$_custom_user" &>/dev/null; then
+      info_msg "Creating user $_custom_user..."
+      sudo useradd -m -s /bin/bash "$_custom_user"
+      done_msg "User $_custom_user created"
+    else
+      done_msg "User $_custom_user already exists"
+    fi
+
+    # Set password
+    info_msg "Set password for $_custom_user:"
+    sudo passwd "$_custom_user"
+    done_msg "Password set"
+
+    # Add to sudo group
+    sudo usermod -aG sudo "$_custom_user"
+    done_msg "Added $_custom_user to sudo group"
+
+    # Copy SSH authorized_keys from current user
+    if [ -f "$HOME/.ssh/authorized_keys" ]; then
+      if confirm "Copy SSH authorized_keys from $USER to $_custom_user?"; then
+        _new_ssh_dir="/home/$_custom_user/.ssh"
+        sudo mkdir -p "$_new_ssh_dir"
+        sudo cp "$HOME/.ssh/authorized_keys" "$_new_ssh_dir/authorized_keys"
+        sudo chown -R "$_custom_user:$_custom_user" "$_new_ssh_dir"
+        sudo chmod 700 "$_new_ssh_dir"
+        sudo chmod 600 "$_new_ssh_dir/authorized_keys"
+        done_msg "SSH authorized_keys copied to $_custom_user"
+      fi
+    fi
+
+    # SSH hardening: require publickey + password
+    if confirm "Require SSH key + password for $_custom_user? (AuthenticationMethods)"; then
+      _sshd="/etc/ssh/sshd_config"
+      # Enable PasswordAuthentication
+      if sudo grep -q "^#\?PasswordAuthentication" "$_sshd" 2>/dev/null; then
+        sudo sed -i 's/^#\?PasswordAuthentication.*/PasswordAuthentication yes/' "$_sshd"
+      else
+        echo "PasswordAuthentication yes" | sudo tee -a "$_sshd" > /dev/null
+      fi
+      # Append Match block only if not already present
+      if ! sudo grep -q "^Match User $_custom_user$" "$_sshd" 2>/dev/null; then
+        printf '\nMatch User %s\n    AuthenticationMethods publickey,password\n' "$_custom_user" | sudo tee -a "$_sshd" > /dev/null
+      fi
+      # Validate config then restart
+      if sudo sshd -t 2>/dev/null; then
+        sudo systemctl restart sshd 2>/dev/null || sudo service ssh restart 2>/dev/null || true
+        done_msg "SSH: requires publickey + password for $_custom_user"
+      else
+        warn_msg "sshd config test failed — manual check needed: sudo sshd -t"
+      fi
+    fi
+
+    done_msg "Custom user $_custom_user is ready"
+    info_msg "Login: ssh $_custom_user@<your-server>"
+
+    # Offer to delete/lock default cloud users with no password
+    _cloud_defaults=(ubuntu azureuser ec2-user admin centos fedora debian cloud)
+    for _default_user in "${_cloud_defaults[@]}"; do
+      if id "$_default_user" &>/dev/null && [ "$_default_user" != "$_custom_user" ]; then
+        _pw_status=$(sudo passwd -S "$_default_user" 2>/dev/null | awk '{print $2}' || true)
+        if [ "$_pw_status" = "P" ]; then
+          _pw_hash=$(sudo getent shadow "$_default_user" 2>/dev/null | cut -d: -f2 || true)
+          case "$_pw_hash" in
+            ""|"!"*|"*"|"!!"*) _pw_empty=1 ;;
+            *) _pw_empty=0 ;;
+          esac
+        else
+          _pw_empty=1
+        fi
+        if [ "$_pw_empty" = "1" ]; then
+          warn_msg "User '$_default_user' (default cloud user) has no password — insecure!"
+          if confirm "Delete user '$_default_user' and its home directory? (recommended)"; then
+            sudo userdel -r "$_default_user" 2>/dev/null && done_msg "User '$_default_user' deleted" || warn_msg "Failed to delete '$_default_user'"
+          elif confirm "Lock user '$_default_user' to prevent login?"; then
+            sudo passwd -l "$_default_user"
+            done_msg "User '$_default_user' locked"
+          else
+            warn_msg "User '$_default_user' left as-is — consider deleting or locking it manually"
+          fi
+        fi
+      fi
+    done
+  fi
+fi
+
+# ========== 1: APT Packages + Nerd Font ==========
+if [ "${SELECTED[1]}" = "1" ]; then
   step "Installing APT packages + Nerd Font"
 
   # Neovim: latest stable from GitHub releases
@@ -395,8 +523,8 @@ if [ "${SELECTED[0]}" = "1" ]; then
   fi
 fi
 
-# ========== 1: Starship ==========
-if [ "${SELECTED[1]}" = "1" ]; then
+# ========== 2: Starship ==========
+if [ "${SELECTED[2]}" = "1" ]; then
   step "Installing Starship"
   if ! command -v starship &>/dev/null; then
     info_msg "Installing Starship..."
@@ -407,8 +535,8 @@ if [ "${SELECTED[1]}" = "1" ]; then
   fi
 fi
 
-# ========== 2: Oh My Zsh ==========
-if [ "${SELECTED[2]}" = "1" ]; then
+# ========== 3: Oh My Zsh ==========
+if [ "${SELECTED[3]}" = "1" ]; then
   step "Setting up Oh My Zsh"
   if [ ! -f "$HOME/.oh-my-zsh/oh-my-zsh.sh" ]; then
     info_msg "Installing Oh My Zsh..."
@@ -433,8 +561,8 @@ if [ "${SELECTED[2]}" = "1" ]; then
   done_msg "Plugins ready"
 fi
 
-# ========== 3: Rust ==========
-if [ "${SELECTED[3]}" = "1" ]; then
+# ========== 4: Rust ==========
+if [ "${SELECTED[4]}" = "1" ]; then
   step "Setting up Rust"
   if [ ! -f "$HOME/.cargo/bin/rustup" ]; then
     info_msg "Installing Rust (stable)..."
@@ -453,8 +581,8 @@ if [ "${SELECTED[3]}" = "1" ]; then
   fi
 fi
 
-# ========== 4: Bun ==========
-if [ "${SELECTED[4]}" = "1" ]; then
+# ========== 5: Bun ==========
+if [ "${SELECTED[5]}" = "1" ]; then
   step "Setting up Bun"
   if [ ! -f "$HOME/.bun/bin/bun" ]; then
     info_msg "Installing Bun..."
@@ -466,8 +594,8 @@ if [ "${SELECTED[4]}" = "1" ]; then
   fi
 fi
 
-# ========== 5: NVM + Node ==========
-if [ "${SELECTED[5]}" = "1" ]; then
+# ========== 6: NVM + Node ==========
+if [ "${SELECTED[6]}" = "1" ]; then
   step "Setting up NVM + Node 24"
   export NVM_DIR="$HOME/.nvm"
   if [ ! -s "$NVM_DIR/nvm.sh" ]; then
@@ -489,8 +617,8 @@ if [ "${SELECTED[5]}" = "1" ]; then
   nvm use 24
 fi
 
-# ========== 6: Docker ==========
-if [ "${SELECTED[6]}" = "1" ]; then
+# ========== 7: Docker ==========
+if [ "${SELECTED[7]}" = "1" ]; then
   step "Installing Docker"
   if ! command -v docker &>/dev/null; then
     info_msg "Installing Docker via get.docker.com..."
@@ -508,8 +636,8 @@ if [ "${SELECTED[6]}" = "1" ]; then
   fi
 fi
 
-# ========== 7: AI CLI Tools ==========
-if [ "${SELECTED[7]}" = "1" ]; then
+# ========== 8: AI CLI Tools ==========
+if [ "${SELECTED[8]}" = "1" ]; then
   step "Installing AI CLI Tools"
   # Ensure npm is available
   export NVM_DIR="$HOME/.nvm"
@@ -540,8 +668,8 @@ if [ "${SELECTED[7]}" = "1" ]; then
   fi
 fi
 
-# ========== 8: Swap ==========
-if [ "${SELECTED[8]}" = "1" ]; then
+# ========== 9: Swap ==========
+if [ "${SELECTED[9]}" = "1" ]; then
   step "Setting up 2GB swap"
   if [ ! -f /swapfile ]; then
     info_msg "Creating 2GB swap file..."
@@ -556,8 +684,8 @@ if [ "${SELECTED[8]}" = "1" ]; then
   fi
 fi
 
-# ========== 9: fail2ban ==========
-if [ "${SELECTED[9]}" = "1" ]; then
+# ========== 10: fail2ban ==========
+if [ "${SELECTED[10]}" = "1" ]; then
   step "Installing fail2ban"
   if ! command -v fail2ban-client &>/dev/null; then
     info_msg "Installing fail2ban..."
@@ -570,8 +698,8 @@ if [ "${SELECTED[9]}" = "1" ]; then
   fi
 fi
 
-# ========== 10: UFW ==========
-if [ "${SELECTED[10]}" = "1" ]; then
+# ========== 11: UFW ==========
+if [ "${SELECTED[11]}" = "1" ]; then
   step "Setting up UFW firewall"
   if ! command -v ufw &>/dev/null; then
     info_msg "Installing UFW..."

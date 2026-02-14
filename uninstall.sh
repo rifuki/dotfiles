@@ -39,13 +39,45 @@ step()     { echo -e "\n${BOLD}${CYAN}  ◆ $1${NC}"; }
 done_msg() { echo -e "  ${GREEN}✔${NC} $1"; }
 warn_msg() { echo -e "  ${PEACH}▸${NC} $1"; }
 
+confirm() {
+  local _ans
+  if [ -t 0 ] || [ -c /dev/tty ]; then
+    printf "    %s [y/n]: " "$1"
+    read -r _ans < /dev/tty
+    case "${_ans}" in
+      [yY]|[yY][eE][sS]) return 0 ;;
+      *) return 1 ;;
+    esac
+  fi
+  return 1
+}
+
 # ========== Detect Installed Components ==========
 LABELS=()
 DESCRIPTIONS=()
 SELECTED=()
 DETECTED=()
 
-# 0: APT Packages + Nerd Font
+# 0: Custom User
+LABELS+=("Custom User")
+_custom_users=()
+while IFS=: read -r _u _ _uid _; do
+  if [ "$_uid" -ge 1000 ] && [ "$_uid" -lt 65534 ]; then
+    case "$_u" in
+      ubuntu|azureuser|ec2-user|admin|centos|fedora|debian|cloud) ;;
+      *) _custom_users+=("$_u") ;;
+    esac
+  fi
+done < /etc/passwd
+if [ "${#_custom_users[@]}" -gt 0 ]; then
+  DESCRIPTIONS+=("${_custom_users[*]}")
+  DETECTED+=(1); SELECTED+=(0)
+else
+  DESCRIPTIONS+=("no custom users found")
+  DETECTED+=(0); SELECTED+=(0)
+fi
+
+# 1: APT Packages + Nerd Font
 _apt_count=0
 for _cmd in nvim tmux zsh htop rg neofetch yazi gh; do
   command -v "$_cmd" &>/dev/null && ((_apt_count++)) || true
@@ -61,57 +93,57 @@ else
   DETECTED+=(0); SELECTED+=(0)
 fi
 
-# 1: Starship
+# 2: Starship
 LABELS+=("Starship")
 DESCRIPTIONS+=("Cross-shell prompt")
 if command -v starship &>/dev/null; then DETECTED+=(1); SELECTED+=(1); else DETECTED+=(0); SELECTED+=(0); fi
 
-# 2: Oh My Zsh
+# 3: Oh My Zsh
 LABELS+=("Oh My Zsh")
 DESCRIPTIONS+=("~/.oh-my-zsh")
 if [ -d "$HOME/.oh-my-zsh" ]; then DETECTED+=(1); SELECTED+=(1); else DETECTED+=(0); SELECTED+=(0); fi
 
-# 3: Rust
+# 4: Rust
 LABELS+=("Rust")
 DESCRIPTIONS+=("~/.cargo, ~/.rustup")
 if [ -d "$HOME/.cargo" ] || [ -d "$HOME/.rustup" ]; then DETECTED+=(1); SELECTED+=(1); else DETECTED+=(0); SELECTED+=(0); fi
 
-# 4: Bun
+# 5: Bun
 LABELS+=("Bun")
 DESCRIPTIONS+=("~/.bun")
 if [ -d "$HOME/.bun" ]; then DETECTED+=(1); SELECTED+=(1); else DETECTED+=(0); SELECTED+=(0); fi
 
-# 5: NVM
+# 6: NVM
 LABELS+=("NVM")
 DESCRIPTIONS+=("~/.nvm")
 if [ -d "$HOME/.nvm" ]; then DETECTED+=(1); SELECTED+=(1); else DETECTED+=(0); SELECTED+=(0); fi
 
-# 6: Docker
+# 7: Docker
 LABELS+=("Docker")
 DESCRIPTIONS+=("Docker engine")
 if command -v docker &>/dev/null; then DETECTED+=(1); SELECTED+=(0); else DETECTED+=(0); SELECTED+=(0); fi
 
-# 7: AI CLI Tools
+# 8: AI CLI Tools
 LABELS+=("AI CLI Tools")
 DESCRIPTIONS+=("Claude Code + Gemini CLI")
 if command -v claude &>/dev/null || command -v gemini &>/dev/null; then DETECTED+=(1); SELECTED+=(1); else DETECTED+=(0); SELECTED+=(0); fi
 
-# 8: Swap
+# 9: Swap
 LABELS+=("Swap")
 DESCRIPTIONS+=("/swapfile")
 if [ -f /swapfile ]; then DETECTED+=(1); SELECTED+=(0); else DETECTED+=(0); SELECTED+=(0); fi
 
-# 9: fail2ban
+# 10: fail2ban
 LABELS+=("fail2ban")
 DESCRIPTIONS+=("Intrusion prevention")
 if command -v fail2ban-client &>/dev/null; then DETECTED+=(1); SELECTED+=(0); else DETECTED+=(0); SELECTED+=(0); fi
 
-# 10: UFW
+# 11: UFW
 LABELS+=("UFW")
 DESCRIPTIONS+=("Firewall")
 if command -v ufw &>/dev/null && sudo ufw status 2>/dev/null | grep -q "active"; then DETECTED+=(1); SELECTED+=(0); else DETECTED+=(0); SELECTED+=(0); fi
 
-# 11: Deep Clean
+# 12: Deep Clean
 LABELS+=("Deep Clean")
 DESCRIPTIONS+=(".cache, .local, .npm, .gitconfig")
 DETECTED+=(1); SELECTED+=(0)
@@ -234,8 +266,26 @@ for _d in "$HOME/.config"/*; do
 done
 done_msg "Symlinks removed"
 
-# ========== APT Packages + Nerd Font (index 0) ==========
+# ========== Custom User (index 0) ==========
 if [ "${SELECTED[0]}" = "1" ]; then
+  step "Removing Custom User(s)"
+  for _u in "${_custom_users[@]}"; do
+    if confirm "Delete user '$_u' and its home directory?"; then
+      sudo userdel -r "$_u" 2>/dev/null && done_msg "User $_u removed" || warn_msg "Failed to remove $_u"
+      # Remove SSH Match block for this user
+      _sshd="/etc/ssh/sshd_config"
+      if [ -f "$_sshd" ] && sudo grep -q "^Match User $_u$" "$_sshd" 2>/dev/null; then
+        sudo sed -i "/^Match User $_u$/{ N; /AuthenticationMethods/d; d; }" "$_sshd" 2>/dev/null || true
+        sudo sed -i "/^Match User $_u$/d" "$_sshd" 2>/dev/null || true
+        sudo sshd -t 2>/dev/null && (sudo systemctl restart sshd 2>/dev/null || sudo service ssh restart 2>/dev/null || true) || true
+        done_msg "SSH config cleaned for $_u"
+      fi
+    fi
+  done
+fi
+
+# ========== APT Packages + Nerd Font (index 1) ==========
+if [ "${SELECTED[1]}" = "1" ]; then
   step "Removing APT packages + Nerd Font"
   # Neovim (manual install)
   if [ -d /opt/nvim-linux-x86_64 ]; then
@@ -269,44 +319,44 @@ if [ "${SELECTED[0]}" = "1" ]; then
   done_msg "APT packages + font done"
 fi
 
-# ========== Starship (index 1) ==========
-if [ "${SELECTED[1]}" = "1" ]; then
+# ========== Starship (index 2) ==========
+if [ "${SELECTED[2]}" = "1" ]; then
   step "Removing Starship"
   sudo rm -f /usr/local/bin/starship
   done_msg "Starship removed"
 fi
 
-# ========== Oh My Zsh (index 2) ==========
-if [ "${SELECTED[2]}" = "1" ]; then
+# ========== Oh My Zsh (index 3) ==========
+if [ "${SELECTED[3]}" = "1" ]; then
   step "Removing Oh My Zsh"
   rm -rf "$HOME/.oh-my-zsh"
   done_msg "Oh My Zsh removed"
 fi
 
-# ========== Rust (index 3) ==========
-if [ "${SELECTED[3]}" = "1" ]; then
+# ========== Rust (index 4) ==========
+if [ "${SELECTED[4]}" = "1" ]; then
   step "Removing Rust"
   rm -rf "$HOME/.cargo"
   rm -rf "$HOME/.rustup"
   done_msg "Rust removed"
 fi
 
-# ========== Bun (index 4) ==========
-if [ "${SELECTED[4]}" = "1" ]; then
+# ========== Bun (index 5) ==========
+if [ "${SELECTED[5]}" = "1" ]; then
   step "Removing Bun"
   rm -rf "$HOME/.bun"
   done_msg "Bun removed"
 fi
 
-# ========== NVM (index 5) ==========
-if [ "${SELECTED[5]}" = "1" ]; then
+# ========== NVM (index 6) ==========
+if [ "${SELECTED[6]}" = "1" ]; then
   step "Removing NVM"
   rm -rf "$HOME/.nvm"
   done_msg "NVM removed"
 fi
 
-# ========== Docker (index 6) ==========
-if [ "${SELECTED[6]}" = "1" ]; then
+# ========== Docker (index 7) ==========
+if [ "${SELECTED[7]}" = "1" ]; then
   step "Removing Docker"
   sudo apt remove -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin 2>/dev/null || true
   sudo apt autoremove -y
@@ -314,8 +364,8 @@ if [ "${SELECTED[6]}" = "1" ]; then
   done_msg "Docker removed"
 fi
 
-# ========== AI CLI Tools (index 7) ==========
-if [ "${SELECTED[7]}" = "1" ]; then
+# ========== AI CLI Tools (index 8) ==========
+if [ "${SELECTED[8]}" = "1" ]; then
   step "Removing AI CLI Tools"
   export NVM_DIR="$HOME/.nvm"
   [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
@@ -331,8 +381,8 @@ if [ "${SELECTED[7]}" = "1" ]; then
   done_msg "Gemini CLI files removed"
 fi
 
-# ========== Swap (index 8) ==========
-if [ "${SELECTED[8]}" = "1" ]; then
+# ========== Swap (index 9) ==========
+if [ "${SELECTED[9]}" = "1" ]; then
   step "Removing swap"
   if [ -f /swapfile ]; then
     sudo swapoff /swapfile 2>/dev/null || true
@@ -342,16 +392,16 @@ if [ "${SELECTED[8]}" = "1" ]; then
   fi
 fi
 
-# ========== fail2ban (index 9) ==========
-if [ "${SELECTED[9]}" = "1" ]; then
+# ========== fail2ban (index 10) ==========
+if [ "${SELECTED[10]}" = "1" ]; then
   step "Removing fail2ban"
   sudo systemctl stop fail2ban 2>/dev/null || true
   sudo apt remove -y fail2ban
   done_msg "fail2ban removed"
 fi
 
-# ========== UFW (index 10) ==========
-if [ "${SELECTED[10]}" = "1" ]; then
+# ========== UFW (index 11) ==========
+if [ "${SELECTED[11]}" = "1" ]; then
   step "Removing UFW"
   echo "y" | sudo ufw disable 2>/dev/null || true
   sudo apt remove -y ufw
@@ -364,8 +414,8 @@ rm -f "$HOME"/.zcompdump*
 rm -f "$HOME/.node_repl_history"
 done_msg "Cache files removed"
 
-# ========== Deep Clean (index 11) ==========
-if [ "${SELECTED[11]}" = "1" ]; then
+# ========== Deep Clean (index 12) ==========
+if [ "${SELECTED[12]}" = "1" ]; then
   step "Deep cleaning residue files"
 
   # Kill running processes that might recreate files
