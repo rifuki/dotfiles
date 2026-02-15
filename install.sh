@@ -108,6 +108,9 @@ elif [ "$_user_no_password" = "1" ]; then
   SELECTED+=(1); STATUS+=("$USER has no password"); EXTERNAL+=(0)
 elif [ -n "$_found_user" ] && [ "$_found_user_has_pw" = "1" ]; then
   SELECTED+=(0); STATUS+=("$_found_user (ready)"); EXTERNAL+=(0)
+elif [ -n "$_found_user" ] && [ "$_found_user" = "$USER" ] && [ "$_user_no_password" = "0" ]; then
+  # Current user IS the custom user; sudo -n failed (needs password) = has password = ready
+  SELECTED+=(0); STATUS+=("$_found_user (ready)"); EXTERNAL+=(0)
 elif [ -n "$_found_user" ]; then
   SELECTED+=(1); STATUS+=("$_found_user (no password!)"); EXTERNAL+=(0)
 else
