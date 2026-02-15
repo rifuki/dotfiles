@@ -283,6 +283,10 @@ while true; do
   [ "${SELECTED[8]}" = "1" ] && SELECTED[6]=1
   # Deselect NVM (6) → auto-deselect AI CLI Tools (8)
   [ "${SELECTED[6]}" = "0" ] && SELECTED[8]=0
+  # Custom User selected → force all others OFF (must finish user setup first)
+  if [ "${SELECTED[0]}" = "1" ]; then
+    for (( i=1; i<_total; i++ )); do SELECTED[$i]=0; done
+  fi
 done
 
 # ========== Confirmation ==========
@@ -490,30 +494,17 @@ if [ "${SELECTED[0]}" = "1" ]; then
     fi
   done
 
-  # Auto re-launch as new user if other components are selected
-  _other_sel=0
-  for (( _i=1; _i<${#SELECTED[@]}; _i++ )); do
-    [ "${SELECTED[$_i]}" = "1" ] && _other_sel=1 && break
-  done
-
-  if [ "$_other_sel" = "1" ]; then
-    _new_home=$(getent passwd "$_custom_user" | cut -d: -f6)
-    if [ ! -d "$_new_home/.dotfiles/.git" ]; then
-      info_msg "Cloning dotfiles for $_custom_user..."
-      sudo -u "$_custom_user" git clone --branch vps "$DOTFILES_REPO" "$_new_home/.dotfiles" 2>/dev/null || \
-        { sudo cp -r "$DOTFILES_DIR" "$_new_home/.dotfiles" && \
-          sudo chown -R "$_custom_user:$_custom_user" "$_new_home/.dotfiles"; }
-      done_msg "Dotfiles ready for $_custom_user"
-    fi
-    _sel_str="0"
-    for (( _i=1; _i<${#SELECTED[@]}; _i++ )); do
-      _sel_str+=",${SELECTED[$_i]}"
-    done
-    echo ""
-    step "Re-launching installer as $_custom_user"
-    info_msg "All remaining components will install under $_custom_user's home"
-    exec sudo -H -u "$_custom_user" bash "$_new_home/.dotfiles/install.sh" --resume "$_sel_str"
-  fi
+  # Done — user must re-run the script as the new user
+  echo ""
+  echo -e "${BOLD}${MAGENTA}╔══════════════════════════════════════════════════╗${NC}"
+  echo -e "${BOLD}${MAGENTA}║         ✓ Custom user setup complete!            ║${NC}"
+  echo -e "${BOLD}${MAGENTA}╚══════════════════════════════════════════════════╝${NC}"
+  echo ""
+  echo -e "  ${DIM}👉 Now login as $_custom_user and re-run the installer:${NC}"
+  echo -e "  ${CYAN}   ssh $_custom_user@<your-server>${NC}"
+  echo -e "  ${CYAN}   bash <(curl -fsSL https://dotfiles.rifuki.dev/vps/install.sh)${NC}"
+  echo ""
+  exit 0
 fi
 
 # ========== 1: APT Packages + Nerd Font ==========
