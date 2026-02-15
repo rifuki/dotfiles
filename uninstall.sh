@@ -150,7 +150,19 @@ draw_menu() {
   echo ""
   echo -e "  ${PEACH}⚠${NC}  ${DIM}Recommended: Close all terminal sessions and apps before proceeding${NC}"
   echo ""
-  echo -e "  ${BOLD}${GREEN}Select components to remove:${NC}"
+  local _none_detected=1 _all_checked=1
+  for (( i=0; i<_total; i++ )); do
+    [ "${DETECTED[$i]}" = "1" ] && _none_detected=0
+    [ "${DETECTED[$i]}" = "1" ] && [ "${SELECTED[$i]}" = "0" ] && _all_checked=0
+  done
+  if [ "$_none_detected" = "1" ]; then
+    echo -e "  ${BOLD}${GREEN}Nothing to uninstall — system is already clean!${NC}"
+    echo ""
+  elif [ "$_all_checked" = "1" ]; then
+    echo -e "  ${BOLD}${PEACH}All detected components selected for removal!${NC}"
+    echo ""
+  fi
+  echo -e "  ${BOLD}${CYAN}Select components to remove:${NC}"
   echo ""
   for (( i=0; i<_total; i++ )); do
     local _num; _num=$(printf "%d" $((i + 1)))
