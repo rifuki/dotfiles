@@ -293,17 +293,24 @@ if [ "${SELECTED[2]}" = "1" ]; then
   step "Removing Ghostty"
   if brew list --cask ghostty &>/dev/null; then
     brew uninstall --cask ghostty && done_msg "Removed ghostty" || warn_msg "Failed to remove ghostty"
+  elif [ -d "/Applications/Ghostty.app" ]; then
+    warn_msg "Ghostty not installed via Homebrew — remove manually: drag to Trash or rm -rf /Applications/Ghostty.app"
   fi
 fi
 
 # ========== Cloudflare WARP + Hot (index 3) ==========
 if [ "${SELECTED[3]}" = "1" ]; then
   step "Removing Cloudflare WARP + Hot"
-  for _cask in cloudflare-warp hot; do
-    if brew list --cask "$_cask" &>/dev/null; then
-      brew uninstall --cask "$_cask" && done_msg "Removed $_cask" || warn_msg "Failed to remove $_cask"
-    fi
-  done
+  if brew list --cask cloudflare-warp &>/dev/null; then
+    brew uninstall --cask cloudflare-warp && done_msg "Cloudflare WARP removed" || warn_msg "Failed to remove cloudflare-warp"
+  elif [ -d "/Applications/Cloudflare WARP.app" ]; then
+    warn_msg "Cloudflare WARP not installed via Homebrew — remove manually: drag to Trash"
+  fi
+  if brew list --cask hot &>/dev/null; then
+    brew uninstall --cask hot && done_msg "Hot removed" || warn_msg "Failed to remove hot"
+  elif [ -d "/Applications/Hot.app" ]; then
+    warn_msg "Hot not installed via Homebrew — remove manually: drag to Trash"
+  fi
 fi
 
 # ========== Google Chrome (index 4) ==========
@@ -311,6 +318,8 @@ if [ "${SELECTED[4]}" = "1" ]; then
   step "Removing Google Chrome"
   if brew list --cask google-chrome &>/dev/null; then
     brew uninstall --cask google-chrome && done_msg "Google Chrome removed" || warn_msg "Failed to remove Google Chrome"
+  elif [ -d "/Applications/Google Chrome.app" ]; then
+    warn_msg "Google Chrome not installed via Homebrew — remove manually: drag to Trash"
   fi
 fi
 
@@ -319,6 +328,8 @@ if [ "${SELECTED[5]}" = "1" ]; then
   step "Removing OrbStack"
   if brew list --cask orbstack &>/dev/null; then
     brew uninstall --cask orbstack && done_msg "OrbStack removed" || warn_msg "Failed to remove OrbStack"
+  elif [ -d "/Applications/OrbStack.app" ]; then
+    warn_msg "OrbStack not installed via Homebrew — remove manually: drag to Trash"
   fi
 fi
 
