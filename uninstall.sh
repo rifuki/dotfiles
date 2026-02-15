@@ -83,28 +83,28 @@ fi
 _apt_count=0; _apt_external=0
 # nvim
 if [ -d /opt/nvim-linux-x86_64 ]; then
-  ((_apt_count++))
+  ((_apt_count++)) || true
 elif command -v nvim &>/dev/null; then
-  ((_apt_count++)); _apt_external=1
+  ((_apt_count++)) || true; _apt_external=1
 fi
 # APT-managed packages
 for _pkg in tmux zsh htop ripgrep neofetch gh; do
   _cmd="$_pkg"; [ "$_pkg" = "ripgrep" ] && _cmd="rg"
   if dpkg -s "$_pkg" &>/dev/null 2>&1; then
-    ((_apt_count++))
+    ((_apt_count++)) || true
   elif command -v "$_cmd" &>/dev/null 2>&1; then
-    ((_apt_count++)); _apt_external=1
+    ((_apt_count++)) || true; _apt_external=1
   fi
 done
 # yazi
 if [ -f /usr/local/bin/yazi ]; then
-  ((_apt_count++))
+  ((_apt_count++)) || true
 elif command -v yazi &>/dev/null; then
-  ((_apt_count++)); _apt_external=1
+  ((_apt_count++)) || true; _apt_external=1
 fi
 # Nerd Font
 if ls "$HOME/.local/share/fonts/JetBrainsMono"*"NerdFont"* &>/dev/null 2>&1; then
-  ((_apt_count++))
+  ((_apt_count++)) || true
 fi
 LABELS+=("APT Packages + Nerd Font")
 DESCRIPTIONS+=("${_apt_count}/9 found")

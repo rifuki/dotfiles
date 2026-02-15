@@ -120,19 +120,19 @@ LABELS+=("APT Packages + Nerd Font")
 DESCRIPTIONS+=("neovim, tmux, zsh, htop, ripgrep, neofetch, yazi, gh, JetBrainsMono")
 _fi=0; _fi_ext=0
 # nvim
-if [ -d /opt/nvim-linux-x86_64 ]; then ((_fi++))
-elif command -v nvim &>/dev/null; then ((_fi++)); _fi_ext=1; fi
+if [ -d /opt/nvim-linux-x86_64 ]; then ((_fi++)) || true
+elif command -v nvim &>/dev/null; then ((_fi++)) || true; _fi_ext=1; fi
 # APT-managed packages
 for _pkg in tmux zsh htop ripgrep neofetch gh; do
   _cmd="$_pkg"; [ "$_pkg" = "ripgrep" ] && _cmd="rg"
-  if dpkg -s "$_pkg" &>/dev/null 2>&1; then ((_fi++))
-  elif command -v "$_cmd" &>/dev/null 2>&1; then ((_fi++)); _fi_ext=1; fi
+  if dpkg -s "$_pkg" &>/dev/null 2>&1; then ((_fi++)) || true
+  elif command -v "$_cmd" &>/dev/null 2>&1; then ((_fi++)) || true; _fi_ext=1; fi
 done
 # yazi
-if [ -f /usr/local/bin/yazi ]; then ((_fi++))
-elif command -v yazi &>/dev/null; then ((_fi++)); _fi_ext=1; fi
+if [ -f /usr/local/bin/yazi ]; then ((_fi++)) || true
+elif command -v yazi &>/dev/null; then ((_fi++)) || true; _fi_ext=1; fi
 # Nerd Font
-if ls "$HOME/.local/share/fonts/JetBrainsMono"*"NerdFont"* &>/dev/null 2>&1; then ((_fi++)); fi
+if ls "$HOME/.local/share/fonts/JetBrainsMono"*"NerdFont"* &>/dev/null 2>&1; then ((_fi++)) || true; fi
 if [ "$_fi" -gt 0 ] && [ "$_fi_ext" = "1" ]; then STATUS+=("${_fi}/9 installed (external)"); SELECTED+=(0); EXTERNAL+=(1)
 elif [ "$_fi" -eq 9 ]; then STATUS+=("all installed"); SELECTED+=(0); EXTERNAL+=(0)
 elif [ "$_fi" -gt 0 ]; then STATUS+=("${_fi}/9 installed"); SELECTED+=(1); EXTERNAL+=(0)
