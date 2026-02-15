@@ -9,6 +9,7 @@
 !install.sh
 !uninstall.sh
 !macos-defaults.sh
+!macos-defaults-check.sh
 !README.md
 !.zshrc
 !.hyper.js

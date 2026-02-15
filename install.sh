@@ -207,9 +207,10 @@ fi
 # 15: macOS Defaults
 LABELS+=("macOS Defaults")
 DESCRIPTIONS+=("Key repeat, Finder tweaks, no smart quotes")
-SELECTED+=(1)
-_press_hold=$(defaults read -g ApplePressAndHoldEnabled 2>/dev/null || echo "1")
-[ "$_press_hold" = "0" ] && STATUS+=("applied") || STATUS+=("")
+_md_result=$(bash "$(cd "$(dirname "$0")" && pwd)/macos-defaults-check.sh" 2>/dev/null) && _md_ok=1 || _md_ok=0
+if [ "$_md_ok" = "1" ]; then STATUS+=("all applied"); SELECTED+=(0)
+elif [ -n "$_md_result" ] && [ "${_md_result%%/*}" -gt 0 ] 2>/dev/null; then STATUS+=("${_md_result} applied"); SELECTED+=(1)
+else STATUS+=(""); SELECTED+=(1); fi
 
 _total=${#LABELS[@]}
 
@@ -220,7 +221,16 @@ draw_menu() {
   echo -e "${BOLD}${MAGENTA}║           dotfiles installer — macOS             ║${NC}"
   echo -e "${BOLD}${MAGENTA}╚══════════════════════════════════════════════════╝${NC}"
   echo ""
-  echo -e "  ${BOLD}${GREEN}Select components to install:${NC}"
+  # Check if all items are unchecked (everything installed)
+  local _all_unchecked=1
+  for (( i=0; i<_total; i++ )); do
+    [ "${SELECTED[$i]}" = "1" ] && _all_unchecked=0 && break
+  done
+  if [ "$_all_unchecked" = "1" ]; then
+    echo -e "  ${BOLD}${GREEN}All components are already installed!${NC}"
+    echo ""
+  fi
+  echo -e "  ${BOLD}${CYAN}Select components to install:${NC}"
   echo ""
   for (( i=0; i<_total; i++ )); do
     local _num; _num=$(printf "%2d" $((i + 1)))
