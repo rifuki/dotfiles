@@ -194,7 +194,7 @@ else STATUS+=(""); SELECTED+=(1); EXTERNAL+=(0); fi
 # 11: UFW
 LABELS+=("UFW")
 DESCRIPTIONS+=("Firewall (allow SSH + HTTP/S)")
-if command -v ufw &>/dev/null && sudo -n ufw status 2>/dev/null | grep -q "active"; then STATUS+=("active"); SELECTED+=(0); EXTERNAL+=(0)
+if command -v ufw &>/dev/null && sudo -n ufw status 2>/dev/null | grep -qw "active"; then STATUS+=("active"); SELECTED+=(0); EXTERNAL+=(0)
 elif command -v ufw &>/dev/null; then STATUS+=("installed (inactive)"); SELECTED+=(1); EXTERNAL+=(0)
 else STATUS+=(""); SELECTED+=(1); EXTERNAL+=(0); fi
 
@@ -229,12 +229,15 @@ draw_menu() {
     local _label; _label=$(printf "%-22s" "${LABELS[$i]}")
     local _status=""
     [ -n "${STATUS[$i]}" ] && _status=" ${TEAL}(${STATUS[$i]})${NC}"
+    # Bold label for APT Packages when some installed
+    local _label_color="${_label}"
+    [ "$i" = "1" ] && [[ "${STATUS[$i]}" == *"installed"* ]] && _label_color="${BOLD}${_label}${NC}"
     if [ "${EXTERNAL[$i]}" = "1" ]; then
-      echo -e "    ${ORANGE}${_num}. [!] ${_label}${NC} ${DIM}not installed by this script — manage manually${NC}${_status}"
+      echo -e "    ${ORANGE}${_num}. [!] ${_label_color}${NC} ${DIM}not installed by this script — manage manually${NC}${_status}"
     elif [ "${SELECTED[$i]}" = "1" ]; then
-      echo -e "    ${CYAN}${_num}. [x] ${_label}${NC} ${DIM}${DESCRIPTIONS[$i]}${NC}${_status}"
+      echo -e "    ${CYAN}${_num}. [x] ${_label_color}${NC} ${DIM}${DESCRIPTIONS[$i]}${NC}${_status}"
     else
-      echo -e "    ${GRAY}${_num}. [ ] ${_label}${NC} ${DIM}${DESCRIPTIONS[$i]}${NC}${_status}"
+      echo -e "    ${GRAY}${_num}. [ ] ${_label_color}${NC} ${DIM}${DESCRIPTIONS[$i]}${NC}${_status}"
     fi
   done
   echo ""
