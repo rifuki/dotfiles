@@ -83,3 +83,6 @@ alt + ctrl - c : yabai -m space --layout stack
 
 ## Toggle Active Window Opacity
 alt + ctrl - o : yabai -m config active_window_opacity $(yabai -m config active_window_opacity | grep -q 1.0 && echo 0.95 || echo 1.0)
+
+## Toggle Ghostty Background Transparency
+alt + ctrl - t : ~/.config/ghostty/toggle-opacity.sh && skhd -k "cmd - r"
