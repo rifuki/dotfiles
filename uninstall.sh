@@ -57,6 +57,7 @@ LABELS=()
 DESCRIPTIONS=()
 SELECTED=()
 DETECTED=()
+EXTERNAL=()   # 1 = found but not at script's expected path — cannot auto-remove
 
 # 0: Custom User
 LABELS+=("Custom User")
@@ -71,82 +72,125 @@ while IFS=: read -r _u _ _uid _; do
 done < /etc/passwd
 if [ "${#_custom_users[@]}" -gt 0 ]; then
   DESCRIPTIONS+=("${_custom_users[*]}")
-  DETECTED+=(1); SELECTED+=(0)
+  DETECTED+=(1); SELECTED+=(0); EXTERNAL+=(0)
 else
   DESCRIPTIONS+=("no custom users found")
-  DETECTED+=(0); SELECTED+=(0)
+  DETECTED+=(0); SELECTED+=(0); EXTERNAL+=(0)
 fi
 
 # 1: APT Packages + Nerd Font
-_apt_count=0
-for _cmd in nvim tmux zsh htop rg neofetch yazi gh; do
-  command -v "$_cmd" &>/dev/null && ((_apt_count++)) || true
+# Expected paths: nvim → /opt/nvim-linux-x86_64, yazi → /usr/local/bin/yazi, others via dpkg
+_apt_count=0; _apt_external=0
+# nvim
+if [ -d /opt/nvim-linux-x86_64 ]; then
+  ((_apt_count++))
+elif command -v nvim &>/dev/null; then
+  ((_apt_count++)); _apt_external=1
+fi
+# APT-managed packages
+for _pkg in tmux zsh htop ripgrep neofetch gh; do
+  _cmd="$_pkg"; [ "$_pkg" = "ripgrep" ] && _cmd="rg"
+  if dpkg -s "$_pkg" &>/dev/null 2>&1; then
+    ((_apt_count++))
+  elif command -v "$_cmd" &>/dev/null 2>&1; then
+    ((_apt_count++)); _apt_external=1
+  fi
 done
+# yazi
+if [ -f /usr/local/bin/yazi ]; then
+  ((_apt_count++))
+elif command -v yazi &>/dev/null; then
+  ((_apt_count++)); _apt_external=1
+fi
+# Nerd Font
 if ls "$HOME/.local/share/fonts/JetBrainsMono"*"NerdFont"* &>/dev/null 2>&1; then
   ((_apt_count++))
 fi
 LABELS+=("APT Packages + Nerd Font")
 DESCRIPTIONS+=("${_apt_count}/9 found")
 if [ "$_apt_count" -gt 0 ]; then
-  DETECTED+=(1); SELECTED+=(1)
+  DETECTED+=(1)
+  if [ "$_apt_external" = "1" ]; then
+    SELECTED+=(0); EXTERNAL+=(1)
+  else
+    SELECTED+=(1); EXTERNAL+=(0)
+  fi
 else
-  DETECTED+=(0); SELECTED+=(0)
+  DETECTED+=(0); SELECTED+=(0); EXTERNAL+=(0)
 fi
 
-# 2: Starship
+# 2: Starship — expected at /usr/local/bin/starship
 LABELS+=("Starship")
 DESCRIPTIONS+=("Cross-shell prompt")
-if command -v starship &>/dev/null; then DETECTED+=(1); SELECTED+=(1); else DETECTED+=(0); SELECTED+=(0); fi
+if [ -f /usr/local/bin/starship ]; then
+  DETECTED+=(1); SELECTED+=(1); EXTERNAL+=(0)
+elif command -v starship &>/dev/null; then
+  DETECTED+=(1); SELECTED+=(0); EXTERNAL+=(1)
+else
+  DETECTED+=(0); SELECTED+=(0); EXTERNAL+=(0)
+fi
 
 # 3: Oh My Zsh
 LABELS+=("Oh My Zsh")
 DESCRIPTIONS+=("~/.oh-my-zsh")
-if [ -d "$HOME/.oh-my-zsh" ]; then DETECTED+=(1); SELECTED+=(1); else DETECTED+=(0); SELECTED+=(0); fi
+if [ -d "$HOME/.oh-my-zsh" ]; then DETECTED+=(1); SELECTED+=(1); EXTERNAL+=(0); else DETECTED+=(0); SELECTED+=(0); EXTERNAL+=(0); fi
 
 # 4: Rust
 LABELS+=("Rust")
 DESCRIPTIONS+=("~/.cargo, ~/.rustup")
-if [ -d "$HOME/.cargo" ] || [ -d "$HOME/.rustup" ]; then DETECTED+=(1); SELECTED+=(1); else DETECTED+=(0); SELECTED+=(0); fi
+if [ -d "$HOME/.cargo" ] || [ -d "$HOME/.rustup" ]; then DETECTED+=(1); SELECTED+=(1); EXTERNAL+=(0); else DETECTED+=(0); SELECTED+=(0); EXTERNAL+=(0); fi
 
 # 5: Bun
 LABELS+=("Bun")
 DESCRIPTIONS+=("~/.bun")
-if [ -d "$HOME/.bun" ]; then DETECTED+=(1); SELECTED+=(1); else DETECTED+=(0); SELECTED+=(0); fi
+if [ -d "$HOME/.bun" ]; then DETECTED+=(1); SELECTED+=(1); EXTERNAL+=(0); else DETECTED+=(0); SELECTED+=(0); EXTERNAL+=(0); fi
 
 # 6: NVM
 LABELS+=("NVM")
 DESCRIPTIONS+=("~/.nvm")
-if [ -d "$HOME/.nvm" ]; then DETECTED+=(1); SELECTED+=(1); else DETECTED+=(0); SELECTED+=(0); fi
+if [ -d "$HOME/.nvm" ]; then DETECTED+=(1); SELECTED+=(1); EXTERNAL+=(0); else DETECTED+=(0); SELECTED+=(0); EXTERNAL+=(0); fi
 
-# 7: Docker
+# 7: Docker — expected via apt docker-ce repo
 LABELS+=("Docker")
 DESCRIPTIONS+=("Docker engine")
-if command -v docker &>/dev/null; then DETECTED+=(1); SELECTED+=(1); else DETECTED+=(0); SELECTED+=(0); fi
+if dpkg -s docker-ce &>/dev/null 2>&1; then
+  DETECTED+=(1); SELECTED+=(1); EXTERNAL+=(0)
+elif command -v docker &>/dev/null; then
+  DETECTED+=(1); SELECTED+=(0); EXTERNAL+=(1)
+else
+  DETECTED+=(0); SELECTED+=(0); EXTERNAL+=(0)
+fi
 
 # 8: AI CLI Tools
 LABELS+=("AI CLI Tools")
 DESCRIPTIONS+=("Claude Code + Gemini CLI")
-if command -v claude &>/dev/null || command -v gemini &>/dev/null; then DETECTED+=(1); SELECTED+=(1); else DETECTED+=(0); SELECTED+=(0); fi
+if command -v claude &>/dev/null || command -v gemini &>/dev/null; then DETECTED+=(1); SELECTED+=(1); EXTERNAL+=(0); else DETECTED+=(0); SELECTED+=(0); EXTERNAL+=(0); fi
 
 # 9: Swap
 LABELS+=("Swap")
 DESCRIPTIONS+=("/swapfile")
-if [ -f /swapfile ]; then DETECTED+=(1); SELECTED+=(1); else DETECTED+=(0); SELECTED+=(0); fi
+if [ -f /swapfile ]; then DETECTED+=(1); SELECTED+=(1); EXTERNAL+=(0); else DETECTED+=(0); SELECTED+=(0); EXTERNAL+=(0); fi
 
 # 10: fail2ban
 LABELS+=("fail2ban")
 DESCRIPTIONS+=("Intrusion prevention")
-if command -v fail2ban-client &>/dev/null; then DETECTED+=(1); SELECTED+=(1); else DETECTED+=(0); SELECTED+=(0); fi
+if dpkg -s fail2ban &>/dev/null 2>&1; then
+  DETECTED+=(1); SELECTED+=(1); EXTERNAL+=(0)
+elif command -v fail2ban-client &>/dev/null; then
+  DETECTED+=(1); SELECTED+=(0); EXTERNAL+=(1)
+else
+  DETECTED+=(0); SELECTED+=(0); EXTERNAL+=(0)
+fi
 
 # 11: UFW
 LABELS+=("UFW")
 DESCRIPTIONS+=("Firewall")
-if command -v ufw &>/dev/null && sudo ufw status 2>/dev/null | grep -q "active"; then DETECTED+=(1); SELECTED+=(1); else DETECTED+=(0); SELECTED+=(0); fi
+if command -v ufw &>/dev/null && sudo ufw status 2>/dev/null | grep -q "active"; then DETECTED+=(1); SELECTED+=(1); EXTERNAL+=(0); else DETECTED+=(0); SELECTED+=(0); EXTERNAL+=(0); fi
 
 # 12: Deep Clean
 LABELS+=("Deep Clean")
 DESCRIPTIONS+=(".cache, .local, .npm, .gitconfig")
-DETECTED+=(1); SELECTED+=(0)
+DETECTED+=(1); SELECTED+=(0); EXTERNAL+=(0)
 
 _total=${#LABELS[@]}
 
@@ -159,6 +203,20 @@ draw_menu() {
   echo ""
   echo -e "  ${PEACH}⚠${NC}  ${DIM}Recommended: Close all terminal sessions before proceeding${NC}"
   echo ""
+  local _none_managed=1 _all_checked=1
+  for (( i=0; i<_total; i++ )); do
+    if [ "${DETECTED[$i]}" = "1" ] && [ "${EXTERNAL[$i]}" = "0" ]; then
+      _none_managed=0
+      [ "${SELECTED[$i]}" = "0" ] && _all_checked=0
+    fi
+  done
+  if [ "$_none_managed" = "1" ]; then
+    echo -e "  ${BOLD}${GREEN}Nothing to uninstall — system is already clean!${NC}"
+    echo ""
+  elif [ "$_all_checked" = "1" ]; then
+    echo -e "  ${BOLD}${PEACH}All detected components selected for removal!${NC}"
+    echo ""
+  fi
   echo -e "  ${BOLD}${CYAN}Select components to remove:${NC}"
   echo ""
   for (( i=0; i<_total; i++ )); do
@@ -166,6 +224,8 @@ draw_menu() {
     local _label; _label=$(printf "%-22s" "${LABELS[$i]}")
     if [ "${DETECTED[$i]}" = "0" ]; then
       echo -e "    ${DIM}${_num}. [ ] ${_label} —  not found${NC}"
+    elif [ "${EXTERNAL[$i]}" = "1" ]; then
+      echo -e "    ${ORANGE}${_num}. [!] ${_label}${NC} ${DIM}not installed by this script — remove manually${NC}"
     elif [ "${SELECTED[$i]}" = "1" ]; then
       echo -e "    ${CYAN}${_num}. [x] ${_label}${NC} ${DIM}${DESCRIPTIONS[$i]}${NC}"
     else
@@ -191,12 +251,15 @@ while true; do
 
   if [[ "$_input" =~ ^[0-9]+$ ]] && [ "$_input" -ge 1 ] && [ "$_input" -le "$_total" ]; then
     _idx=$((_input - 1))
-    if [ "${DETECTED[$_idx]}" = "1" ]; then
+    if [ "${EXTERNAL[$_idx]}" = "1" ]; then
+      echo -e "  ${ORANGE}⚠  Not installed by this script — remove manually.${NC}"
+      sleep 1.5
+    elif [ "${DETECTED[$_idx]}" = "1" ]; then
       [ "${SELECTED[$_idx]}" = "1" ] && SELECTED[$_idx]=0 || SELECTED[$_idx]=1
     fi
   elif [[ "$_input" = [aA] ]]; then
     for (( i=0; i<_total; i++ )); do
-      [ "${DETECTED[$i]}" = "1" ] && SELECTED[$i]=1
+      [ "${DETECTED[$i]}" = "1" ] && [ "${EXTERNAL[$i]}" != "1" ] && SELECTED[$i]=1
     done
   elif [[ "$_input" = [nN] ]]; then
     for (( i=0; i<_total; i++ )); do

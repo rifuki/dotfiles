@@ -195,6 +195,14 @@ draw_menu() {
     echo -e "  ${YELLOW}${BOLD}⚠  User '${USER}' has no password!${NC}  ${DIM}Enable the Custom User option to create a secure user.${NC}"
     echo ""
   fi
+  local _all_unchecked=1
+  for (( i=0; i<_total; i++ )); do
+    [ "${SELECTED[$i]}" = "1" ] && _all_unchecked=0 && break
+  done
+  if [ "$_all_unchecked" = "1" ]; then
+    echo -e "  ${BOLD}${GREEN}All components are already installed!${NC}"
+    echo ""
+  fi
   echo -e "  ${BOLD}${CYAN}Select components to install:${NC}"
   echo ""
   for (( i=0; i<_total; i++ )); do
