@@ -67,7 +67,7 @@ _user_no_password=0
 if [ "$EUID" = "0" ] || [ "$USER" = "root" ]; then
   _is_root=1
 fi
-_cur_pw_status=$(sudo passwd -S "$USER" 2>/dev/null | awk '{print $2}' || true)
+_cur_pw_status=$(sudo -n passwd -S "$USER" 2>/dev/null | awk '{print $2}' || true)
 [ "$_cur_pw_status" = "NP" ] && _user_no_password=1 || true
 
 echo ""
@@ -93,9 +93,9 @@ while IFS=: read -r _u _ _uid _; do
   fi
 done < /etc/passwd
 if [ -n "$_found_user" ]; then
-  _fu_pw_status=$(sudo passwd -S "$_found_user" 2>/dev/null | awk '{print $2}' || true)
+  _fu_pw_status=$(sudo -n passwd -S "$_found_user" 2>/dev/null | awk '{print $2}' || true)
   if [ "$_fu_pw_status" = "P" ]; then
-    _fu_pw_hash=$(sudo getent shadow "$_found_user" 2>/dev/null | cut -d: -f2 || true)
+    _fu_pw_hash=$(sudo -n getent shadow "$_found_user" 2>/dev/null | cut -d: -f2 || true)
     case "$_fu_pw_hash" in
       ""|"!"*|"*"|"!!"*) _found_user_has_pw=0 ;;
       *) _found_user_has_pw=1 ;;

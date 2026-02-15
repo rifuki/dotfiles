@@ -185,7 +185,7 @@ fi
 # 11: UFW
 LABELS+=("UFW")
 DESCRIPTIONS+=("Firewall")
-if command -v ufw &>/dev/null && sudo ufw status 2>/dev/null | grep -q "active"; then DETECTED+=(1); SELECTED+=(1); EXTERNAL+=(0); else DETECTED+=(0); SELECTED+=(0); EXTERNAL+=(0); fi
+if command -v ufw &>/dev/null && sudo -n ufw status 2>/dev/null | grep -q "active"; then DETECTED+=(1); SELECTED+=(1); EXTERNAL+=(0); else DETECTED+=(0); SELECTED+=(0); EXTERNAL+=(0); fi
 
 # 12: Deep Clean
 LABELS+=("Deep Clean")
