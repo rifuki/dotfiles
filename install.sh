@@ -232,7 +232,11 @@ draw_menu() {
     # Bold label for APT Packages when some installed
     local _label_color="${_label}"
     [ "$i" = "1" ] && [[ "${STATUS[$i]}" == *"installed"* ]] && _label_color="${BOLD}${_label}${NC}"
-    if [ "${EXTERNAL[$i]}" = "1" ]; then
+
+    # Block all items except Custom User (0) if Custom User is selected
+    if [ "$i" -ne 0 ] && [ "${SELECTED[0]}" = "1" ]; then
+      echo -e "    ${ORANGE}${_num}. [!] ${_label_color}${NC} ${DIM}disabled (Custom User must run first — uncheck item 1)${NC}${_status}"
+    elif [ "${EXTERNAL[$i]}" = "1" ]; then
       echo -e "    ${ORANGE}${_num}. [!] ${_label_color}${NC} ${DIM}not installed by this script — manage manually${NC}${_status}"
     elif [ "${SELECTED[$i]}" = "1" ]; then
       echo -e "    ${CYAN}${_num}. [x] ${_label_color}${NC} ${DIM}${DESCRIPTIONS[$i]}${NC}${_status}"
@@ -260,7 +264,11 @@ while true; do
 
   if [[ "$_input" =~ ^[0-9]+$ ]] && [ "$_input" -ge 1 ] && [ "$_input" -le "$_total" ]; then
     _idx=$((_input - 1))
-    if [ "${EXTERNAL[$_idx]}" = "1" ]; then
+    # Block toggling other items if Custom User (0) is selected
+    if [ "$_idx" -ne 0 ] && [ "${SELECTED[0]}" = "1" ]; then
+      echo -e "  ${ORANGE}⚠  Custom User is selected — uncheck item 1 first to select other items.${NC}"
+      sleep 1.5
+    elif [ "${EXTERNAL[$_idx]}" = "1" ]; then
       echo -e "  ${ORANGE}⚠  Not installed by this script — manage manually.${NC}"
       sleep 1.5
     else
@@ -283,10 +291,6 @@ while true; do
   [ "${SELECTED[8]}" = "1" ] && SELECTED[6]=1
   # Deselect NVM (6) → auto-deselect AI CLI Tools (8)
   [ "${SELECTED[6]}" = "0" ] && SELECTED[8]=0
-  # Custom User selected → force all others OFF (must finish user setup first)
-  if [ "${SELECTED[0]}" = "1" ]; then
-    for (( i=1; i<_total; i++ )); do SELECTED[$i]=0; done
-  fi
 done
 
 # ========== Confirmation ==========
