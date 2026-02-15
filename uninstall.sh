@@ -45,8 +45,9 @@ LABELS=()
 DESCRIPTIONS=()
 SELECTED=()
 DETECTED=()
+EXTERNAL=()   # 1 = found but not installed by this script — cannot auto-remove
 
-# 0: Homebrew Formulae + Nerd Font
+# 0: Homebrew Formulae + Nerd Font — detected via brew list (already brew-managed if found)
 _brew_count=0
 if command -v brew &>/dev/null; then
   for _pkg in "${BREW_FORMULAE[@]}"; do
@@ -59,85 +60,127 @@ fi
 LABELS+=("Homebrew Formulae + Nerd Font")
 DESCRIPTIONS+=("${_brew_count}/$((${#BREW_FORMULAE[@]} + 1)) found")
 if [ "$_brew_count" -gt 0 ]; then
-  DETECTED+=(1); SELECTED+=(1)
+  DETECTED+=(1); SELECTED+=(1); EXTERNAL+=(0)
 else
-  DETECTED+=(0); SELECTED+=(0)
+  DETECTED+=(0); SELECTED+=(0); EXTERNAL+=(0)
 fi
 
-# 1: Yabai + Skhd
+# 1: Yabai + Skhd — install.sh installs via brew
 LABELS+=("Yabai + Skhd")
 DESCRIPTIONS+=("Tiling WM + hotkey daemon")
-if command -v yabai &>/dev/null || command -v skhd &>/dev/null; then DETECTED+=(1); SELECTED+=(0); else DETECTED+=(0); SELECTED+=(0); fi
+if brew list yabai &>/dev/null 2>&1 || brew list skhd &>/dev/null 2>&1; then
+  DETECTED+=(1); SELECTED+=(0); EXTERNAL+=(0)
+elif command -v yabai &>/dev/null || command -v skhd &>/dev/null; then
+  DETECTED+=(1); SELECTED+=(0); EXTERNAL+=(1)
+else
+  DETECTED+=(0); SELECTED+=(0); EXTERNAL+=(0)
+fi
 
-# 2: Ghostty
+# 2: Ghostty — install.sh installs via brew cask
 LABELS+=("Ghostty")
 DESCRIPTIONS+=("Ghostty terminal")
-if [ -d "/Applications/Ghostty.app" ]; then DETECTED+=(1); SELECTED+=(1); else DETECTED+=(0); SELECTED+=(0); fi
+if brew list --cask ghostty &>/dev/null 2>&1; then
+  DETECTED+=(1); SELECTED+=(1); EXTERNAL+=(0)
+elif [ -d "/Applications/Ghostty.app" ]; then
+  DETECTED+=(1); SELECTED+=(0); EXTERNAL+=(1)
+else
+  DETECTED+=(0); SELECTED+=(0); EXTERNAL+=(0)
+fi
 
-# 3: Cloudflare WARP + Hot
+# 3: Cloudflare WARP + Hot — install.sh installs via brew cask
 LABELS+=("Cloudflare WARP + Hot")
 DESCRIPTIONS+=("Menu bar: VPN + thermal monitor")
-if [ -d "/Applications/Cloudflare WARP.app" ] || [ -d "/Applications/Hot.app" ]; then DETECTED+=(1); SELECTED+=(1); else DETECTED+=(0); SELECTED+=(0); fi
+_warp_brew=0; _hot_brew=0
+brew list --cask cloudflare-warp &>/dev/null 2>&1 && _warp_brew=1 || true
+brew list --cask hot &>/dev/null 2>&1 && _hot_brew=1 || true
+_warp_found=0; _hot_found=0
+[ -d "/Applications/Cloudflare WARP.app" ] && _warp_found=1
+[ -d "/Applications/Hot.app" ] && _hot_found=1
+if [ "$_warp_found" = "1" ] || [ "$_hot_found" = "1" ]; then
+  DETECTED+=(1)
+  _cf_ext=0
+  [ "$_warp_found" = "1" ] && [ "$_warp_brew" = "0" ] && _cf_ext=1
+  [ "$_hot_found" = "1" ] && [ "$_hot_brew" = "0" ] && _cf_ext=1
+  if [ "$_cf_ext" = "1" ]; then
+    SELECTED+=(0); EXTERNAL+=(1)
+  else
+    SELECTED+=(1); EXTERNAL+=(0)
+  fi
+else
+  DETECTED+=(0); SELECTED+=(0); EXTERNAL+=(0)
+fi
 
-# 4: Google Chrome
+# 4: Google Chrome — check if managed by brew cask
 LABELS+=("Google Chrome")
 DESCRIPTIONS+=("Browser")
-if [ -d "/Applications/Google Chrome.app" ]; then DETECTED+=(1); SELECTED+=(0); else DETECTED+=(0); SELECTED+=(0); fi
+if brew list --cask google-chrome &>/dev/null 2>&1; then
+  DETECTED+=(1); SELECTED+=(0); EXTERNAL+=(0)
+elif [ -d "/Applications/Google Chrome.app" ]; then
+  DETECTED+=(1); SELECTED+=(0); EXTERNAL+=(1)
+else
+  DETECTED+=(0); SELECTED+=(0); EXTERNAL+=(0)
+fi
 
-# 5: OrbStack
+# 5: OrbStack — check if managed by brew cask
 LABELS+=("OrbStack")
 DESCRIPTIONS+=("Docker & Linux VM runtime")
-if [ -d "/Applications/OrbStack.app" ]; then DETECTED+=(1); SELECTED+=(1); else DETECTED+=(0); SELECTED+=(0); fi
+if brew list --cask orbstack &>/dev/null 2>&1; then
+  DETECTED+=(1); SELECTED+=(0); EXTERNAL+=(0)
+elif [ -d "/Applications/OrbStack.app" ]; then
+  DETECTED+=(1); SELECTED+=(0); EXTERNAL+=(1)
+else
+  DETECTED+=(0); SELECTED+=(0); EXTERNAL+=(0)
+fi
 
 # 6: Oh My Zsh
 LABELS+=("Oh My Zsh")
 DESCRIPTIONS+=("~/.oh-my-zsh")
-if [ -d "$HOME/.oh-my-zsh" ]; then DETECTED+=(1); SELECTED+=(1); else DETECTED+=(0); SELECTED+=(0); fi
+if [ -d "$HOME/.oh-my-zsh" ]; then DETECTED+=(1); SELECTED+=(1); EXTERNAL+=(0); else DETECTED+=(0); SELECTED+=(0); EXTERNAL+=(0); fi
 
 # 7: Rust
 LABELS+=("Rust")
 DESCRIPTIONS+=("~/.cargo, ~/.rustup")
-if [ -d "$HOME/.cargo" ] || [ -d "$HOME/.rustup" ]; then DETECTED+=(1); SELECTED+=(1); else DETECTED+=(0); SELECTED+=(0); fi
+if [ -d "$HOME/.cargo" ] || [ -d "$HOME/.rustup" ]; then DETECTED+=(1); SELECTED+=(1); EXTERNAL+=(0); else DETECTED+=(0); SELECTED+=(0); EXTERNAL+=(0); fi
 
 # 8: Bun
 LABELS+=("Bun")
 DESCRIPTIONS+=("~/.bun")
-if [ -d "$HOME/.bun" ]; then DETECTED+=(1); SELECTED+=(1); else DETECTED+=(0); SELECTED+=(0); fi
+if [ -d "$HOME/.bun" ]; then DETECTED+=(1); SELECTED+=(1); EXTERNAL+=(0); else DETECTED+=(0); SELECTED+=(0); EXTERNAL+=(0); fi
 
 # 9: NVM
 LABELS+=("NVM")
 DESCRIPTIONS+=("~/.nvm")
-if [ -d "$HOME/.nvm" ]; then DETECTED+=(1); SELECTED+=(1); else DETECTED+=(0); SELECTED+=(0); fi
+if [ -d "$HOME/.nvm" ]; then DETECTED+=(1); SELECTED+=(1); EXTERNAL+=(0); else DETECTED+=(0); SELECTED+=(0); EXTERNAL+=(0); fi
 
 # 10: Solana + AVM
 LABELS+=("Solana + AVM")
 DESCRIPTIONS+=("~/.local/share/solana, ~/.avm")
-if command -v solana &>/dev/null || [ -d "$HOME/.local/share/solana" ]; then DETECTED+=(1); SELECTED+=(1); else DETECTED+=(0); SELECTED+=(0); fi
+if command -v solana &>/dev/null || [ -d "$HOME/.local/share/solana" ]; then DETECTED+=(1); SELECTED+=(1); EXTERNAL+=(0); else DETECTED+=(0); SELECTED+=(0); EXTERNAL+=(0); fi
 
 # 11: suiup + Sui
 LABELS+=("suiup + Sui")
 DESCRIPTIONS+=("~/.local/bin/sui*, ~/.sui")
-if [ -f "$HOME/.local/bin/suiup" ] || [ -d "$HOME/.sui" ]; then DETECTED+=(1); SELECTED+=(1); else DETECTED+=(0); SELECTED+=(0); fi
+if [ -f "$HOME/.local/bin/suiup" ] || [ -d "$HOME/.sui" ]; then DETECTED+=(1); SELECTED+=(1); EXTERNAL+=(0); else DETECTED+=(0); SELECTED+=(0); EXTERNAL+=(0); fi
 
 # 12: sui-move-analyzer
 LABELS+=("sui-move-analyzer")
 DESCRIPTIONS+=("~/.cargo/bin/sui-move-analyzer")
-if [ -f "$HOME/.cargo/bin/sui-move-analyzer" ]; then DETECTED+=(1); SELECTED+=(1); else DETECTED+=(0); SELECTED+=(0); fi
+if [ -f "$HOME/.cargo/bin/sui-move-analyzer" ]; then DETECTED+=(1); SELECTED+=(1); EXTERNAL+=(0); else DETECTED+=(0); SELECTED+=(0); EXTERNAL+=(0); fi
 
 # 13: AI CLI Tools
 LABELS+=("AI CLI Tools")
 DESCRIPTIONS+=("Claude Code + Gemini CLI")
-if command -v claude &>/dev/null || command -v gemini &>/dev/null; then DETECTED+=(1); SELECTED+=(1); else DETECTED+=(0); SELECTED+=(0); fi
+if command -v claude &>/dev/null || command -v gemini &>/dev/null; then DETECTED+=(1); SELECTED+=(1); EXTERNAL+=(0); else DETECTED+=(0); SELECTED+=(0); EXTERNAL+=(0); fi
 
 # 14: SSH Keys (iCloud)
 LABELS+=("SSH Keys (iCloud)")
 DESCRIPTIONS+=("~/.ssh symlink only")
-if [ -L "$HOME/.ssh" ]; then DETECTED+=(1); SELECTED+=(1); else DETECTED+=(0); SELECTED+=(0); fi
+if [ -L "$HOME/.ssh" ]; then DETECTED+=(1); SELECTED+=(1); EXTERNAL+=(0); else DETECTED+=(0); SELECTED+=(0); EXTERNAL+=(0); fi
 
 # 15: Deep Clean
 LABELS+=("Deep Clean")
 DESCRIPTIONS+=(".cache, .local, .npm, .wakatime, .gitconfig")
-DETECTED+=(1); SELECTED+=(0)
+DETECTED+=(1); SELECTED+=(0); EXTERNAL+=(0)
 
 _total=${#LABELS[@]}
 
@@ -150,12 +193,14 @@ draw_menu() {
   echo ""
   echo -e "  ${PEACH}⚠${NC}  ${DIM}Recommended: Close all terminal sessions and apps before proceeding${NC}"
   echo ""
-  local _none_detected=1 _all_checked=1
+  local _none_managed=1 _all_checked=1
   for (( i=0; i<_total; i++ )); do
-    [ "${DETECTED[$i]}" = "1" ] && _none_detected=0
-    [ "${DETECTED[$i]}" = "1" ] && [ "${SELECTED[$i]}" = "0" ] && _all_checked=0
+    if [ "${DETECTED[$i]}" = "1" ] && [ "${EXTERNAL[$i]}" = "0" ]; then
+      _none_managed=0
+      [ "${SELECTED[$i]}" = "0" ] && _all_checked=0
+    fi
   done
-  if [ "$_none_detected" = "1" ]; then
+  if [ "$_none_managed" = "1" ]; then
     echo -e "  ${BOLD}${GREEN}Nothing to uninstall — system is already clean!${NC}"
     echo ""
   elif [ "$_all_checked" = "1" ]; then
@@ -169,6 +214,8 @@ draw_menu() {
     local _label; _label=$(printf "%-22s" "${LABELS[$i]}")
     if [ "${DETECTED[$i]}" = "0" ]; then
       echo -e "    ${DIM}${_num}. [ ] ${_label} —  not found${NC}"
+    elif [ "${EXTERNAL[$i]}" = "1" ]; then
+      echo -e "    ${ORANGE}${_num}. [!] ${_label}${NC} ${DIM}not installed by this script — remove manually${NC}"
     elif [ "${SELECTED[$i]}" = "1" ]; then
       echo -e "    ${MAGENTA}${_num}. [x] ${_label}${NC} ${DIM}${DESCRIPTIONS[$i]}${NC}"
     else
@@ -194,12 +241,15 @@ while true; do
 
   if [[ "$_input" =~ ^[0-9]+$ ]] && [ "$_input" -ge 1 ] && [ "$_input" -le "$_total" ]; then
     _idx=$((_input - 1))
-    if [ "${DETECTED[$_idx]}" = "1" ]; then
+    if [ "${EXTERNAL[$_idx]}" = "1" ]; then
+      echo -e "  ${ORANGE}⚠  Not installed by this script — remove manually.${NC}"
+      sleep 1.5
+    elif [ "${DETECTED[$_idx]}" = "1" ]; then
       [ "${SELECTED[$_idx]}" = "1" ] && SELECTED[$_idx]=0 || SELECTED[$_idx]=1
     fi
   elif [[ "$_input" = [aA] ]]; then
     for (( i=0; i<_total; i++ )); do
-      [ "${DETECTED[$i]}" = "1" ] && SELECTED[$i]=1
+      [ "${DETECTED[$i]}" = "1" ] && [ "${EXTERNAL[$i]}" != "1" ] && SELECTED[$i]=1
     done
   elif [[ "$_input" = [nN] ]]; then
     for (( i=0; i<_total; i++ )); do
@@ -212,8 +262,8 @@ while true; do
     exit 0
   fi
   # Dependency: Rust (7) selected → auto-select Solana AVM (10) and sui-move-analyzer (12) if detected
-  [ "${SELECTED[7]}" = "1" ] && [ "${DETECTED[10]}" = "1" ] && SELECTED[10]=1
-  [ "${SELECTED[7]}" = "1" ] && [ "${DETECTED[12]}" = "1" ] && SELECTED[12]=1
+  [ "${SELECTED[7]}" = "1" ] && [ "${DETECTED[10]}" = "1" ] && [ "${EXTERNAL[10]}" != "1" ] && SELECTED[10]=1
+  [ "${SELECTED[7]}" = "1" ] && [ "${DETECTED[12]}" = "1" ] && [ "${EXTERNAL[12]}" != "1" ] && SELECTED[12]=1
   # Deselect Rust (7) → auto-deselect Solana AVM (10) and sui-move-analyzer (12)
   [ "${SELECTED[7]}" = "0" ] && SELECTED[10]=0
   [ "${SELECTED[7]}" = "0" ] && SELECTED[12]=0

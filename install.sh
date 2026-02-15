@@ -106,6 +106,7 @@ LABELS=()
 DESCRIPTIONS=()
 SELECTED=()
 STATUS=()
+EXTERNAL=()   # 1 = found but not installed by this script — cannot manage
 
 # 0: Homebrew Formulae + Nerd Font
 LABELS+=("Homebrew Formulae + Nerd Font")
@@ -120,97 +121,137 @@ fi
 if [ "$_fi" -eq 10 ]; then STATUS+=("all installed"); SELECTED+=(0)
 elif [ "$_fi" -gt 0 ]; then STATUS+=("${_fi}/10 installed"); SELECTED+=(1)
 else STATUS+=(""); SELECTED+=(1); fi
+EXTERNAL+=(0)
 
-# 1: Yabai + Skhd
+# 1: Yabai + Skhd — install.sh installs via brew
 LABELS+=("Yabai + Skhd")
 DESCRIPTIONS+=("Tiling WM + hotkey daemon")
-if command -v yabai &>/dev/null; then STATUS+=("installed"); SELECTED+=(0); else STATUS+=(""); SELECTED+=(1); fi
+if brew list yabai &>/dev/null 2>&1 || brew list skhd &>/dev/null 2>&1; then
+  STATUS+=("installed"); SELECTED+=(0); EXTERNAL+=(0)
+elif command -v yabai &>/dev/null || command -v skhd &>/dev/null; then
+  STATUS+=("installed (external)"); SELECTED+=(0); EXTERNAL+=(1)
+else
+  STATUS+=(""); SELECTED+=(1); EXTERNAL+=(0)
+fi
 
-# 2: Ghostty
+# 2: Ghostty — install.sh installs via brew cask
 LABELS+=("Ghostty")
 DESCRIPTIONS+=("Ghostty terminal")
-if [ -d "/Applications/Ghostty.app" ]; then STATUS+=("installed"); SELECTED+=(0); else STATUS+=(""); SELECTED+=(1); fi
+if brew list --cask ghostty &>/dev/null 2>&1; then
+  STATUS+=("installed"); SELECTED+=(0); EXTERNAL+=(0)
+elif [ -d "/Applications/Ghostty.app" ]; then
+  STATUS+=("installed (external)"); SELECTED+=(0); EXTERNAL+=(1)
+else
+  STATUS+=(""); SELECTED+=(1); EXTERNAL+=(0)
+fi
 
-# 3: Cloudflare WARP + Hot
+# 3: Cloudflare WARP + Hot — install.sh installs via brew cask
 LABELS+=("Cloudflare WARP + Hot")
 DESCRIPTIONS+=("Menu bar: VPN + thermal monitor")
-if [ -d "/Applications/Cloudflare WARP.app" ] || [ -d "/Applications/Hot.app" ]; then STATUS+=("installed"); SELECTED+=(0); else STATUS+=(""); SELECTED+=(1); fi
+_warp_brew=0; _hot_brew=0
+brew list --cask cloudflare-warp &>/dev/null 2>&1 && _warp_brew=1 || true
+brew list --cask hot &>/dev/null 2>&1 && _hot_brew=1 || true
+_warp_found=0; _hot_found=0
+[ -d "/Applications/Cloudflare WARP.app" ] && _warp_found=1
+[ -d "/Applications/Hot.app" ] && _hot_found=1
+if [ "$_warp_found" = "1" ] || [ "$_hot_found" = "1" ]; then
+  _cf_ext=0
+  [ "$_warp_found" = "1" ] && [ "$_warp_brew" = "0" ] && _cf_ext=1
+  [ "$_hot_found" = "1" ] && [ "$_hot_brew" = "0" ] && _cf_ext=1
+  if [ "$_cf_ext" = "1" ]; then
+    STATUS+=("installed (external)"); SELECTED+=(0); EXTERNAL+=(1)
+  else
+    STATUS+=("installed"); SELECTED+=(0); EXTERNAL+=(0)
+  fi
+else
+  STATUS+=(""); SELECTED+=(1); EXTERNAL+=(0)
+fi
 
-# 4: Google Chrome
+# 4: Google Chrome — check if managed by brew cask
 LABELS+=("Google Chrome")
 DESCRIPTIONS+=("Browser")
-SELECTED+=(0)
-[ -d "/Applications/Google Chrome.app" ] && STATUS+=("installed") || STATUS+=("")
+if brew list --cask google-chrome &>/dev/null 2>&1; then
+  STATUS+=("installed"); SELECTED+=(0); EXTERNAL+=(0)
+elif [ -d "/Applications/Google Chrome.app" ]; then
+  STATUS+=("installed (external)"); SELECTED+=(0); EXTERNAL+=(1)
+else
+  STATUS+=(""); SELECTED+=(0); EXTERNAL+=(0)
+fi
 
-# 5: OrbStack
+# 5: OrbStack — check if managed by brew cask
 LABELS+=("OrbStack")
 DESCRIPTIONS+=("Docker & Linux VM runtime")
-SELECTED+=(0)
-[ -d "/Applications/OrbStack.app" ] && STATUS+=("installed") || STATUS+=("")
+if brew list --cask orbstack &>/dev/null 2>&1; then
+  STATUS+=("installed"); SELECTED+=(0); EXTERNAL+=(0)
+elif [ -d "/Applications/OrbStack.app" ]; then
+  STATUS+=("installed (external)"); SELECTED+=(0); EXTERNAL+=(1)
+else
+  STATUS+=(""); SELECTED+=(0); EXTERNAL+=(0)
+fi
 
 # 6: Oh My Zsh
 LABELS+=("Oh My Zsh")
 DESCRIPTIONS+=("Zsh framework + plugins")
-if [ -d "$HOME/.oh-my-zsh" ]; then STATUS+=("installed"); SELECTED+=(0); else STATUS+=(""); SELECTED+=(1); fi
+if [ -d "$HOME/.oh-my-zsh" ]; then STATUS+=("installed"); SELECTED+=(0); EXTERNAL+=(0); else STATUS+=(""); SELECTED+=(1); EXTERNAL+=(0); fi
 
 # 7: Rust
 LABELS+=("Rust")
 DESCRIPTIONS+=("Rust toolchain via rustup")
-if [ -f "$HOME/.cargo/bin/rustup" ]; then STATUS+=("installed"); SELECTED+=(0); else STATUS+=(""); SELECTED+=(1); fi
+if [ -f "$HOME/.cargo/bin/rustup" ]; then STATUS+=("installed"); SELECTED+=(0); EXTERNAL+=(0); else STATUS+=(""); SELECTED+=(1); EXTERNAL+=(0); fi
 
 # 8: Bun
 LABELS+=("Bun")
 DESCRIPTIONS+=("JavaScript runtime")
-if [ -d "$HOME/.bun" ]; then STATUS+=("installed"); SELECTED+=(0); else STATUS+=(""); SELECTED+=(1); fi
+if [ -d "$HOME/.bun" ]; then STATUS+=("installed"); SELECTED+=(0); EXTERNAL+=(0); else STATUS+=(""); SELECTED+=(1); EXTERNAL+=(0); fi
 
 # 9: NVM + Node
 LABELS+=("NVM + Node 24")
 DESCRIPTIONS+=("Node Version Manager + Node.js")
-if [ -d "$HOME/.nvm" ]; then STATUS+=("installed"); SELECTED+=(0); else STATUS+=(""); SELECTED+=(1); fi
+if [ -d "$HOME/.nvm" ]; then STATUS+=("installed"); SELECTED+=(0); EXTERNAL+=(0); else STATUS+=(""); SELECTED+=(1); EXTERNAL+=(0); fi
 
 # 10: Solana + AVM
 LABELS+=("Solana + AVM")
 DESCRIPTIONS+=("Solana CLI + Anchor Version Manager")
-if command -v solana &>/dev/null || [ -f "$HOME/.local/share/solana/install/active_release/bin/solana" ]; then STATUS+=("installed"); SELECTED+=(0); else STATUS+=(""); SELECTED+=(1); fi
+if command -v solana &>/dev/null || [ -f "$HOME/.local/share/solana/install/active_release/bin/solana" ]; then STATUS+=("installed"); SELECTED+=(0); EXTERNAL+=(0); else STATUS+=(""); SELECTED+=(1); EXTERNAL+=(0); fi
 
 # 11: suiup + Sui Testnet
 LABELS+=("suiup + Sui Testnet")
 DESCRIPTIONS+=("Sui version manager + latest testnet binary")
-if [ -f "$HOME/.local/bin/suiup" ]; then STATUS+=("installed"); SELECTED+=(0); else STATUS+=(""); SELECTED+=(1); fi
+if [ -f "$HOME/.local/bin/suiup" ]; then STATUS+=("installed"); SELECTED+=(0); EXTERNAL+=(0); else STATUS+=(""); SELECTED+=(1); EXTERNAL+=(0); fi
 
 # 12: sui-move-analyzer
 LABELS+=("sui-move-analyzer")
 DESCRIPTIONS+=("Sui Move language server (~10min)")
-if [ -f "$HOME/.cargo/bin/sui-move-analyzer" ]; then STATUS+=("installed"); SELECTED+=(0); else STATUS+=(""); SELECTED+=(1); fi
+if [ -f "$HOME/.cargo/bin/sui-move-analyzer" ]; then STATUS+=("installed"); SELECTED+=(0); EXTERNAL+=(0); else STATUS+=(""); SELECTED+=(1); EXTERNAL+=(0); fi
 
 # 13: AI CLI Tools
 LABELS+=("AI CLI Tools")
 DESCRIPTIONS+=("Claude Code + Gemini CLI")
-if command -v claude &>/dev/null && command -v gemini &>/dev/null; then STATUS+=("installed"); SELECTED+=(0)
-elif command -v claude &>/dev/null || command -v gemini &>/dev/null; then STATUS+=("partial"); SELECTED+=(1)
-else STATUS+=(""); SELECTED+=(1); fi
+if command -v claude &>/dev/null && command -v gemini &>/dev/null; then STATUS+=("installed"); SELECTED+=(0); EXTERNAL+=(0)
+elif command -v claude &>/dev/null || command -v gemini &>/dev/null; then STATUS+=("partial"); SELECTED+=(1); EXTERNAL+=(0)
+else STATUS+=(""); SELECTED+=(1); EXTERNAL+=(0); fi
 
 # 14: SSH Keys (iCloud)
 LABELS+=("SSH Keys (iCloud)")
 DESCRIPTIONS+=("Symlink ~/.ssh from iCloud Drive")
 _icloud_base="$HOME/Library/Mobile Documents/com~apple~CloudDocs"
 if [ -L "$HOME/.ssh" ] && { [ -f "$HOME/.ssh/config" ] || ls "$HOME/.ssh"/*.pub &>/dev/null 2>&1 || [ -f "$HOME/.ssh/authorized_keys" ]; }; then
-  SELECTED+=(0); STATUS+=("symlinked + configured")
+  SELECTED+=(0); STATUS+=("symlinked + configured"); EXTERNAL+=(0)
 elif [ -L "$HOME/.ssh" ]; then
-  SELECTED+=(1); STATUS+=("symlinked (empty)")
+  SELECTED+=(1); STATUS+=("symlinked (empty)"); EXTERNAL+=(0)
 elif [ -d "$_icloud_base" ]; then
-  SELECTED+=(1); STATUS+=("iCloud available")
+  SELECTED+=(1); STATUS+=("iCloud available"); EXTERNAL+=(0)
 else
-  SELECTED+=(0); STATUS+=("iCloud not found")
+  SELECTED+=(0); STATUS+=("iCloud not found"); EXTERNAL+=(0)
 fi
 
 # 15: macOS Defaults
 LABELS+=("macOS Defaults")
 DESCRIPTIONS+=("Key repeat, Finder tweaks, no smart quotes")
 _md_result=$(bash "$(cd "$(dirname "$0")" && pwd)/macos-defaults-check.sh" 2>/dev/null) && _md_ok=1 || _md_ok=0
-if [ "$_md_ok" = "1" ]; then STATUS+=("all applied"); SELECTED+=(0)
-elif [ -n "$_md_result" ] && [ "${_md_result%%/*}" -gt 0 ] 2>/dev/null; then STATUS+=("${_md_result} applied"); SELECTED+=(1)
-else STATUS+=(""); SELECTED+=(1); fi
+if [ "$_md_ok" = "1" ]; then STATUS+=("all applied"); SELECTED+=(0); EXTERNAL+=(0)
+elif [ -n "$_md_result" ] && [ "${_md_result%%/*}" -gt 0 ] 2>/dev/null; then STATUS+=("${_md_result} applied"); SELECTED+=(1); EXTERNAL+=(0)
+else STATUS+=(""); SELECTED+=(1); EXTERNAL+=(0); fi
 
 _total=${#LABELS[@]}
 
@@ -221,10 +262,10 @@ draw_menu() {
   echo -e "${BOLD}${MAGENTA}║           dotfiles installer — macOS             ║${NC}"
   echo -e "${BOLD}${MAGENTA}╚══════════════════════════════════════════════════╝${NC}"
   echo ""
-  # Check if all items are unchecked (everything installed)
+  # Check if all non-EXTERNAL items are unchecked (everything installed by script)
   local _all_unchecked=1
   for (( i=0; i<_total; i++ )); do
-    [ "${SELECTED[$i]}" = "1" ] && _all_unchecked=0 && break
+    [ "${EXTERNAL[$i]}" = "0" ] && [ "${SELECTED[$i]}" = "1" ] && _all_unchecked=0 && break
   done
   if [ "$_all_unchecked" = "1" ]; then
     echo -e "  ${BOLD}${GREEN}All components are already installed!${NC}"
@@ -237,7 +278,9 @@ draw_menu() {
     local _label; _label=$(printf "%-22s" "${LABELS[$i]}")
     local _status=""
     [ -n "${STATUS[$i]}" ] && _status=" ${TEAL}(${STATUS[$i]})${NC}"
-    if [ "${SELECTED[$i]}" = "1" ]; then
+    if [ "${EXTERNAL[$i]}" = "1" ]; then
+      echo -e "    ${ORANGE}${_num}. [!] ${_label}${NC} ${DIM}not installed by this script — manage manually${NC}${_status}"
+    elif [ "${SELECTED[$i]}" = "1" ]; then
       echo -e "    ${MAGENTA}${_num}. [x] ${_label}${NC} ${DIM}${DESCRIPTIONS[$i]}${NC}${_status}"
     else
       echo -e "    ${GRAY}${_num}. [ ] ${_label}${NC} ${DIM}${DESCRIPTIONS[$i]}${NC}${_status}"
@@ -262,9 +305,14 @@ while true; do
 
   if [[ "$_input" =~ ^[0-9]+$ ]] && [ "$_input" -ge 1 ] && [ "$_input" -le "$_total" ]; then
     _idx=$((_input - 1))
-    [ "${SELECTED[$_idx]}" = "1" ] && SELECTED[$_idx]=0 || SELECTED[$_idx]=1
+    if [ "${EXTERNAL[$_idx]}" = "1" ]; then
+      echo -e "  ${ORANGE}⚠  Not installed by this script — manage manually.${NC}"
+      sleep 1.5
+    else
+      [ "${SELECTED[$_idx]}" = "1" ] && SELECTED[$_idx]=0 || SELECTED[$_idx]=1
+    fi
   elif [[ "$_input" = [aA] ]]; then
-    for (( i=0; i<_total; i++ )); do SELECTED[$i]=1; done
+    for (( i=0; i<_total; i++ )); do [ "${EXTERNAL[$i]}" != "1" ] && SELECTED[$i]=1; done
   elif [[ "$_input" = [nN] ]]; then
     for (( i=0; i<_total; i++ )); do SELECTED[$i]=0; done
   elif [ -z "$_input" ]; then
