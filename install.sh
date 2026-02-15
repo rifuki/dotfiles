@@ -194,7 +194,9 @@ else STATUS+=(""); SELECTED+=(1); EXTERNAL+=(0); fi
 # 11: UFW
 LABELS+=("UFW")
 DESCRIPTIONS+=("Firewall (allow SSH + HTTP/S)")
-if command -v ufw &>/dev/null; then STATUS+=("installed"); SELECTED+=(0); EXTERNAL+=(0); else STATUS+=(""); SELECTED+=(1); EXTERNAL+=(0); fi
+if command -v ufw &>/dev/null && sudo -n ufw status 2>/dev/null | grep -q "active"; then STATUS+=("active"); SELECTED+=(0); EXTERNAL+=(0)
+elif command -v ufw &>/dev/null; then STATUS+=("installed (inactive)"); SELECTED+=(1); EXTERNAL+=(0)
+else STATUS+=(""); SELECTED+=(1); EXTERNAL+=(0); fi
 
 _total=${#LABELS[@]}
 
