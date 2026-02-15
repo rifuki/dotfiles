@@ -415,176 +415,105 @@ fi
 # ========== 0: Custom User ==========
 if [ "${SELECTED[0]}" = "1" ]; then
   step "Setting up Custom User"
-  printf "    Enter new username (leave empty to skip): "
+  printf "    Enter new username: "
   read -r _custom_user < /dev/tty
-  if [ -z "$_custom_user" ]; then
-    warn_msg "Custom user setup skipped"
+  [ -z "$_custom_user" ] && { fail_msg "Username is required"; exit 1; }
+
+  # Create user if not exists
+  if ! id "$_custom_user" &>/dev/null; then
+    info_msg "Creating user $_custom_user..."
+    sudo useradd -m -s /bin/bash "$_custom_user"
+    done_msg "User $_custom_user created"
   else
-    # Create user if not exists
-    if ! id "$_custom_user" &>/dev/null; then
-      info_msg "Creating user $_custom_user..."
-      sudo useradd -m -s /bin/bash "$_custom_user"
-      done_msg "User $_custom_user created"
-    else
-      done_msg "User $_custom_user already exists"
-    fi
-
-    # Set password (retry on mismatch)
-    info_msg "Set password for $_custom_user:"
-    until sudo passwd "$_custom_user"; do
-      warn_msg "Password mismatch or error — please try again"
-    done
-    done_msg "Password set"
-
-    # Add to sudo group
-    sudo usermod -aG sudo "$_custom_user"
-    done_msg "Added $_custom_user to sudo group"
-
-    # Copy SSH authorized_keys from current user
-    _ssh_keys_copied=0
-    if [ -f "$HOME/.ssh/authorized_keys" ]; then
-      if confirm "Copy SSH authorized_keys from $USER to $_custom_user?"; then
-        _new_ssh_dir="/home/$_custom_user/.ssh"
-        sudo mkdir -p "$_new_ssh_dir"
-        sudo cp "$HOME/.ssh/authorized_keys" "$_new_ssh_dir/authorized_keys"
-        sudo chown -R "$_custom_user:$_custom_user" "$_new_ssh_dir"
-        sudo chmod 700 "$_new_ssh_dir"
-        sudo chmod 600 "$_new_ssh_dir/authorized_keys"
-        done_msg "SSH authorized_keys copied to $_custom_user"
-        _ssh_keys_copied=1
-      fi
-    else
-      warn_msg "No authorized_keys found for $USER — SSH key copy skipped"
-    fi
-
-    # SSH hardening: only offered if SSH keys were actually copied
-    if [ "$_ssh_keys_copied" = "1" ]; then
-      if confirm "Require SSH key + password for $_custom_user? (AuthenticationMethods)"; then
-        _sshd="/etc/ssh/sshd_config"
-        # Enable PasswordAuthentication
-        if sudo grep -q "^#\?PasswordAuthentication" "$_sshd" 2>/dev/null; then
-          sudo sed -i 's/^#\?PasswordAuthentication.*/PasswordAuthentication yes/' "$_sshd"
-        else
-          echo "PasswordAuthentication yes" | sudo tee -a "$_sshd" > /dev/null
-        fi
-        # Append Match block only if not already present
-        if ! sudo grep -q "^Match User $_custom_user$" "$_sshd" 2>/dev/null; then
-          printf '\nMatch User %s\n    PasswordAuthentication yes\n    AuthenticationMethods publickey,password\n' "$_custom_user" | sudo tee -a "$_sshd" > /dev/null
-        fi
-        # Validate config then restart
-        if sudo sshd -t 2>/dev/null; then
-          sudo systemctl restart sshd 2>/dev/null || sudo service ssh restart 2>/dev/null || true
-          done_msg "SSH: requires publickey + password for $_custom_user"
-        else
-          warn_msg "sshd config test failed — manual check needed: sudo sshd -t"
-        fi
-      fi
-    else
-      # No keys copied — enable PasswordAuthentication so user can at least login via password
-      warn_msg "No SSH keys copied — enabling PasswordAuthentication so $_custom_user can login via password"
-      _sshd="/etc/ssh/sshd_config"
-      if sudo grep -q "^#\?PasswordAuthentication" "$_sshd" 2>/dev/null; then
-        sudo sed -i 's/^#\?PasswordAuthentication.*/PasswordAuthentication yes/' "$_sshd"
-      else
-        echo "PasswordAuthentication yes" | sudo tee -a "$_sshd" > /dev/null
-      fi
-      if sudo sshd -t 2>/dev/null; then
-        sudo systemctl restart sshd 2>/dev/null || sudo service ssh restart 2>/dev/null || true
-        done_msg "PasswordAuthentication enabled — login: ssh $_custom_user@<your-server>"
-      else
-        warn_msg "sshd config test failed — manual check needed: sudo sshd -t"
-      fi
-    fi
-
-    done_msg "Custom user $_custom_user is ready"
-    info_msg "Login: ssh $_custom_user@<your-server>"
-
-    # Auto-lock all passwordless default cloud users (no per-user prompt)
-    _cloud_defaults=(ubuntu azureuser ec2-user admin centos fedora debian cloud)
-    for _default_user in "${_cloud_defaults[@]}"; do
-      if id "$_default_user" &>/dev/null && [ "$_default_user" != "$_custom_user" ]; then
-        _pw_status=$(sudo passwd -S "$_default_user" 2>/dev/null | awk '{print $2}' || true)
-        _pw_empty=0
-        if [ "$_pw_status" = "P" ]; then
-          _pw_hash=$(sudo getent shadow "$_default_user" 2>/dev/null | cut -d: -f2 || true)
-          case "$_pw_hash" in
-            ""|"!"*|"*"|"!!"*) _pw_empty=1 ;;
-          esac
-        else
-          _pw_empty=1
-        fi
-        if [ "$_pw_empty" = "1" ]; then
-          sudo passwd -l "$_default_user" 2>/dev/null && \
-            done_msg "Locked passwordless user: $_default_user" || true
-        fi
-      fi
-    done
-
-    # If other components selected, prompt: re-launch as new user or continue here
-    _other_sel=0
-    for (( _i=1; _i<${#SELECTED[@]}; _i++ )); do
-      [ "${SELECTED[$_i]}" = "1" ] && _other_sel=1 && break
-    done
-
-    if [ "$_other_sel" = "1" ]; then
-      echo ""
-      echo -e "  ${BOLD}${MAGENTA}╔══════════════════════════════════════════════════╗${NC}"
-      echo -e "  ${BOLD}${MAGENTA}║       ⚠  Where should components install?        ║${NC}"
-      echo -e "  ${BOLD}${MAGENTA}╚══════════════════════════════════════════════════╝${NC}"
-      echo ""
-      echo -e "    ${BOLD}${CYAN}[1]${NC} Re-launch as ${BOLD}${CYAN}$_custom_user${NC}  ${GREEN}← recommended${NC}"
-      echo -e "        ${DIM}→ NVM, dotfiles, zsh, etc. install into $_custom_user's \$HOME${NC}"
-      echo ""
-      echo -e "    ${BOLD}${YELLOW}[2]${NC} Continue as ${BOLD}${YELLOW}$USER${NC}  ${RED}← not recommended${NC}"
-      echo -e "        ${DIM}→ All apps install in $USER's \$HOME, not in $_custom_user's${NC}"
-      echo -e "        ${RED}▸ $_custom_user will NOT have these apps set up${NC}"
-      echo ""
-      while true; do
-        printf "  > "
-        read -r _launch_choice < /dev/tty
-        case "$_launch_choice" in
-          1)
-            _new_home=$(getent passwd "$_custom_user" | cut -d: -f6)
-            if [ ! -d "$_new_home/.dotfiles/.git" ]; then
-              info_msg "Cloning dotfiles for $_custom_user..."
-              sudo -u "$_custom_user" git clone --branch vps "$DOTFILES_REPO" "$_new_home/.dotfiles" 2>/dev/null || \
-                { sudo cp -r "$DOTFILES_DIR" "$_new_home/.dotfiles" && \
-                  sudo chown -R "$_custom_user:$_custom_user" "$_new_home/.dotfiles"; }
-              done_msg "Dotfiles ready for $_custom_user"
-            fi
-            _sel_str="0"
-            for (( _i=1; _i<${#SELECTED[@]}; _i++ )); do
-              _sel_str+=",${SELECTED[$_i]}"
-            done
-            echo ""
-            step "Re-launching installer as $_custom_user"
-            info_msg "All remaining components will install under $_custom_user's home"
-            exec sudo -H -u "$_custom_user" bash "$_new_home/.dotfiles/install.sh" --resume "$_sel_str"
-            ;;
-          2)
-            echo ""
-            echo -e "  ${RED}${BOLD}╔══════════════════════════════════════════════════╗${NC}"
-            echo -e "  ${RED}${BOLD}║  ⚠  WARNING: Continuing as $USER                 ║${NC}"
-            echo -e "  ${RED}${BOLD}╚══════════════════════════════════════════════════╝${NC}"
-            echo -e "  ${RED}▸ All selected apps will install in $USER's \$HOME${NC}"
-            echo -e "  ${RED}▸ $_custom_user will NOT have these tools in their environment${NC}"
-            echo -e "  ${RED}▸ Re-run install.sh as $_custom_user later to set up properly${NC}"
-            echo ""
-            _WARN_WRONG_USER=1
-            break
-            ;;
-          *)
-            echo -e "  ${YELLOW}Enter 1 or 2${NC}"
-            ;;
-        esac
-      done
-    fi
+    done_msg "User $_custom_user already exists"
   fi
-fi
 
-if [ "${_WARN_WRONG_USER:-0}" = "1" ]; then
-  echo -e "  ${RED}${BOLD}⚠  Installing as $USER — these apps will NOT appear in the new custom user's home${NC}"
-  echo ""
+  # Set password (for sudo, NOT SSH)
+  info_msg "Set password for $_custom_user (used for sudo):"
+  until sudo passwd "$_custom_user"; do
+    warn_msg "Password mismatch or error — please try again"
+  done
+  done_msg "Password set"
+
+  # Add to sudo group
+  sudo usermod -aG sudo "$_custom_user"
+  done_msg "Added $_custom_user to sudo group"
+
+  # Copy SSH keys (mandatory — key-only auth requires this)
+  if [ -f "$HOME/.ssh/authorized_keys" ]; then
+    _new_ssh_dir="/home/$_custom_user/.ssh"
+    sudo mkdir -p "$_new_ssh_dir"
+    sudo cp "$HOME/.ssh/authorized_keys" "$_new_ssh_dir/authorized_keys"
+    sudo chown -R "$_custom_user:$_custom_user" "$_new_ssh_dir"
+    sudo chmod 700 "$_new_ssh_dir"
+    sudo chmod 600 "$_new_ssh_dir/authorized_keys"
+    done_msg "SSH authorized_keys copied to $_custom_user"
+  else
+    fail_msg "No SSH keys found! Cannot create secure user without SSH access."
+    info_msg "Add your public key to $HOME/.ssh/authorized_keys first, then re-run."
+    exit 1
+  fi
+
+  # SSH hardening: key-only authentication
+  _sshd="/etc/ssh/sshd_config"
+  sudo sed -i 's/^#\?PasswordAuthentication.*/PasswordAuthentication no/' "$_sshd"
+  # Remove any old Match blocks for this user
+  sudo sed -i "/^Match User $_custom_user$/,/^$/d" "$_sshd" 2>/dev/null || true
+  if sudo sshd -t 2>/dev/null; then
+    sudo systemctl restart sshd 2>/dev/null || sudo service ssh restart 2>/dev/null || true
+    done_msg "SSH: key-only authentication enabled"
+  else
+    warn_msg "sshd config test failed — manual check needed: sudo sshd -t"
+  fi
+
+  done_msg "Custom user $_custom_user is ready"
+  info_msg "Login: ssh $_custom_user@<your-server> (key-only, password disabled)"
+
+  # Auto-lock all passwordless default cloud users (no per-user prompt)
+  _cloud_defaults=(ubuntu azureuser ec2-user admin centos fedora debian cloud)
+  for _default_user in "${_cloud_defaults[@]}"; do
+    if id "$_default_user" &>/dev/null && [ "$_default_user" != "$_custom_user" ]; then
+      _pw_status=$(sudo passwd -S "$_default_user" 2>/dev/null | awk '{print $2}' || true)
+      _pw_empty=0
+      if [ "$_pw_status" = "P" ]; then
+        _pw_hash=$(sudo getent shadow "$_default_user" 2>/dev/null | cut -d: -f2 || true)
+        case "$_pw_hash" in
+          ""|"!"*|"*"|"!!"*) _pw_empty=1 ;;
+        esac
+      else
+        _pw_empty=1
+      fi
+      if [ "$_pw_empty" = "1" ]; then
+        sudo passwd -l "$_default_user" 2>/dev/null && \
+          done_msg "Locked passwordless user: $_default_user" || true
+      fi
+    fi
+  done
+
+  # Auto re-launch as new user if other components are selected
+  _other_sel=0
+  for (( _i=1; _i<${#SELECTED[@]}; _i++ )); do
+    [ "${SELECTED[$_i]}" = "1" ] && _other_sel=1 && break
+  done
+
+  if [ "$_other_sel" = "1" ]; then
+    _new_home=$(getent passwd "$_custom_user" | cut -d: -f6)
+    if [ ! -d "$_new_home/.dotfiles/.git" ]; then
+      info_msg "Cloning dotfiles for $_custom_user..."
+      sudo -u "$_custom_user" git clone --branch vps "$DOTFILES_REPO" "$_new_home/.dotfiles" 2>/dev/null || \
+        { sudo cp -r "$DOTFILES_DIR" "$_new_home/.dotfiles" && \
+          sudo chown -R "$_custom_user:$_custom_user" "$_new_home/.dotfiles"; }
+      done_msg "Dotfiles ready for $_custom_user"
+    fi
+    _sel_str="0"
+    for (( _i=1; _i<${#SELECTED[@]}; _i++ )); do
+      _sel_str+=",${SELECTED[$_i]}"
+    done
+    echo ""
+    step "Re-launching installer as $_custom_user"
+    info_msg "All remaining components will install under $_custom_user's home"
+    exec sudo -H -u "$_custom_user" bash "$_new_home/.dotfiles/install.sh" --resume "$_sel_str"
+  fi
 fi
 
 # ========== 1: APT Packages + Nerd Font ==========
