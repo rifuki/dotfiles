@@ -77,6 +77,7 @@ LABELS=()
 DESCRIPTIONS=()
 SELECTED=()
 STATUS=()
+EXTERNAL=()   # 1 = found but not installed by this script — cannot manage
 
 # 0: Custom User
 LABELS+=("Custom User")
@@ -102,82 +103,98 @@ if [ -n "$_found_user" ]; then
   fi
 fi
 if [ "$_is_root" = "1" ]; then
-  SELECTED+=(1); STATUS+=("running as root")
+  SELECTED+=(1); STATUS+=("running as root"); EXTERNAL+=(0)
 elif [ "$_user_no_password" = "1" ]; then
-  SELECTED+=(1); STATUS+=("$USER has no password")
+  SELECTED+=(1); STATUS+=("$USER has no password"); EXTERNAL+=(0)
 elif [ -n "$_found_user" ] && [ "$_found_user_has_pw" = "1" ]; then
-  SELECTED+=(0); STATUS+=("$_found_user (ready)")
+  SELECTED+=(0); STATUS+=("$_found_user (ready)"); EXTERNAL+=(0)
 elif [ -n "$_found_user" ]; then
-  SELECTED+=(1); STATUS+=("$_found_user (no password!)")
+  SELECTED+=(1); STATUS+=("$_found_user (no password!)"); EXTERNAL+=(0)
 else
-  SELECTED+=(1); STATUS+=("")
+  SELECTED+=(1); STATUS+=(""); EXTERNAL+=(0)
 fi
 
 # 1: APT Packages + Nerd Font
+# Expected: nvim → /opt/nvim-linux-x86_64, yazi → /usr/local/bin/yazi, others via dpkg
 LABELS+=("APT Packages + Nerd Font")
 DESCRIPTIONS+=("neovim, tmux, zsh, htop, ripgrep, neofetch, yazi, gh, JetBrainsMono")
-_fi=0
-for _cmd in nvim tmux zsh htop rg neofetch yazi gh; do
-  command -v "$_cmd" &>/dev/null && ((_fi++)) || true
+_fi=0; _fi_ext=0
+# nvim
+if [ -d /opt/nvim-linux-x86_64 ]; then ((_fi++))
+elif command -v nvim &>/dev/null; then ((_fi++)); _fi_ext=1; fi
+# APT-managed packages
+for _pkg in tmux zsh htop ripgrep neofetch gh; do
+  _cmd="$_pkg"; [ "$_pkg" = "ripgrep" ] && _cmd="rg"
+  if dpkg -s "$_pkg" &>/dev/null 2>&1; then ((_fi++))
+  elif command -v "$_cmd" &>/dev/null 2>&1; then ((_fi++)); _fi_ext=1; fi
 done
-if ls "$HOME/.local/share/fonts/JetBrainsMono"*"NerdFont"* &>/dev/null 2>&1; then
-  ((_fi++))
-fi
-if [ "$_fi" -eq 9 ]; then STATUS+=("all installed"); SELECTED+=(0)
-elif [ "$_fi" -gt 0 ]; then STATUS+=("${_fi}/9 installed"); SELECTED+=(1)
-else STATUS+=(""); SELECTED+=(1); fi
+# yazi
+if [ -f /usr/local/bin/yazi ]; then ((_fi++))
+elif command -v yazi &>/dev/null; then ((_fi++)); _fi_ext=1; fi
+# Nerd Font
+if ls "$HOME/.local/share/fonts/JetBrainsMono"*"NerdFont"* &>/dev/null 2>&1; then ((_fi++)); fi
+if [ "$_fi" -gt 0 ] && [ "$_fi_ext" = "1" ]; then STATUS+=("${_fi}/9 installed (external)"); SELECTED+=(0); EXTERNAL+=(1)
+elif [ "$_fi" -eq 9 ]; then STATUS+=("all installed"); SELECTED+=(0); EXTERNAL+=(0)
+elif [ "$_fi" -gt 0 ]; then STATUS+=("${_fi}/9 installed"); SELECTED+=(1); EXTERNAL+=(0)
+else STATUS+=(""); SELECTED+=(1); EXTERNAL+=(0); fi
 
-# 2: Starship
+# 2: Starship — expected at /usr/local/bin/starship
 LABELS+=("Starship")
 DESCRIPTIONS+=("Cross-shell prompt theme")
-if command -v starship &>/dev/null; then STATUS+=("installed"); SELECTED+=(0); else STATUS+=(""); SELECTED+=(1); fi
+if [ -f /usr/local/bin/starship ]; then STATUS+=("installed"); SELECTED+=(0); EXTERNAL+=(0)
+elif command -v starship &>/dev/null; then STATUS+=("installed (external)"); SELECTED+=(0); EXTERNAL+=(1)
+else STATUS+=(""); SELECTED+=(1); EXTERNAL+=(0); fi
 
 # 3: Oh My Zsh
 LABELS+=("Oh My Zsh")
 DESCRIPTIONS+=("Zsh framework + plugins")
-if [ -d "$HOME/.oh-my-zsh" ]; then STATUS+=("installed"); SELECTED+=(0); else STATUS+=(""); SELECTED+=(1); fi
+if [ -d "$HOME/.oh-my-zsh" ]; then STATUS+=("installed"); SELECTED+=(0); EXTERNAL+=(0); else STATUS+=(""); SELECTED+=(1); EXTERNAL+=(0); fi
 
 # 4: Rust
 LABELS+=("Rust")
 DESCRIPTIONS+=("Rust toolchain via rustup")
-if [ -f "$HOME/.cargo/bin/rustup" ]; then STATUS+=("installed"); SELECTED+=(0); else STATUS+=(""); SELECTED+=(1); fi
+if [ -f "$HOME/.cargo/bin/rustup" ]; then STATUS+=("installed"); SELECTED+=(0); EXTERNAL+=(0); else STATUS+=(""); SELECTED+=(1); EXTERNAL+=(0); fi
 
 # 5: Bun
 LABELS+=("Bun")
 DESCRIPTIONS+=("JavaScript runtime")
-if [ -d "$HOME/.bun" ]; then STATUS+=("installed"); SELECTED+=(0); else STATUS+=(""); SELECTED+=(1); fi
+if [ -d "$HOME/.bun" ]; then STATUS+=("installed"); SELECTED+=(0); EXTERNAL+=(0); else STATUS+=(""); SELECTED+=(1); EXTERNAL+=(0); fi
 
 # 6: NVM + Node 24
 LABELS+=("NVM + Node 24")
 DESCRIPTIONS+=("Node Version Manager + Node.js")
-if [ -d "$HOME/.nvm" ]; then STATUS+=("installed"); SELECTED+=(0); else STATUS+=(""); SELECTED+=(1); fi
+if [ -d "$HOME/.nvm" ]; then STATUS+=("installed"); SELECTED+=(0); EXTERNAL+=(0); else STATUS+=(""); SELECTED+=(1); EXTERNAL+=(0); fi
 
-# 7: Docker
+# 7: Docker — expected via apt docker-ce repo
 LABELS+=("Docker")
 DESCRIPTIONS+=("Container engine + add user to docker group")
-if command -v docker &>/dev/null; then STATUS+=("installed"); SELECTED+=(0); else STATUS+=(""); SELECTED+=(1); fi
+if dpkg -s docker-ce &>/dev/null 2>&1; then STATUS+=("installed"); SELECTED+=(0); EXTERNAL+=(0)
+elif command -v docker &>/dev/null; then STATUS+=("installed (external)"); SELECTED+=(0); EXTERNAL+=(1)
+else STATUS+=(""); SELECTED+=(1); EXTERNAL+=(0); fi
 
 # 8: AI CLI Tools
 LABELS+=("AI CLI Tools")
 DESCRIPTIONS+=("Claude Code + Gemini CLI (requires NVM)")
-if command -v claude &>/dev/null && command -v gemini &>/dev/null; then STATUS+=("installed"); SELECTED+=(0)
-elif command -v claude &>/dev/null || command -v gemini &>/dev/null; then STATUS+=("partial"); SELECTED+=(1)
-else STATUS+=(""); SELECTED+=(1); fi
+if command -v claude &>/dev/null && command -v gemini &>/dev/null; then STATUS+=("installed"); SELECTED+=(0); EXTERNAL+=(0)
+elif command -v claude &>/dev/null || command -v gemini &>/dev/null; then STATUS+=("partial"); SELECTED+=(1); EXTERNAL+=(0)
+else STATUS+=(""); SELECTED+=(1); EXTERNAL+=(0); fi
 
 # 9: Swap (2GB)
 LABELS+=("Swap (2GB)")
 DESCRIPTIONS+=("Create 2GB swap file")
-if [ -f /swapfile ]; then STATUS+=("active"); SELECTED+=(0); else STATUS+=(""); SELECTED+=(1); fi
+if [ -f /swapfile ]; then STATUS+=("active"); SELECTED+=(0); EXTERNAL+=(0); else STATUS+=(""); SELECTED+=(1); EXTERNAL+=(0); fi
 
 # 10: fail2ban
 LABELS+=("fail2ban")
 DESCRIPTIONS+=("Intrusion prevention")
-if command -v fail2ban-client &>/dev/null; then STATUS+=("installed"); SELECTED+=(0); else STATUS+=(""); SELECTED+=(1); fi
+if dpkg -s fail2ban &>/dev/null 2>&1; then STATUS+=("installed"); SELECTED+=(0); EXTERNAL+=(0)
+elif command -v fail2ban-client &>/dev/null; then STATUS+=("installed (external)"); SELECTED+=(0); EXTERNAL+=(1)
+else STATUS+=(""); SELECTED+=(1); EXTERNAL+=(0); fi
 
 # 11: UFW
 LABELS+=("UFW")
 DESCRIPTIONS+=("Firewall (allow SSH + HTTP/S)")
-if command -v ufw &>/dev/null; then STATUS+=("installed"); SELECTED+=(0); else STATUS+=(""); SELECTED+=(1); fi
+if command -v ufw &>/dev/null; then STATUS+=("installed"); SELECTED+=(0); EXTERNAL+=(0); else STATUS+=(""); SELECTED+=(1); EXTERNAL+=(0); fi
 
 _total=${#LABELS[@]}
 
@@ -197,7 +214,7 @@ draw_menu() {
   fi
   local _all_unchecked=1
   for (( i=0; i<_total; i++ )); do
-    [ "${SELECTED[$i]}" = "1" ] && _all_unchecked=0 && break
+    [ "${EXTERNAL[$i]}" = "0" ] && [ "${SELECTED[$i]}" = "1" ] && _all_unchecked=0 && break
   done
   if [ "$_all_unchecked" = "1" ]; then
     echo -e "  ${BOLD}${GREEN}All components are already installed!${NC}"
@@ -210,7 +227,9 @@ draw_menu() {
     local _label; _label=$(printf "%-22s" "${LABELS[$i]}")
     local _status=""
     [ -n "${STATUS[$i]}" ] && _status=" ${TEAL}(${STATUS[$i]})${NC}"
-    if [ "${SELECTED[$i]}" = "1" ]; then
+    if [ "${EXTERNAL[$i]}" = "1" ]; then
+      echo -e "    ${ORANGE}${_num}. [!] ${_label}${NC} ${DIM}not installed by this script — manage manually${NC}${_status}"
+    elif [ "${SELECTED[$i]}" = "1" ]; then
       echo -e "    ${CYAN}${_num}. [x] ${_label}${NC} ${DIM}${DESCRIPTIONS[$i]}${NC}${_status}"
     else
       echo -e "    ${GRAY}${_num}. [ ] ${_label}${NC} ${DIM}${DESCRIPTIONS[$i]}${NC}${_status}"
@@ -236,9 +255,14 @@ while true; do
 
   if [[ "$_input" =~ ^[0-9]+$ ]] && [ "$_input" -ge 1 ] && [ "$_input" -le "$_total" ]; then
     _idx=$((_input - 1))
-    [ "${SELECTED[$_idx]}" = "1" ] && SELECTED[$_idx]=0 || SELECTED[$_idx]=1
+    if [ "${EXTERNAL[$_idx]}" = "1" ]; then
+      echo -e "  ${ORANGE}⚠  Not installed by this script — manage manually.${NC}"
+      sleep 1.5
+    else
+      [ "${SELECTED[$_idx]}" = "1" ] && SELECTED[$_idx]=0 || SELECTED[$_idx]=1
+    fi
   elif [[ "$_input" = [aA] ]]; then
-    for (( i=0; i<_total; i++ )); do SELECTED[$i]=1; done
+    for (( i=0; i<_total; i++ )); do [ "${EXTERNAL[$i]}" != "1" ] && SELECTED[$i]=1; done
   elif [[ "$_input" = [nN] ]]; then
     for (( i=0; i<_total; i++ )); do SELECTED[$i]=0; done
   elif [ -z "$_input" ]; then
