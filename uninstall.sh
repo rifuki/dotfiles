@@ -121,7 +121,7 @@ if [ -d "$HOME/.nvm" ]; then DETECTED+=(1); SELECTED+=(1); else DETECTED+=(0); S
 # 7: Docker
 LABELS+=("Docker")
 DESCRIPTIONS+=("Docker engine")
-if command -v docker &>/dev/null; then DETECTED+=(1); SELECTED+=(0); else DETECTED+=(0); SELECTED+=(0); fi
+if command -v docker &>/dev/null; then DETECTED+=(1); SELECTED+=(1); else DETECTED+=(0); SELECTED+=(0); fi
 
 # 8: AI CLI Tools
 LABELS+=("AI CLI Tools")
@@ -131,17 +131,17 @@ if command -v claude &>/dev/null || command -v gemini &>/dev/null; then DETECTED
 # 9: Swap
 LABELS+=("Swap")
 DESCRIPTIONS+=("/swapfile")
-if [ -f /swapfile ]; then DETECTED+=(1); SELECTED+=(0); else DETECTED+=(0); SELECTED+=(0); fi
+if [ -f /swapfile ]; then DETECTED+=(1); SELECTED+=(1); else DETECTED+=(0); SELECTED+=(0); fi
 
 # 10: fail2ban
 LABELS+=("fail2ban")
 DESCRIPTIONS+=("Intrusion prevention")
-if command -v fail2ban-client &>/dev/null; then DETECTED+=(1); SELECTED+=(0); else DETECTED+=(0); SELECTED+=(0); fi
+if command -v fail2ban-client &>/dev/null; then DETECTED+=(1); SELECTED+=(1); else DETECTED+=(0); SELECTED+=(0); fi
 
 # 11: UFW
 LABELS+=("UFW")
 DESCRIPTIONS+=("Firewall")
-if command -v ufw &>/dev/null && sudo ufw status 2>/dev/null | grep -q "active"; then DETECTED+=(1); SELECTED+=(0); else DETECTED+=(0); SELECTED+=(0); fi
+if command -v ufw &>/dev/null && sudo ufw status 2>/dev/null | grep -q "active"; then DETECTED+=(1); SELECTED+=(1); else DETECTED+=(0); SELECTED+=(0); fi
 
 # 12: Deep Clean
 LABELS+=("Deep Clean")
@@ -275,8 +275,7 @@ if [ "${SELECTED[0]}" = "1" ]; then
       # Remove SSH Match block for this user
       _sshd="/etc/ssh/sshd_config"
       if [ -f "$_sshd" ] && sudo grep -q "^Match User $_u$" "$_sshd" 2>/dev/null; then
-        sudo sed -i "/^Match User $_u$/{ N; /AuthenticationMethods/d; d; }" "$_sshd" 2>/dev/null || true
-        sudo sed -i "/^Match User $_u$/d" "$_sshd" 2>/dev/null || true
+        sudo awk "/^Match User $_u\$/ { skip=1; next } skip && /^[[:space:]]/ { next } { skip=0; print }" "$_sshd" | sudo tee "$_sshd.tmp" > /dev/null && sudo mv "$_sshd.tmp" "$_sshd" || true
         sudo sshd -t 2>/dev/null && (sudo systemctl restart sshd 2>/dev/null || sudo service ssh restart 2>/dev/null || true) || true
         done_msg "SSH config cleaned for $_u"
       fi

@@ -116,7 +116,6 @@ fi
 # 1: APT Packages + Nerd Font
 LABELS+=("APT Packages + Nerd Font")
 DESCRIPTIONS+=("neovim, tmux, zsh, htop, ripgrep, neofetch, yazi, gh, JetBrainsMono")
-SELECTED+=(1)
 _fi=0
 for _cmd in nvim tmux zsh htop rg neofetch yazi gh; do
   command -v "$_cmd" &>/dev/null && ((_fi++)) || true
@@ -124,71 +123,61 @@ done
 if ls "$HOME/.local/share/fonts/JetBrainsMono"*"NerdFont"* &>/dev/null 2>&1; then
   ((_fi++))
 fi
-if [ "$_fi" -eq 9 ]; then STATUS+=("all installed")
-elif [ "$_fi" -gt 0 ]; then STATUS+=("${_fi}/9 installed")
-else STATUS+=(""); fi
+if [ "$_fi" -eq 9 ]; then STATUS+=("all installed"); SELECTED+=(0)
+elif [ "$_fi" -gt 0 ]; then STATUS+=("${_fi}/9 installed"); SELECTED+=(1)
+else STATUS+=(""); SELECTED+=(1); fi
 
 # 2: Starship
 LABELS+=("Starship")
 DESCRIPTIONS+=("Cross-shell prompt theme")
-SELECTED+=(1)
-command -v starship &>/dev/null && STATUS+=("installed") || STATUS+=("")
+if command -v starship &>/dev/null; then STATUS+=("installed"); SELECTED+=(0); else STATUS+=(""); SELECTED+=(1); fi
 
 # 3: Oh My Zsh
 LABELS+=("Oh My Zsh")
 DESCRIPTIONS+=("Zsh framework + plugins")
-SELECTED+=(1)
-[ -d "$HOME/.oh-my-zsh" ] && STATUS+=("installed") || STATUS+=("")
+if [ -d "$HOME/.oh-my-zsh" ]; then STATUS+=("installed"); SELECTED+=(0); else STATUS+=(""); SELECTED+=(1); fi
 
 # 4: Rust
 LABELS+=("Rust")
 DESCRIPTIONS+=("Rust toolchain via rustup")
-SELECTED+=(1)
-[ -f "$HOME/.cargo/bin/rustup" ] && STATUS+=("installed") || STATUS+=("")
+if [ -f "$HOME/.cargo/bin/rustup" ]; then STATUS+=("installed"); SELECTED+=(0); else STATUS+=(""); SELECTED+=(1); fi
 
 # 5: Bun
 LABELS+=("Bun")
 DESCRIPTIONS+=("JavaScript runtime")
-SELECTED+=(1)
-[ -d "$HOME/.bun" ] && STATUS+=("installed") || STATUS+=("")
+if [ -d "$HOME/.bun" ]; then STATUS+=("installed"); SELECTED+=(0); else STATUS+=(""); SELECTED+=(1); fi
 
 # 6: NVM + Node 24
 LABELS+=("NVM + Node 24")
 DESCRIPTIONS+=("Node Version Manager + Node.js")
-SELECTED+=(1)
-[ -d "$HOME/.nvm" ] && STATUS+=("installed") || STATUS+=("")
+if [ -d "$HOME/.nvm" ]; then STATUS+=("installed"); SELECTED+=(0); else STATUS+=(""); SELECTED+=(1); fi
 
 # 7: Docker
 LABELS+=("Docker")
 DESCRIPTIONS+=("Container engine + add user to docker group")
-SELECTED+=(1)
-command -v docker &>/dev/null && STATUS+=("installed") || STATUS+=("")
+if command -v docker &>/dev/null; then STATUS+=("installed"); SELECTED+=(0); else STATUS+=(""); SELECTED+=(1); fi
 
 # 8: AI CLI Tools
 LABELS+=("AI CLI Tools")
 DESCRIPTIONS+=("Claude Code + Gemini CLI (requires NVM)")
-SELECTED+=(1)
-if command -v claude &>/dev/null && command -v gemini &>/dev/null; then STATUS+=("installed")
-elif command -v claude &>/dev/null || command -v gemini &>/dev/null; then STATUS+=("partial")
-else STATUS+=(""); fi
+if command -v claude &>/dev/null && command -v gemini &>/dev/null; then STATUS+=("installed"); SELECTED+=(0)
+elif command -v claude &>/dev/null || command -v gemini &>/dev/null; then STATUS+=("partial"); SELECTED+=(1)
+else STATUS+=(""); SELECTED+=(1); fi
 
 # 9: Swap (2GB)
 LABELS+=("Swap (2GB)")
 DESCRIPTIONS+=("Create 2GB swap file")
-SELECTED+=(1)
-[ -f /swapfile ] && STATUS+=("active") || STATUS+=("")
+if [ -f /swapfile ]; then STATUS+=("active"); SELECTED+=(0); else STATUS+=(""); SELECTED+=(1); fi
 
 # 10: fail2ban
 LABELS+=("fail2ban")
 DESCRIPTIONS+=("Intrusion prevention")
-SELECTED+=(1)
-command -v fail2ban-client &>/dev/null && STATUS+=("installed") || STATUS+=("")
+if command -v fail2ban-client &>/dev/null; then STATUS+=("installed"); SELECTED+=(0); else STATUS+=(""); SELECTED+=(1); fi
 
 # 11: UFW
 LABELS+=("UFW")
 DESCRIPTIONS+=("Firewall (allow SSH + HTTP/S)")
-SELECTED+=(1)
-command -v ufw &>/dev/null && STATUS+=("installed") || STATUS+=("")
+if command -v ufw &>/dev/null; then STATUS+=("installed"); SELECTED+=(0); else STATUS+=(""); SELECTED+=(1); fi
 
 _total=${#LABELS[@]}
 
@@ -443,7 +432,7 @@ if [ "${SELECTED[0]}" = "1" ]; then
         fi
         # Append Match block only if not already present
         if ! sudo grep -q "^Match User $_custom_user$" "$_sshd" 2>/dev/null; then
-          printf '\nMatch User %s\n    AuthenticationMethods publickey,password\n' "$_custom_user" | sudo tee -a "$_sshd" > /dev/null
+          printf '\nMatch User %s\n    PasswordAuthentication yes\n    AuthenticationMethods publickey,password\n' "$_custom_user" | sudo tee -a "$_sshd" > /dev/null
         fi
         # Validate config then restart
         if sudo sshd -t 2>/dev/null; then
