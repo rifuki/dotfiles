@@ -110,7 +110,6 @@ STATUS=()
 # 0: Homebrew Formulae + Nerd Font
 LABELS+=("Homebrew Formulae + Nerd Font")
 DESCRIPTIONS+=("neovim, tmux, trash, htop, ripgrep, starship, neofetch, yazi, gh, JetBrainsMono")
-SELECTED+=(1)
 _fi=0; _ft=9
 for _cmd in nvim tmux trash htop rg starship neofetch yazi gh; do
   command -v "$_cmd" &>/dev/null && ((_fi++)) || true
@@ -118,27 +117,24 @@ done
 if brew list --cask font-jetbrains-mono-nerd-font &>/dev/null || ls "$HOME/Library/Fonts/JetBrainsMono"*"NerdFont"* &>/dev/null 2>&1; then
   ((_fi++))
 fi
-if [ "$_fi" -eq 10 ]; then STATUS+=("all installed")
-elif [ "$_fi" -gt 0 ]; then STATUS+=("${_fi}/10 installed")
-else STATUS+=(""); fi
+if [ "$_fi" -eq 10 ]; then STATUS+=("all installed"); SELECTED+=(0)
+elif [ "$_fi" -gt 0 ]; then STATUS+=("${_fi}/10 installed"); SELECTED+=(1)
+else STATUS+=(""); SELECTED+=(1); fi
 
 # 1: Yabai + Skhd
 LABELS+=("Yabai + Skhd")
 DESCRIPTIONS+=("Tiling WM + hotkey daemon")
-SELECTED+=(1)
-command -v yabai &>/dev/null && STATUS+=("installed") || STATUS+=("")
+if command -v yabai &>/dev/null; then STATUS+=("installed"); SELECTED+=(0); else STATUS+=(""); SELECTED+=(1); fi
 
 # 2: Ghostty
 LABELS+=("Ghostty")
 DESCRIPTIONS+=("Ghostty terminal")
-SELECTED+=(1)
-[ -d "/Applications/Ghostty.app" ] && STATUS+=("installed") || STATUS+=("")
+if [ -d "/Applications/Ghostty.app" ]; then STATUS+=("installed"); SELECTED+=(0); else STATUS+=(""); SELECTED+=(1); fi
 
 # 3: Cloudflare WARP + Hot
 LABELS+=("Cloudflare WARP + Hot")
 DESCRIPTIONS+=("Menu bar: VPN + thermal monitor")
-SELECTED+=(1)
-[ -d "/Applications/Cloudflare WARP.app" ] && STATUS+=("installed") || STATUS+=("")
+if [ -d "/Applications/Cloudflare WARP.app" ] || [ -d "/Applications/Hot.app" ]; then STATUS+=("installed"); SELECTED+=(0); else STATUS+=(""); SELECTED+=(1); fi
 
 # 4: Google Chrome
 LABELS+=("Google Chrome")
@@ -155,59 +151,53 @@ SELECTED+=(0)
 # 6: Oh My Zsh
 LABELS+=("Oh My Zsh")
 DESCRIPTIONS+=("Zsh framework + plugins")
-SELECTED+=(1)
-[ -d "$HOME/.oh-my-zsh" ] && STATUS+=("installed") || STATUS+=("")
+if [ -d "$HOME/.oh-my-zsh" ]; then STATUS+=("installed"); SELECTED+=(0); else STATUS+=(""); SELECTED+=(1); fi
 
 # 7: Rust
 LABELS+=("Rust")
 DESCRIPTIONS+=("Rust toolchain via rustup")
-SELECTED+=(1)
-[ -f "$HOME/.cargo/bin/rustup" ] && STATUS+=("installed") || STATUS+=("")
+if [ -f "$HOME/.cargo/bin/rustup" ]; then STATUS+=("installed"); SELECTED+=(0); else STATUS+=(""); SELECTED+=(1); fi
 
 # 8: Bun
 LABELS+=("Bun")
 DESCRIPTIONS+=("JavaScript runtime")
-SELECTED+=(1)
-[ -d "$HOME/.bun" ] && STATUS+=("installed") || STATUS+=("")
+if [ -d "$HOME/.bun" ]; then STATUS+=("installed"); SELECTED+=(0); else STATUS+=(""); SELECTED+=(1); fi
 
 # 9: NVM + Node
 LABELS+=("NVM + Node 24")
 DESCRIPTIONS+=("Node Version Manager + Node.js")
-SELECTED+=(1)
-[ -d "$HOME/.nvm" ] && STATUS+=("installed") || STATUS+=("")
+if [ -d "$HOME/.nvm" ]; then STATUS+=("installed"); SELECTED+=(0); else STATUS+=(""); SELECTED+=(1); fi
 
 # 10: Solana + AVM
 LABELS+=("Solana + AVM")
 DESCRIPTIONS+=("Solana CLI + Anchor Version Manager")
-SELECTED+=(1)
-if command -v solana &>/dev/null || [ -f "$HOME/.local/share/solana/install/active_release/bin/solana" ]; then STATUS+=("installed"); else STATUS+=(""); fi
+if command -v solana &>/dev/null || [ -f "$HOME/.local/share/solana/install/active_release/bin/solana" ]; then STATUS+=("installed"); SELECTED+=(0); else STATUS+=(""); SELECTED+=(1); fi
 
 # 11: suiup + Sui Testnet
 LABELS+=("suiup + Sui Testnet")
 DESCRIPTIONS+=("Sui version manager + latest testnet binary")
-SELECTED+=(1)
-[ -f "$HOME/.local/bin/suiup" ] && STATUS+=("installed") || STATUS+=("")
+if [ -f "$HOME/.local/bin/suiup" ]; then STATUS+=("installed"); SELECTED+=(0); else STATUS+=(""); SELECTED+=(1); fi
 
 # 12: sui-move-analyzer
 LABELS+=("sui-move-analyzer")
 DESCRIPTIONS+=("Sui Move language server (~10min)")
-SELECTED+=(1)
-[ -f "$HOME/.cargo/bin/sui-move-analyzer" ] && STATUS+=("installed") || STATUS+=("")
+if [ -f "$HOME/.cargo/bin/sui-move-analyzer" ]; then STATUS+=("installed"); SELECTED+=(0); else STATUS+=(""); SELECTED+=(1); fi
 
 # 13: AI CLI Tools
 LABELS+=("AI CLI Tools")
 DESCRIPTIONS+=("Claude Code + Gemini CLI")
-SELECTED+=(1)
-if command -v claude &>/dev/null && command -v gemini &>/dev/null; then STATUS+=("installed")
-elif command -v claude &>/dev/null || command -v gemini &>/dev/null; then STATUS+=("partial")
-else STATUS+=(""); fi
+if command -v claude &>/dev/null && command -v gemini &>/dev/null; then STATUS+=("installed"); SELECTED+=(0)
+elif command -v claude &>/dev/null || command -v gemini &>/dev/null; then STATUS+=("partial"); SELECTED+=(1)
+else STATUS+=(""); SELECTED+=(1); fi
 
 # 14: SSH Keys (iCloud)
 LABELS+=("SSH Keys (iCloud)")
 DESCRIPTIONS+=("Symlink ~/.ssh from iCloud Drive")
 _icloud_base="$HOME/Library/Mobile Documents/com~apple~CloudDocs"
-if [ -L "$HOME/.ssh" ]; then
-  SELECTED+=(1); STATUS+=("symlinked")
+if [ -L "$HOME/.ssh" ] && { [ -f "$HOME/.ssh/config" ] || ls "$HOME/.ssh"/*.pub &>/dev/null 2>&1 || [ -f "$HOME/.ssh/authorized_keys" ]; }; then
+  SELECTED+=(0); STATUS+=("symlinked + configured")
+elif [ -L "$HOME/.ssh" ]; then
+  SELECTED+=(1); STATUS+=("symlinked (empty)")
 elif [ -d "$_icloud_base" ]; then
   SELECTED+=(1); STATUS+=("iCloud available")
 else

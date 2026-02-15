@@ -67,7 +67,7 @@ fi
 # 1: Yabai + Skhd
 LABELS+=("Yabai + Skhd")
 DESCRIPTIONS+=("Tiling WM + hotkey daemon")
-if command -v yabai &>/dev/null || command -v skhd &>/dev/null; then DETECTED+=(1); SELECTED+=(0); else DETECTED+=(0); SELECTED+=(0); fi
+if command -v yabai &>/dev/null || command -v skhd &>/dev/null; then DETECTED+=(1); SELECTED+=(1); else DETECTED+=(0); SELECTED+=(0); fi
 
 # 2: Ghostty
 LABELS+=("Ghostty")
@@ -137,7 +137,7 @@ if [ -L "$HOME/.ssh" ]; then DETECTED+=(1); SELECTED+=(1); else DETECTED+=(0); S
 # 15: Deep Clean
 LABELS+=("Deep Clean")
 DESCRIPTIONS+=(".cache, .local, .npm, .wakatime, .gitconfig")
-DETECTED+=(1); SELECTED+=(1)
+DETECTED+=(1); SELECTED+=(0)
 
 _total=${#LABELS[@]}
 
