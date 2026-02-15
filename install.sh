@@ -437,11 +437,22 @@ if [ "${SELECTED[0]}" = "1" ]; then
   fi
 
   # Set password (for sudo, NOT SSH)
-  info_msg "Set password for $_custom_user (used for sudo):"
-  until sudo passwd "$_custom_user"; do
-    warn_msg "Password mismatch or error — please try again"
+  info_msg "Set password for $_custom_user (used for sudo, press Ctrl+C to abort):"
+  _pw_attempts=0
+  while true; do
+    if sudo passwd "$_custom_user"; then
+      done_msg "Password set"
+      break
+    else
+      ((_pw_attempts++)) || true
+      if [ "$_pw_attempts" -ge 3 ]; then
+        fail_msg "Too many failed attempts. Aborting."
+        sudo userdel -r "$_custom_user" 2>/dev/null || true
+        exit 1
+      fi
+      warn_msg "Password mismatch or error — try again (attempt $_pw_attempts/3)"
+    fi
   done
-  done_msg "Password set"
 
   # Add to sudo group
   sudo usermod -aG sudo "$_custom_user"
