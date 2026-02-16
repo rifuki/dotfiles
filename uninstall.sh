@@ -2,7 +2,7 @@
 set -e
 
 # ========== Tool Names for Deep Clean ==========
-TOOL_NAMES=(nvim starship yazi tmux neofetch claude gemini gh ripgrep htop)
+TOOL_NAMES=(nvim starship yazi tmux neofetch claude gemini gh ripgrep htop fzf)
 
 # ========== Colors (Miku Cyberpunk Theme — VPS variant) ==========
 # Cyan: #00D9FF | Green: #50FA7B | Magenta: #FF79C6 | Purple: #BD93F9
@@ -358,7 +358,7 @@ if [ "${SELECTED[1]}" = "1" ]; then
     sudo apt remove -y neovim && done_msg "Neovim removed" || warn_msg "Failed to remove neovim"
   fi
   # APT packages
-  for _pkg in tmux zsh htop ripgrep neofetch; do
+  for _pkg in tmux zsh htop ripgrep neofetch fzf imagemagick; do
     if dpkg -s "$_pkg" &>/dev/null; then
       sudo apt remove -y "$_pkg" && done_msg "Removed $_pkg" || warn_msg "Failed to remove $_pkg"
     fi
