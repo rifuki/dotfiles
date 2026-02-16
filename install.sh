@@ -485,20 +485,48 @@ if [ "${SELECTED[0]}" = "1" ]; then
     exit 1
   fi
 
-  # SSH hardening: key-only authentication
+  # SSH auth mode selection
+  echo ""
+  echo -e "  ${ORANGE}Select SSH auth mode for $_custom_user:${NC}"
+  echo -e "    ${CYAN}1.${NC} SSH key only          ${GRAY}(most secure)${NC}"
+  echo -e "    ${CYAN}2.${NC} SSH key + password     ${GRAY}(key required, password as extra layer)${NC}"
+  echo -e "    ${CYAN}3.${NC} Password only          ${GRAY}(not recommended)${NC}"
+  printf "    Choice [1]: "
+  read -r _auth_mode < /dev/tty
+  _auth_mode="${_auth_mode:-1}"
+
+  # SSH hardening
   _sshd="/etc/ssh/sshd_config"
   sudo sed -i 's/^#\?PasswordAuthentication.*/PasswordAuthentication no/' "$_sshd"
   # Remove any old Match blocks for this user
   sudo sed -i "/^Match User $_custom_user$/,/^$/d" "$_sshd" 2>/dev/null || true
+
+  case "$_auth_mode" in
+    2)
+      # SSH key + password: require both key and password
+      printf '\nMatch User %s\n    AuthenticationMethods publickey,password\n' "$_custom_user" | sudo tee -a "$_sshd" > /dev/null
+      _auth_desc="SSH key + password (both required)"
+      ;;
+    3)
+      # Password only: allow password for this user
+      printf '\nMatch User %s\n    PasswordAuthentication yes\n' "$_custom_user" | sudo tee -a "$_sshd" > /dev/null
+      _auth_desc="password only (not recommended)"
+      ;;
+    *)
+      # SSH key only (default): global PasswordAuthentication no is sufficient
+      _auth_desc="SSH key only"
+      ;;
+  esac
+
   if sudo sshd -t 2>/dev/null; then
     sudo systemctl restart sshd 2>/dev/null || sudo service ssh restart 2>/dev/null || true
-    done_msg "SSH: key-only authentication enabled"
+    done_msg "SSH: $_auth_desc"
   else
     warn_msg "sshd config test failed — manual check needed: sudo sshd -t"
   fi
 
   done_msg "Custom user $_custom_user is ready"
-  info_msg "Login: ssh $_custom_user@<your-server> (key-only, password disabled)"
+  info_msg "Login: ssh $_custom_user@<your-server> ($_auth_desc)"
 
   # Auto-lock all passwordless default cloud users (no per-user prompt)
   _cloud_defaults=(ubuntu azureuser ec2-user admin centos fedora debian cloud)
