@@ -120,14 +120,14 @@ fi
 # 1: APT Packages + Nerd Font
 # Expected: nvim → /opt/nvim-linux-x86_64, yazi → /usr/local/bin/yazi, others via dpkg
 LABELS+=("APT Packages + Nerd Font")
-DESCRIPTIONS+=("neovim, tmux, zsh, htop, ripgrep, neofetch, yazi, fzf, imagemagick, gh, JetBrainsMono")
+DESCRIPTIONS+=("build-essential, neovim, tmux, zsh, htop, ripgrep, neofetch, yazi, fzf, imagemagick, gh, JetBrainsMono")
 _fi=0; _fi_ext=0; _fi_installed=""
 # nvim
 if [ -d /opt/nvim-linux-x86_64 ]; then ((_fi++)) || true; _fi_installed="nvim"
 elif command -v nvim &>/dev/null; then ((_fi++)) || true; _fi_ext=1; _fi_installed="nvim"; fi
 # APT-managed packages
-for _pkg in tmux zsh htop ripgrep neofetch fzf imagemagick gh; do
-  _cmd="$_pkg"; [ "$_pkg" = "ripgrep" ] && _cmd="rg"; [ "$_pkg" = "imagemagick" ] && _cmd="convert"
+for _pkg in build-essential tmux zsh htop ripgrep neofetch fzf imagemagick gh; do
+  _cmd="$_pkg"; [ "$_pkg" = "ripgrep" ] && _cmd="rg"; [ "$_pkg" = "imagemagick" ] && _cmd="convert"; [ "$_pkg" = "build-essential" ] && _cmd="make"
   if dpkg -s "$_pkg" &>/dev/null 2>&1; then ((_fi++)) || true; [ -z "$_fi_installed" ] && _fi_installed="$_pkg" || _fi_installed="$_fi_installed, $_pkg"
   elif command -v "$_cmd" &>/dev/null 2>&1; then ((_fi++)) || true; _fi_ext=1; [ -z "$_fi_installed" ] && _fi_installed="$_pkg" || _fi_installed="$_fi_installed, $_pkg"; fi
 done
@@ -136,9 +136,9 @@ if [ -f /usr/local/bin/yazi ]; then ((_fi++)) || true; [ -z "$_fi_installed" ] &
 elif command -v yazi &>/dev/null; then ((_fi++)) || true; _fi_ext=1; [ -z "$_fi_installed" ] && _fi_installed="yazi" || _fi_installed="$_fi_installed, yazi"; fi
 # Nerd Font
 if ls "$HOME/.local/share/fonts/JetBrainsMono"*"NerdFont"* &>/dev/null 2>&1; then ((_fi++)) || true; [ -z "$_fi_installed" ] && _fi_installed="font" || _fi_installed="$_fi_installed, font"; fi
-if [ "$_fi" -gt 0 ] && [ "$_fi_ext" = "1" ]; then STATUS+=("${_fi}/11 installed (external): ${_fi_installed}"); SELECTED+=(0); EXTERNAL+=(1)
-elif [ "$_fi" -eq 11 ]; then STATUS+=("all installed"); SELECTED+=(0); EXTERNAL+=(0)
-elif [ "$_fi" -gt 0 ]; then STATUS+=("${_fi}/11 installed: ${_fi_installed}"); SELECTED+=(1); EXTERNAL+=(0)
+if [ "$_fi" -gt 0 ] && [ "$_fi_ext" = "1" ]; then STATUS+=("${_fi}/12 installed (external): ${_fi_installed}"); SELECTED+=(0); EXTERNAL+=(1)
+elif [ "$_fi" -eq 12 ]; then STATUS+=("all installed"); SELECTED+=(0); EXTERNAL+=(0)
+elif [ "$_fi" -gt 0 ]; then STATUS+=("${_fi}/12 installed: ${_fi_installed}"); SELECTED+=(1); EXTERNAL+=(0)
 else STATUS+=(""); SELECTED+=(1); EXTERNAL+=(0); fi
 
 # 2: Starship — expected at /usr/local/bin/starship
@@ -299,12 +299,19 @@ done
 # ========== Confirmation ==========
 echo ""
 echo -e "  ${BOLD}${MAGENTA}Will be installed:${NC}"
-for (( i=0; i<_total; i++ )); do
-  if [ "${SELECTED[$i]}" = "1" ]; then
-    echo -e "    ${GREEN}+${NC} ${LABELS[$i]}  ${DIM}${DESCRIPTIONS[$i]}${NC}"
-  fi
-done
-echo -e "    ${GREEN}+${NC} System update, Dotfiles, Symlinks  ${DIM}(always)${NC}"
+if [ "${SELECTED[0]}" = "1" ]; then
+  # Custom User only — no other components will run
+  echo -e "    ${GREEN}+${NC} ${LABELS[0]}  ${DIM}${DESCRIPTIONS[0]}${NC}"
+  echo ""
+  echo -e "  ${DIM}Note: Other selected components will be installed after you login as the new user.${NC}"
+else
+  for (( i=0; i<_total; i++ )); do
+    if [ "${SELECTED[$i]}" = "1" ]; then
+      echo -e "    ${GREEN}+${NC} ${LABELS[$i]}  ${DIM}${DESCRIPTIONS[$i]}${NC}"
+    fi
+  done
+  echo -e "    ${GREEN}+${NC} System update, Dotfiles, Symlinks  ${DIM}(always)${NC}"
+fi
 echo ""
 
 printf "  ${BOLD}${MAGENTA}Proceed with installation?${NC} [y/n]: "
@@ -320,93 +327,95 @@ esac
 echo ""
 
 # ══════════════════════════════════════════════════
-#  ALWAYS: Core setup
+#  ALWAYS: Core setup (skip if Custom User selected)
 # ══════════════════════════════════════════════════
 
-# ========== System Update ==========
-step "Updating system packages"
-sudo apt update && sudo apt upgrade -y
-done_msg "System updated"
+if [ "${SELECTED[0]}" != "1" ]; then
+  # ========== System Update ==========
+  step "Updating system packages"
+  sudo apt update && sudo apt upgrade -y
+  done_msg "System updated"
 
-# ========== Essential Tools ==========
-step "Installing essential tools"
-sudo apt install -y git curl wget unzip fontconfig software-properties-common
-done_msg "Essential tools ready"
+  # ========== Essential Tools ==========
+  step "Installing essential tools"
+  sudo apt install -y git curl wget unzip fontconfig software-properties-common
+  done_msg "Essential tools ready"
 
-# ========== Dotfiles Repo ==========
-step "Checking dotfiles repository"
-DOTFILES_DIR="$HOME/.dotfiles"
-DOTFILES_REPO="https://github.com/rifuki/dotfiles.git"
+  # ========== Dotfiles Repo ==========
+  step "Checking dotfiles repository"
+  DOTFILES_DIR="$HOME/.dotfiles"
+  DOTFILES_REPO="https://github.com/rifuki/dotfiles.git"
 
-_script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-if [ -d "$_script_dir/.git" ] && git -C "$_script_dir" rev-parse --git-dir > /dev/null 2>&1; then
-  if [ "$_script_dir" != "$DOTFILES_DIR" ]; then
-    fail_msg "install.sh must be run from $HOME/.dotfiles"
-    echo -e "    ${DIM}Found at: $_script_dir${NC}"
-    echo -e "    ${DIM}1. curl -fsSL https://dotfiles.rifuki.dev/vps/install.sh | bash${NC}"
-    echo -e "    ${DIM}2. mv $_script_dir $DOTFILES_DIR && bash $DOTFILES_DIR/install.sh${NC}"
-    exit 1
-  fi
-  done_msg "Running from: $DOTFILES_DIR"
-else
-  if [ ! -d "$DOTFILES_DIR/.git" ]; then
-    info_msg "Cloning dotfiles repo..."
-    git clone --branch vps "$DOTFILES_REPO" "$DOTFILES_DIR"
-    done_msg "Cloned to $DOTFILES_DIR"
+  _script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+  if [ -d "$_script_dir/.git" ] && git -C "$_script_dir" rev-parse --git-dir > /dev/null 2>&1; then
+    if [ "$_script_dir" != "$DOTFILES_DIR" ]; then
+      fail_msg "install.sh must be run from $HOME/.dotfiles"
+      echo -e "    ${DIM}Found at: $_script_dir${NC}"
+      echo -e "    ${DIM}1. curl -fsSL https://dotfiles.rifuki.dev/vps/install.sh | bash${NC}"
+      echo -e "    ${DIM}2. mv $_script_dir $DOTFILES_DIR && bash $DOTFILES_DIR/install.sh${NC}"
+      exit 1
+    fi
+    done_msg "Running from: $DOTFILES_DIR"
   else
-    done_msg "Repo exists, pulling latest..."
-    git -C "$DOTFILES_DIR" pull --ff-only 2>/dev/null || warn_msg "Could not pull"
-  fi
-fi
-
-# ========== Backup ==========
-step "Checking for existing configs"
-BACKUP_DIR="$HOME/.config/backup-$(date +%Y%m%d-%H%M%S)"
-_did_backup=0
-for _d in "$DOTFILES_DIR/.config"/*/; do
-  _name="$(basename "$_d")"
-  _p="$HOME/.config/$_name"
-  if [ -d "$_p" ] && [ ! -L "$_p" ]; then
-    [ "$_did_backup" = "0" ] && mkdir -p "$BACKUP_DIR"
-    mv "$_p" "$BACKUP_DIR/"
-    _did_backup=1
-  fi
-done
-for _f in "$HOME/.zshrc"; do
-  if [ -f "$_f" ] && [ ! -L "$_f" ]; then
-    [ "$_did_backup" = "0" ] && mkdir -p "$BACKUP_DIR"
-    mv "$_f" "$BACKUP_DIR/"
-    _did_backup=1
-  fi
-done
-[ "$_did_backup" = "1" ] && done_msg "Backed up to: $BACKUP_DIR" || done_msg "No existing configs to backup"
-
-for _d in "$DOTFILES_DIR/.config"/*/; do
-  _name="$(basename "$_d")"
-  _p="$HOME/.config/$_name"
-  if git -C "$DOTFILES_DIR" status --porcelain ".config/$_name" 2>/dev/null | grep -q .; then
-    if [ -L "$_p" ] || [ -e "$_p" ]; then
-      [ "$_did_backup" = "0" ] && mkdir -p "$BACKUP_DIR/.config"
-      cp -rL "$_p" "$BACKUP_DIR/.config/" 2>/dev/null || true
-      _did_backup=1
+    if [ ! -d "$DOTFILES_DIR/.git" ]; then
+      info_msg "Cloning dotfiles repo..."
+      git clone --branch vps "$DOTFILES_REPO" "$DOTFILES_DIR"
+      done_msg "Cloned to $DOTFILES_DIR"
+    else
+      done_msg "Repo exists, pulling latest..."
+      git -C "$DOTFILES_DIR" pull --ff-only 2>/dev/null || warn_msg "Could not pull"
     fi
   fi
-done
-for _f in .zshrc; do
-  if git -C "$DOTFILES_DIR" status --porcelain "$_f" 2>/dev/null | grep -q .; then
-    if [ -L "$HOME/$_f" ] || [ -e "$HOME/$_f" ]; then
+
+  # ========== Backup ==========
+  step "Checking for existing configs"
+  BACKUP_DIR="$HOME/.config/backup-$(date +%Y%m%d-%H%M%S)"
+  _did_backup=0
+  for _d in "$DOTFILES_DIR/.config"/*/; do
+    _name="$(basename "$_d")"
+    _p="$HOME/.config/$_name"
+    if [ -d "$_p" ] && [ ! -L "$_p" ]; then
       [ "$_did_backup" = "0" ] && mkdir -p "$BACKUP_DIR"
-      cp -rL "$HOME/$_f" "$BACKUP_DIR/" 2>/dev/null || true
+      mv "$_p" "$BACKUP_DIR/"
       _did_backup=1
     fi
+  done
+  for _f in "$HOME/.zshrc"; do
+    if [ -f "$_f" ] && [ ! -L "$_f" ]; then
+      [ "$_did_backup" = "0" ] && mkdir -p "$BACKUP_DIR"
+      mv "$_f" "$BACKUP_DIR/"
+      _did_backup=1
+    fi
+  done
+  [ "$_did_backup" = "1" ] && done_msg "Backed up to: $BACKUP_DIR" || done_msg "No existing configs to backup"
+
+  for _d in "$DOTFILES_DIR/.config"/*/; do
+    _name="$(basename "$_d")"
+    _p="$HOME/.config/$_name"
+    if git -C "$DOTFILES_DIR" status --porcelain ".config/$_name" 2>/dev/null | grep -q .; then
+      if [ -L "$_p" ] || [ -e "$_p" ]; then
+        [ "$_did_backup" = "0" ] && mkdir -p "$BACKUP_DIR/.config"
+        cp -rL "$_p" "$BACKUP_DIR/.config/" 2>/dev/null || true
+        _did_backup=1
+      fi
+    fi
+  done
+  for _f in .zshrc; do
+    if git -C "$DOTFILES_DIR" status --porcelain "$_f" 2>/dev/null | grep -q .; then
+      if [ -L "$HOME/$_f" ] || [ -e "$HOME/$_f" ]; then
+        [ "$_did_backup" = "0" ] && mkdir -p "$BACKUP_DIR"
+        cp -rL "$HOME/$_f" "$BACKUP_DIR/" 2>/dev/null || true
+        _did_backup=1
+      fi
+    fi
+  done
+  if [ "$_did_backup" = "1" ]; then
+    done_msg "Local changes backed up"
+    info_msg "Restoring to remote state..."
+    git -C "$DOTFILES_DIR" restore . 2>/dev/null || git -C "$DOTFILES_DIR" checkout -- . 2>/dev/null || true
+    git -C "$DOTFILES_DIR" clean -fd 2>/dev/null || true
+    done_msg "Dotfiles restored"
   fi
-done
-if [ "$_did_backup" = "1" ]; then
-  done_msg "Local changes backed up"
-  info_msg "Restoring to remote state..."
-  git -C "$DOTFILES_DIR" restore . 2>/dev/null || git -C "$DOTFILES_DIR" checkout -- . 2>/dev/null || true
-  git -C "$DOTFILES_DIR" clean -fd 2>/dev/null || true
-  done_msg "Dotfiles restored"
 fi
 
 else
@@ -543,7 +552,7 @@ if [ "${SELECTED[1]}" = "1" ]; then
   fi
 
   # Standard apt packages
-  _apt_pkgs=("tmux" "zsh" "htop" "ripgrep" "neofetch" "fzf" "imagemagick")
+  _apt_pkgs=("build-essential" "tmux" "zsh" "htop" "ripgrep" "neofetch" "fzf" "imagemagick")
   for _pkg in "${_apt_pkgs[@]}"; do
     if ! dpkg -s "$_pkg" &>/dev/null; then
       info_msg "Installing ${_pkg}..."
@@ -794,111 +803,113 @@ if [ "${SELECTED[11]}" = "1" ]; then
 fi
 
 # ══════════════════════════════════════════════════
-#  ALWAYS: Finalize
+#  ALWAYS: Finalize (skip if Custom User selected)
 # ══════════════════════════════════════════════════
 
-# ========== Symlinks ==========
-step "Setting up dotfiles symlinks"
-_src="${BASH_SOURCE[0]:-}"
-if [[ "$_src" == /* ]] && [[ -f "$_src" ]]; then
-  REPO_DIR="$(cd "$(dirname "$_src")" && pwd)"
-else
-  REPO_DIR="$DOTFILES_DIR"
-fi
-for _d in "$REPO_DIR/.config"/*/; do
-  rm -f "$HOME/.config/$(basename "$_d")"
-done
-rm -f "$HOME/.zshrc"
-mkdir -p "$HOME/.config"
-for _d in "$REPO_DIR/.config"/*/; do
-  _name="$(basename "$_d")"
-  ln -sf "$REPO_DIR/.config/$_name" "$HOME/.config/$_name"
-  done_msg "~/.config/$_name"
-done
-ln -sf "$REPO_DIR/.zshrc" "$HOME/.zshrc"
-done_msg "~/.zshrc"
-
-# ========== Hush Login ==========
-[ ! -f "$HOME/.hushlogin" ] && touch "$HOME/.hushlogin" && done_msg ".hushlogin created"
-
-# ========== Shell Cleanup ==========
-step "Cleaning up shell profiles"
-for _f in "$HOME/.zprofile" "$HOME/.zshenv" "$HOME/.profile" "$HOME/.bash_profile" "$HOME/.bashrc"; do
-  [ -f "$_f" ] || continue
-  grep -qE 'cargo/env|NVM_DIR|nvm\.sh|bun\.sh|BUN_INSTALL|_bun' "$_f" 2>/dev/null || continue
-  grep -vE 'cargo/env|NVM_DIR|nvm\.sh|bun\.sh|BUN_INSTALL|_bun|Added by.*installer' "$_f" > "${_f}.tmp" || true
-  if [ -s "${_f}.tmp" ]; then
-    mv "${_f}.tmp" "$_f"
+if [ "${SELECTED[0]}" != "1" ]; then
+  # ========== Symlinks ==========
+  step "Setting up dotfiles symlinks"
+  _src="${BASH_SOURCE[0]:-}"
+  if [[ "$_src" == /* ]] && [[ -f "$_src" ]]; then
+    REPO_DIR="$(cd "$(dirname "$_src")" && pwd)"
   else
-    rm -f "${_f}.tmp" "$_f"
+    REPO_DIR="$DOTFILES_DIR"
   fi
-  done_msg "Cleaned: $(basename "$_f")"
-done
-done_msg "Shell profiles clean"
+  for _d in "$REPO_DIR/.config"/*/; do
+    rm -f "$HOME/.config/$(basename "$_d")"
+  done
+  rm -f "$HOME/.zshrc"
+  mkdir -p "$HOME/.config"
+  for _d in "$REPO_DIR/.config"/*/; do
+    _name="$(basename "$_d")"
+    ln -sf "$REPO_DIR/.config/$_name" "$HOME/.config/$_name"
+    done_msg "~/.config/$_name"
+  done
+  ln -sf "$REPO_DIR/.zshrc" "$HOME/.zshrc"
+  done_msg "~/.zshrc"
 
-# ========== Bashrc Fallback ==========
-step "Setting up bashrc fallback"
-_bashrc="$HOME/.bashrc"
-if [ -f "$_bashrc" ]; then
-  if ! grep -q 'exec zsh' "$_bashrc"; then
-    echo '' >> "$_bashrc"
-    echo '# Switch to zsh if available' >> "$_bashrc"
+  # ========== Hush Login ==========
+  [ ! -f "$HOME/.hushlogin" ] && touch "$HOME/.hushlogin" && done_msg ".hushlogin created"
+
+  # ========== Shell Cleanup ==========
+  step "Cleaning up shell profiles"
+  for _f in "$HOME/.zprofile" "$HOME/.zshenv" "$HOME/.profile" "$HOME/.bash_profile" "$HOME/.bashrc"; do
+    [ -f "$_f" ] || continue
+    grep -qE 'cargo/env|NVM_DIR|nvm\.sh|bun\.sh|BUN_INSTALL|_bun' "$_f" 2>/dev/null || continue
+    grep -vE 'cargo/env|NVM_DIR|nvm\.sh|bun\.sh|BUN_INSTALL|_bun|Added by.*installer' "$_f" > "${_f}.tmp" || true
+    if [ -s "${_f}.tmp" ]; then
+      mv "${_f}.tmp" "$_f"
+    else
+      rm -f "${_f}.tmp" "$_f"
+    fi
+    done_msg "Cleaned: $(basename "$_f")"
+  done
+  done_msg "Shell profiles clean"
+
+  # ========== Bashrc Fallback ==========
+  step "Setting up bashrc fallback"
+  _bashrc="$HOME/.bashrc"
+  if [ -f "$_bashrc" ]; then
+    if ! grep -q 'exec zsh' "$_bashrc"; then
+      echo '' >> "$_bashrc"
+      echo '# Switch to zsh if available' >> "$_bashrc"
+      echo 'if [ -x "$(command -v zsh)" ]; then exec zsh; fi' >> "$_bashrc"
+      done_msg "Added zsh fallback to .bashrc"
+    else
+      done_msg "Bashrc fallback already set"
+    fi
+  else
+    echo '# Switch to zsh if available' > "$_bashrc"
     echo 'if [ -x "$(command -v zsh)" ]; then exec zsh; fi' >> "$_bashrc"
-    done_msg "Added zsh fallback to .bashrc"
-  else
-    done_msg "Bashrc fallback already set"
+    done_msg "Created .bashrc with zsh fallback"
   fi
-else
-  echo '# Switch to zsh if available' > "$_bashrc"
-  echo 'if [ -x "$(command -v zsh)" ]; then exec zsh; fi' >> "$_bashrc"
-  done_msg "Created .bashrc with zsh fallback"
-fi
 
-# ========== Tmux Plugins ==========
-if command -v tmux &>/dev/null; then
-  step "Setting up Tmux plugins"
-  TPM_DIR="$HOME/.config/tmux/plugins/tpm"
-  if [ ! -d "$TPM_DIR" ]; then
-    info_msg "Installing TPM..."
-    git clone https://github.com/tmux-plugins/tpm "$TPM_DIR"
-    done_msg "TPM installed"
-  else
-    done_msg "TPM already installed"
+  # ========== Tmux Plugins ==========
+  if command -v tmux &>/dev/null; then
+    step "Setting up Tmux plugins"
+    TPM_DIR="$HOME/.config/tmux/plugins/tpm"
+    if [ ! -d "$TPM_DIR" ]; then
+      info_msg "Installing TPM..."
+      git clone https://github.com/tmux-plugins/tpm "$TPM_DIR"
+      done_msg "TPM installed"
+    else
+      done_msg "TPM already installed"
+    fi
+    if [ -x "$TPM_DIR/bin/install_plugins" ]; then
+      "$TPM_DIR/bin/install_plugins"
+      done_msg "Tmux plugins installed"
+    else
+      warn_msg "TPM install_plugins not found"
+    fi
   fi
-  if [ -x "$TPM_DIR/bin/install_plugins" ]; then
-    "$TPM_DIR/bin/install_plugins"
-    done_msg "Tmux plugins installed"
-  else
-    warn_msg "TPM install_plugins not found"
-  fi
-fi
 
-# ========== Git Config ==========
-step "Checking Git config"
-GIT_NAME_SET=$(git config --global user.name 2>/dev/null || true)
-GIT_EMAIL_SET=$(git config --global user.email 2>/dev/null || true)
-if [ -z "$GIT_NAME_SET" ] || [ -z "$GIT_EMAIL_SET" ]; then
-  if confirm "Configure Git user name and email?"; then
-    printf "    Enter your Git name: " && read -r GIT_NAME < /dev/tty
-    printf "    Enter your Git email: " && read -r GIT_EMAIL < /dev/tty
-    git config --global user.name "$GIT_NAME"
-    git config --global user.email "$GIT_EMAIL"
-    done_msg "Git config set"
+  # ========== Git Config ==========
+  step "Checking Git config"
+  GIT_NAME_SET=$(git config --global user.name 2>/dev/null || true)
+  GIT_EMAIL_SET=$(git config --global user.email 2>/dev/null || true)
+  if [ -z "$GIT_NAME_SET" ] || [ -z "$GIT_EMAIL_SET" ]; then
+    if confirm "Configure Git user name and email?"; then
+      printf "    Enter your Git name: " && read -r GIT_NAME < /dev/tty
+      printf "    Enter your Git email: " && read -r GIT_EMAIL < /dev/tty
+      git config --global user.name "$GIT_NAME"
+      git config --global user.email "$GIT_EMAIL"
+      done_msg "Git config set"
+    else
+      warn_msg "Git config skipped"
+    fi
   else
-    warn_msg "Git config skipped"
+    done_msg "Git configured: $GIT_NAME_SET <$GIT_EMAIL_SET>"
   fi
-else
-  done_msg "Git configured: $GIT_NAME_SET <$GIT_EMAIL_SET>"
-fi
 
-# ========== Default Shell ==========
-if [ "$SHELL" != "$(which zsh 2>/dev/null)" ]; then
-  step "Setting zsh as default shell"
-  if command -v zsh &>/dev/null; then
-    sudo chsh -s "$(which zsh)" "$USER" || warn_msg "chsh failed"
-    done_msg "Default shell set to zsh"
-  else
-    warn_msg "zsh not installed, skipping"
+  # ========== Default Shell ==========
+  if [ "$SHELL" != "$(which zsh 2>/dev/null)" ]; then
+    step "Setting zsh as default shell"
+    if command -v zsh &>/dev/null; then
+      sudo chsh -s "$(which zsh)" "$USER" || warn_msg "chsh failed"
+      done_msg "Default shell set to zsh"
+    else
+      warn_msg "zsh not installed, skipping"
+    fi
   fi
 fi
 
