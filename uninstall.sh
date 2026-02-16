@@ -3,7 +3,7 @@ set -e
 
 # ========== Packages ==========
 BREW_FORMULAE=(neovim tmux trash htop neofetch yazi fzf gh ripgrep starship)
-TOOL_NAMES=(nvim starship ghostty yazi tmux neofetch wakatime orbstack yabai skhd solana anchor claude gemini sui suiup walrus mvr gh ripgrep trash htop hot)
+TOOL_NAMES=(nvim starship ghostty yazi tmux neofetch wakatime orbstack yabai skhd solana anchor claude gemini kimi opencode sui suiup walrus mvr gh ripgrep trash htop hot)
 
 # ========== Colors (Miku Cyberpunk Theme) ==========
 # Cyan: #00D9FF | Green: #50FA7B | Magenta: #FF79C6 | Purple: #BD93F9
@@ -169,8 +169,8 @@ if [ -f "$HOME/.cargo/bin/sui-move-analyzer" ]; then DETECTED+=(1); SELECTED+=(1
 
 # 13: AI CLI Tools
 LABELS+=("AI CLI Tools")
-DESCRIPTIONS+=("Claude Code + Gemini CLI")
-if command -v claude &>/dev/null || command -v gemini &>/dev/null; then DETECTED+=(1); SELECTED+=(1); EXTERNAL+=(0); else DETECTED+=(0); SELECTED+=(0); EXTERNAL+=(0); fi
+DESCRIPTIONS+=("Claude Code, Gemini CLI, Kimi CLI, OpenCode")
+if command -v claude &>/dev/null || command -v gemini &>/dev/null || command -v kimi &>/dev/null || command -v opencode &>/dev/null; then DETECTED+=(1); SELECTED+=(1); EXTERNAL+=(0); else DETECTED+=(0); SELECTED+=(0); EXTERNAL+=(0); fi
 
 # 14: SSH Keys (iCloud)
 LABELS+=("SSH Keys (iCloud)")
@@ -477,6 +477,16 @@ if [ "${SELECTED[13]}" = "1" ]; then
   fi
   rm -rf "$HOME/.gemini"
   done_msg "Gemini CLI files removed"
+  if brew list kimi-cli &>/dev/null; then
+    brew uninstall kimi-cli && done_msg "Kimi CLI removed" || warn_msg "Failed to remove Kimi CLI"
+  fi
+  rm -rf "$HOME/.kimi"
+  done_msg "Kimi CLI files removed"
+  if brew list opencode-ai/tap/opencode &>/dev/null; then
+    brew uninstall opencode-ai/tap/opencode && done_msg "OpenCode removed" || warn_msg "Failed to remove OpenCode"
+  fi
+  rm -rf "$HOME/.opencode"
+  done_msg "OpenCode files removed"
 fi
 
 # ========== SSH Keys (index 14) ==========

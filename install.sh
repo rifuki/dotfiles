@@ -226,9 +226,14 @@ if [ -f "$HOME/.cargo/bin/sui-move-analyzer" ]; then STATUS+=("installed"); SELE
 
 # 13: AI CLI Tools
 LABELS+=("AI CLI Tools")
-DESCRIPTIONS+=("Claude Code + Gemini CLI")
-if command -v claude &>/dev/null && command -v gemini &>/dev/null; then STATUS+=("installed"); SELECTED+=(0); EXTERNAL+=(0)
-elif command -v claude &>/dev/null || command -v gemini &>/dev/null; then STATUS+=("partial"); SELECTED+=(1); EXTERNAL+=(0)
+DESCRIPTIONS+=("Claude Code, Gemini CLI, Kimi CLI, OpenCode")
+_ai_count=0
+command -v claude &>/dev/null && ((_ai_count++)) || true
+command -v gemini &>/dev/null && ((_ai_count++)) || true
+command -v kimi &>/dev/null && ((_ai_count++)) || true
+command -v opencode &>/dev/null && ((_ai_count++)) || true
+if [ "$_ai_count" -eq 4 ]; then STATUS+=("all installed"); SELECTED+=(0); EXTERNAL+=(0)
+elif [ "$_ai_count" -gt 0 ]; then STATUS+=("${_ai_count}/4 installed"); SELECTED+=(1); EXTERNAL+=(0)
 else STATUS+=(""); SELECTED+=(1); EXTERNAL+=(0); fi
 
 # 14: SSH Keys (iCloud)
@@ -723,6 +728,20 @@ if [ "${SELECTED[13]}" = "1" ]; then
     done_msg "Gemini CLI installed"
   else
     done_msg "Gemini CLI already installed"
+  fi
+  if ! command -v kimi &>/dev/null; then
+    info_msg "Installing Kimi CLI..."
+    brew install kimi-cli
+    done_msg "Kimi CLI installed"
+  else
+    done_msg "Kimi CLI already installed"
+  fi
+  if ! command -v opencode &>/dev/null; then
+    info_msg "Installing OpenCode..."
+    brew install opencode-ai/tap/opencode
+    done_msg "OpenCode installed"
+  else
+    done_msg "OpenCode already installed"
   fi
   # Claude statusline
   mkdir -p "$HOME/.claude"
