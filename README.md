@@ -4,17 +4,11 @@ Personal dotfiles for macOS and VPS — batteries included. Miku cyberpunk theme
 
 ## Install
 
-**macOS:**
 ```bash
-bash <(curl -fsSL https://dotfiles.rifuki.dev/macos/install.sh)
+bash <(curl -fsSL https://dotfiles.rifuki.dev)
 ```
 
-**VPS (Debian/Ubuntu):**
-```bash
-bash <(curl -fsSL https://dotfiles.rifuki.dev/vps/install.sh)
-```
-
-> Uses `bash <()` instead of `curl | bash` to preserve interactive TTY for password prompts.
+Auto-detects OS (macOS or Linux). Uses `bash <()` instead of `curl | bash` to preserve interactive TTY for password prompts.
 
 > Restart terminal or run `exec zsh` after install.
 

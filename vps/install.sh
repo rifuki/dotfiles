@@ -352,7 +352,7 @@ if [ "${SELECTED[0]}" != "1" ]; then
     if [ "$_repo_dir" != "$DOTFILES_DIR" ]; then
       fail_msg "install.sh must be run from $HOME/.dotfiles/vps"
       echo -e "    ${DIM}Found at: $SCRIPT_DIR${NC}"
-      echo -e "    ${DIM}1. curl -fsSL https://dotfiles.rifuki.dev/vps/install.sh | bash${NC}"
+      echo -e "    ${DIM}1. bash <(curl -fsSL https://dotfiles.rifuki.dev/vps)${NC}"
       echo -e "    ${DIM}2. mv $_repo_dir $DOTFILES_DIR && bash $DOTFILES_DIR/vps/install.sh${NC}"
       exit 1
     fi
@@ -568,7 +568,7 @@ if [ "${SELECTED[0]}" = "1" ]; then
   echo ""
   echo -e "  ${DIM}👉 Now login as $_custom_user and re-run the installer:${NC}"
   echo -e "  ${CYAN}   ssh $_custom_user@<your-server>${NC}"
-  echo -e "  ${CYAN}   bash <(curl -fsSL https://dotfiles.rifuki.dev/vps/install.sh)${NC}"
+  echo -e "  ${CYAN}   bash <(curl -fsSL https://dotfiles.rifuki.dev)${NC}"
   echo ""
   exit 0
 fi

@@ -376,7 +376,7 @@ if [ -d "$_repo_dir/.git" ] && git -C "$_repo_dir" rev-parse --git-dir > /dev/nu
   if [ "$_repo_dir" != "$DOTFILES_DIR" ]; then
     fail_msg "install.sh must be run from $HOME/.dotfiles/macos"
     echo -e "    ${DIM}Found at: $SCRIPT_DIR${NC}"
-    echo -e "    ${DIM}1. curl -fsSL https://dotfiles.rifuki.dev/macos/install.sh | bash${NC}"
+    echo -e "    ${DIM}1. bash <(curl -fsSL https://dotfiles.rifuki.dev/macos)${NC}"
     echo -e "    ${DIM}2. mv $_repo_dir $DOTFILES_DIR && bash $DOTFILES_DIR/macos/install.sh${NC}"
     exit 1
   fi
