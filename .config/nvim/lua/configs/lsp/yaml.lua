@@ -25,7 +25,7 @@ vim.lsp.config("yamlls", {
     settings = {
         yaml = {
             schemas = {
-                ["https://json.schemastore.org/docker-compose.json"] = "docker-compose*.yml",
+                ["https://raw.githubusercontent.com/compose-spec/compose-spec/master/schema/compose-spec.json"] = "docker-compose*.yml",
             },
             validate = true,
             completion = true,

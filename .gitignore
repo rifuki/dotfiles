@@ -6,6 +6,10 @@
 
 # But not folders themselves, so we can whitelist
 !*/
+# Ignore unified branch subdirs (not part of this branch)
+/shared/
+/macos/
+/vps/
 !install.sh
 !uninstall.sh
 !macos-defaults.sh
