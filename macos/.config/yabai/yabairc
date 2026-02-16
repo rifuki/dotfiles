@@ -1,0 +1,40 @@
+## Necessary Setup
+yabai -m signal --add event=dock_did_restart action="sudo yabai --load-sa"  # Reload SA after restart
+sudo yabai --load-sa  # Load scripting addition
+
+## Layout & Placement
+yabai -m config layout bsp  # Use BSP layout
+yabai -m config window_placement second_child   # New windows as second child
+
+## Mouse Controls
+yabai -m config mouse_modifier alt  # Hold Alt for mouse options
+yabai -m config mouse_action1 move      # default
+yabai -m config mouse_action2 resize    # default
+yabai -m config mouse_drop_action swap  # default
+yabai -m config focus_follows_mouse autofocus # Auto-raise on focus
+# yabai -m config mouse_follows_focus on
+
+## Padding & Gaps
+yabai -m config left_padding 10
+yabai -m config bottom_padding 10
+yabai -m config top_padding 10
+yabai -m config right_padding 10
+yabai -m config window_gap 10
+
+## Window Configs
+yabai -m config window_animation_duration 0.2
+yabai -m config window_animation_easing   ease_out_quint
+yabai -m config window_opacity            on
+yabai -m config window_opacity_duration   0.25
+yabai -m config active_window_opacity     0.95
+yabai -m config normal_window_opacity     0.85
+yabai -m config window_topmost            off
+yabai -m config window_shadow             on
+
+## Disable Window Management for Specific Apps
+yabai -m rule --add app="System Settings" manage=off
+yabai -m rule --add app="Music" title="MiniPlayer" manage=off
+yabai -m rule --add app="Calculator" manage=off
+yabai -m rule --add app="Raycast" manage=off
+yabai -m rule --add app="CleanMyMac X" manage=off
+yabai -m rule --add app="Google Chrome" title="(MetaMask.*|Keplr.*|HaHa.*|.*Wallet.*)" manage=off

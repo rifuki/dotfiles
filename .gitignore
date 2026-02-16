@@ -3,18 +3,31 @@
 
 # But not these files
 !.gitignore
+!README.md
+!install.sh
 
 # But not folders themselves, so we can whitelist
 !*/
 
-# But not nvim and its contents
-!nvim/
-!nvim/**
-# Ignore nvim/lazy-lock.json, but not the directory
-nvim/lazy-lock.json
+# Shared configs
+!shared/
+!shared/**
 
-# But not tmux and its contents
-!tmux/
-!tmux/**
-# Ignore tmux/plugins and its contents
-tmux/plugins/
+# macOS platform
+!macos/
+!macos/**
+
+# VPS platform
+!vps/
+!vps/**
+
+# Ignore specific files
+.DS_Store
+**/.DS_Store
+**/lazy-lock.json
+**/plugins/
+**/*.zwc
+
+# Claude (shared, ignore runtime json files)
+shared/.claude/*.json
+shared/.claude/*.local.json

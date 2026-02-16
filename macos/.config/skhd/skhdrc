@@ -1,0 +1,88 @@
+## Window Navigation (Focus & Swap)
+# Focus Window (Move between windows)
+alt - h : yabai -m window --focus west
+alt - j : ~/.config/yabai/focus_window.sh south   # Stack-aware focus down
+alt - k : ~/.config/yabai/focus_window.sh north   # Stack-aware focus up
+alt - l : yabai -m window --focus east
+# Swap Window (Rearrange window positions)
+alt + shift - h : yabai -m window --swap west
+alt + shift - j : ~/.config/yabai/swap_window.sh south  # Stack-aware swap down
+alt + shift - k : ~/.config/yabai/swap_window.sh north  # Stack-aware swap up
+alt + shift - l : yabai -m window --swap east
+
+## Window Resizing (Increase/Decrease Size)
+# Increase Size
+alt + ctrl - h : yabai -m window --resize left:-20:0
+alt + ctrl - j : yabai -m window --resize bottom:0:20
+alt + ctrl - k : yabai -m window --resize top:0:-20
+alt + ctrl - l : yabai -m window --resize right:20:0
+# Decrease Size
+alt + ctrl + shift - h : yabai -m window --resize left:20:0
+alt + ctrl + shift - j : yabai -m window --resize bottom:0:-20
+alt + ctrl + shift - k : yabai -m window --resize top:0:20
+alt + ctrl + shift - l : yabai -m window --resize right:-20:0
+
+## Window & Space Layouts
+# Toggle between floating and grid layout
+alt - return : yabai -m window --toggle float; \
+               yabai -m window --grid 20:20:1:1:18:18 
+alt + shift - return : yabai -m window --toggle float; \
+                       yabai -m window --grid 4:4:1:1:2:2
+# Arrange windows in grid
+alt + shift - left : yabai -m window --grid 1:2:0:0:1:1
+alt + shift - down : yabai -m window --grid 20:20:1:1:18:18
+alt + shift - up : yabai -m window --grid 1:1:0:0:1:1
+alt + shift - right : yabai -m window --grid 1:2:1:0:1:1
+
+## Zoom & Parent Resize
+alt - f : yabai -m window --toggle zoom-fullscreen
+alt - d : yabai -m window --toggle zoom-parent # Expand inside BSP container
+
+## Rotate (BSP) & Mirror Layouts
+alt - r : yabai -m space --rotate 270; yabai -m space --balance
+alt + shift - r : yabai -m space --rotate 90; yabai -m space --balance
+alt - y : yabai -m space --mirror y-axis
+alt - x : yabai -m space --mirror x-axis
+
+## Balance & Split Layout
+alt + shift - 0 : yabai -m space --balance
+alt - e : yabai -m window --toggle split ## Toggle horizontal/vertical split
+
+## Toggle Padding & Gaps (Show/Hide window spacing)
+alt - a : yabai -m space --toggle padding; yabai -m space --toggle gap
+
+## Space Navigation (Move between workspaces)
+alt - tab : yabai -m space --focus recent # Focus last used space
+alt - p : yabai -m space --focus prev # Focus previous space
+alt - n : yabai -m space --focus next # Focus next space
+alt - 1 : yabai -m space --focus 1
+alt - 2 : yabai -m space --focus 2
+alt - 3 : yabai -m space --focus 3
+alt - 4 : yabai -m space --focus 4
+alt - 5 : yabai -m space --focus 5
+alt - 6 : yabai -m space --focus 6
+alt - 7 : yabai -m space --focus 7
+alt - 8 : yabai -m space --focus 8
+alt - 9 : yabai -m space --focus 9
+
+## Move Window to Space
+alt + shift - 1 : yabai -m window --space 1
+alt + shift - 2 : yabai -m window --space 2
+alt + shift - 3 : yabai -m window --space 3
+alt + shift - 4 : yabai -m window --space 4
+alt + shift - 5 : yabai -m window --space 5
+alt + shift - 6 : yabai -m window --space 6
+alt + shift - 7 : yabai -m window --space 7
+alt + shift - 8 : yabai -m window --space 8
+alt + shift - 9 : yabai -m window --space 9
+
+## Change Layout Mode
+alt + ctrl - z : yabai -m space --layout bsp
+alt + ctrl - x : yabai -m space --layout float
+alt + ctrl - c : yabai -m space --layout stack
+
+## Toggle Active Window Opacity
+alt + ctrl - o : yabai -m config active_window_opacity $(yabai -m config active_window_opacity | grep -q 1.0 && echo 0.95 || echo 1.0)
+
+## Toggle Ghostty Background Transparency
+alt + ctrl - t : ~/.config/ghostty/toggle-opacity.sh && skhd -k "cmd - r"
