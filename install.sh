@@ -233,14 +233,17 @@ else STATUS+=(""); SELECTED+=(1); EXTERNAL+=(0); fi
 
 # 14: SSH Keys (iCloud)
 LABELS+=("SSH Keys (iCloud)")
-DESCRIPTIONS+=("Symlink ~/.ssh from iCloud Drive")
+DESCRIPTIONS+=("Symlink ~/.ssh → iCloud/rifuki/.ssh")
 _icloud_base="$HOME/Library/Mobile Documents/com~apple~CloudDocs"
-if [ -L "$HOME/.ssh" ] && { [ -f "$HOME/.ssh/config" ] || ls "$HOME/.ssh"/*.pub &>/dev/null 2>&1 || [ -f "$HOME/.ssh/authorized_keys" ]; }; then
+_ssh_target="$_icloud_base/rifuki/.ssh"
+if [ -L "$HOME/.ssh" ] && { [ -f "$HOME/.ssh/config" ] || ls "$HOME/.ssh"/*.pub &>/dev/null 2>&1; }; then
   SELECTED+=(0); STATUS+=("symlinked + configured"); EXTERNAL+=(0)
 elif [ -L "$HOME/.ssh" ]; then
   SELECTED+=(1); STATUS+=("symlinked (empty)"); EXTERNAL+=(0)
+elif [ -d "$_ssh_target" ]; then
+  SELECTED+=(1); STATUS+=("iCloud/rifuki/.ssh found"); EXTERNAL+=(0)
 elif [ -d "$_icloud_base" ]; then
-  SELECTED+=(1); STATUS+=("iCloud available"); EXTERNAL+=(0)
+  SELECTED+=(1); STATUS+=("iCloud available, path not found"); EXTERNAL+=(0)
 else
   SELECTED+=(0); STATUS+=("iCloud not found"); EXTERNAL+=(0)
 fi
@@ -732,39 +735,20 @@ fi
 if [ "${SELECTED[14]}" = "1" ]; then
   step "Setting up SSH keys from iCloud"
   _icloud_base="$HOME/Library/Mobile Documents/com~apple~CloudDocs"
+  _ssh_target="$_icloud_base/rifuki/.ssh"
 
   if [ -L "$HOME/.ssh" ]; then
     done_msg "~/.ssh already symlinked → $(readlink "$HOME/.ssh")"
   else
     _ssh_path=""
 
-    # Auto-detect .ssh in iCloud
-    if [ -d "$_icloud_base" ]; then
-      _ssh_results=()
-      while IFS= read -r _line; do
-        _ssh_results+=("$_line")
-      done < <(find "$_icloud_base" -maxdepth 3 -type d -name ".ssh" 2>/dev/null)
-
-      if [ ${#_ssh_results[@]} -eq 1 ]; then
-        info_msg "Found .ssh at: ${_ssh_results[0]}"
-        if confirm "Use this path?"; then
-          _ssh_path="${_ssh_results[0]}"
-        fi
-      elif [ ${#_ssh_results[@]} -gt 1 ]; then
-        info_msg "Found ${#_ssh_results[@]} .ssh folders in iCloud:"
-        for (( _si=0; _si<${#_ssh_results[@]}; _si++ )); do
-          echo -e "    ${BOLD}$((_si + 1)).${NC} ${_ssh_results[$_si]}"
-        done
-        printf "    Pick a number (or Enter to skip): "
-        read -r _pick < /dev/tty
-        if [[ "$_pick" =~ ^[0-9]+$ ]] && [ "$_pick" -ge 1 ] && [ "$_pick" -le ${#_ssh_results[@]} ]; then
-          _ssh_path="${_ssh_results[$((_pick - 1))]}"
-        fi
-      fi
-    fi
-
-    # Manual input fallback
-    if [ -z "$_ssh_path" ]; then
+    # Use fixed path: iCloud/rifuki/.ssh
+    if [ -d "$_ssh_target" ]; then
+      _ssh_path="$_ssh_target"
+      info_msg "Found .ssh at: $_ssh_path"
+    elif [ -d "$_icloud_base" ]; then
+      # Fallback: manual input if rifuki/.ssh not found
+      warn_msg "iCloud/rifuki/.ssh not found"
       printf "    Enter path to .ssh folder: "
       read -r _ssh_path < /dev/tty
       _ssh_path="${_ssh_path/#\~/$HOME}"
@@ -783,7 +767,7 @@ if [ "${SELECTED[14]}" = "1" ]; then
         fi
       fi
       if [ -n "$_ssh_path" ]; then
-        ln -sf "$_ssh_path" "$HOME/.ssh"
+        ln -sfn "$_ssh_path" "$HOME/.ssh"
         chmod 700 "$HOME/.ssh"
 
         # Fix SSH permissions
