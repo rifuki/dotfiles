@@ -1,49 +1,112 @@
-#!/bin/bash
+#!/usr/bin/env bash
+# Claude Code status line — mirrors Starship prompt style
+# Format: [time] with [user] in [dir] on [branch] [git_status] | [model] [ctx%]
 
 input=$(cat)
-cwd=$(echo "$input" | jq -r '.workspace.current_dir')
 
-# Colors matching starship.toml theme
-cyan_bold=$'\033[1;38;2;0;217;255m'
-green_bold=$'\033[1;38;2;80;250;123m'
-magenta_bold=$'\033[1;38;2;255;121;198m'
-gray_bold=$'\033[1;38;2;108;117;125m'
-white_bold=$'\033[1;38;2;239;241;244m'
-peach=$'\033[38;2;240;202;164m'
-reset=$'\033[0m'
+# ── Extract JSON fields ───────────────────────────────────────────────────────
+cwd=$(echo "$input"        | jq -r '.workspace.current_dir // .cwd // empty')
+model=$(echo "$input"      | jq -r '.model.display_name // empty')
+used=$(echo "$input"       | jq -r '.context_window.used_percentage // empty')
 
-# Starship: $time $username $directory $git_branch $git_status
-# format = '$time$username$directory$git_branch$git_status$line_break$character'
+# ── ANSI color helpers (256-colour hex via escape sequences) ──────────────────
+# Colors are intentionally dimmed by the terminal; we use exact hex values.
+cyan='\033[38;2;0;217;255m'      # #00D9FF
+gray='\033[38;2;108;117;125m'    # #6C757D
+green='\033[38;2;80;250;123m'    # #50FA7B
+pink='\033[38;2;255;121;198m'    # #FF79C6
+peach='\033[38;2;240;202;164m'   # #f0caa4
+reset='\033[0m'
+bold='\033[1m'
 
+# ── Time ──────────────────────────────────────────────────────────────────────
 time_str=$(date +%H:%M:%S)
+
+# ── User ──────────────────────────────────────────────────────────────────────
 user_str=$(whoami)
-dir_str="$cwd"
 
-# Git info (mirrors $git_branch and $git_status modules)
-git_output=""
-if git -C "$cwd" --no-optional-locks rev-parse --git-dir > /dev/null 2>&1; then
-    branch=$(git -C "$cwd" --no-optional-locks rev-parse --abbrev-ref HEAD 2>/dev/null)
-    if [ -n "$branch" ]; then
-        # $git_branch: [on](gray) [ ](white)[$branch](magenta)
-        git_output=$(printf " ${gray_bold}on${reset} ${white_bold} ${reset}${magenta_bold}%s${reset}" "$branch")
+# ── Directory (shorten $HOME to ~) ───────────────────────────────────────────
+home_dir="$HOME"
+if [ -n "$cwd" ]; then
+    dir_str="${cwd/#$home_dir/~}"
+else
+    dir_str="~"
+fi
 
-        # $git_status: show dirty marker in peach if working tree is not clean
-        status_str=""
-        if ! git -C "$cwd" --no-optional-locks diff --quiet 2>/dev/null; then
-            status_str="!"
-        fi
-        if ! git -C "$cwd" --no-optional-locks diff --cached --quiet 2>/dev/null; then
-            status_str="${status_str}+"
-        fi
-        if [ -n "$(git -C "$cwd" --no-optional-locks ls-files --others --exclude-standard 2>/dev/null)" ]; then
-            status_str="${status_str}?"
-        fi
-        if [ -n "$status_str" ]; then
-            git_output="${git_output} ${peach}[${status_str}]${reset}"
-        fi
+# ── Git branch & status (skip optional locks) ────────────────────────────────
+git_branch=""
+git_status_str=""
+if git -c core.fsmonitor=false -C "${cwd:-$HOME}" rev-parse --git-dir >/dev/null 2>&1; then
+    git_branch=$(git -c core.fsmonitor=false -C "${cwd:-$HOME}" symbolic-ref --short HEAD 2>/dev/null \
+                 || git -c core.fsmonitor=false -C "${cwd:-$HOME}" rev-parse --short HEAD 2>/dev/null)
+
+    # Collect status indicators (mirrors Starship git_status defaults)
+    status_flags=""
+    git_status_output=$(git -c core.fsmonitor=false -C "${cwd:-$HOME}" status --porcelain=v2 --branch 2>/dev/null)
+
+    # Staged
+    staged=$(echo "$git_status_output" | grep -c '^[12] [MADRC]')
+    [ "$staged" -gt 0 ] && status_flags="${status_flags}+"
+
+    # Modified (unstaged)
+    modified=$(echo "$git_status_output" | grep -c '^[12] .[MD]')
+    [ "$modified" -gt 0 ] && status_flags="${status_flags}!"
+
+    # Untracked
+    untracked=$(echo "$git_status_output" | grep -c '^?')
+    [ "$untracked" -gt 0 ] && status_flags="${status_flags}?"
+
+    # Deleted (unstaged)
+    deleted=$(echo "$git_status_output" | grep -c '^[12] .D')
+    [ "$deleted" -gt 0 ] && status_flags="${status_flags}✘"
+
+    # Ahead / behind
+    ahead=$(echo "$git_status_output"  | grep -oP '(?<=ahead )\d+'  | head -1)
+    behind=$(echo "$git_status_output" | grep -oP '(?<=behind )\d+' | head -1)
+    [ -n "$ahead"  ] && [ "$ahead"  -gt 0 ] && status_flags="${status_flags}⇡${ahead}"
+    [ -n "$behind" ] && [ "$behind" -gt 0 ] && status_flags="${status_flags}⇣${behind}"
+
+    [ -n "$status_flags" ] && git_status_str="[${status_flags}]"
+fi
+
+# ── Model & context ───────────────────────────────────────────────────────────
+meta_str=""
+if [ -n "$model" ]; then
+    meta_str="$model"
+    if [ -n "$used" ]; then
+        meta_str="${meta_str} ctx:${used}%"
     fi
 fi
 
-# Output: [$time](cyan) [with](gray) [$user](cyan) [in](gray) [$path](green) [git...](various)
-printf "${cyan_bold}%s${reset} ${gray_bold}with${reset} ${cyan_bold}%s${reset} ${gray_bold}in${reset} ${green_bold}%s${reset}%s" \
-    "$time_str" "$user_str" "$dir_str" "$git_output"
+# ── Assemble the line ─────────────────────────────────────────────────────────
+line=""
+
+# time
+line="${line}${bold}${cyan}${time_str}${reset}"
+
+# " with "
+line="${line} ${bold}${gray}with${reset} "
+
+# user
+line="${line}${bold}${cyan}${user_str}${reset}"
+
+# " in "
+line="${line} ${bold}${gray}in${reset} "
+
+# directory
+line="${line}${bold}${green}${dir_str}${reset}"
+
+# git branch
+if [ -n "$git_branch" ]; then
+    line="${line} ${bold}${gray}on${reset} ${bold}${pink}${git_branch}${reset}"
+    if [ -n "$git_status_str" ]; then
+        line="${line} ${peach}${git_status_str}${reset}"
+    fi
+fi
+
+# model / context (right-aligned hint, separated by a pipe)
+if [ -n "$meta_str" ]; then
+    line="${line} ${bold}${gray}|${reset} ${gray}${meta_str}${reset}"
+fi
+
+printf "%b\n" "$line"
