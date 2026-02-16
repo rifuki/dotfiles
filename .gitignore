@@ -1,14 +1,11 @@
 # Ignore everything
 *
 
-# But not these files
+# Root files
 !.gitignore
 !README.md
 !install.sh
 !uninstall.sh
-
-# But not folders themselves, so we can whitelist
-!*/
 
 # Shared configs
 !shared/

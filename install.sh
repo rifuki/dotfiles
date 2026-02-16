@@ -10,7 +10,9 @@ DIM='\033[2m'
 NC='\033[0m'
 
 _os="$(uname)"
-_script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+_script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" 2>/dev/null && pwd)"
+_pipe_mode=false
+[[ "$_script_dir" == "/dev/fd" || "$_script_dir" == "/proc/self/fd" ]] && _pipe_mode=true
 
 echo ""
 echo -e "${BOLD}${MAGENTA}╔══════════════════════════════════════════════════╗${NC}"
@@ -18,16 +20,25 @@ echo -e "${BOLD}${MAGENTA}║              dotfiles installer                  �
 echo -e "${BOLD}${MAGENTA}╚══════════════════════════════════════════════════╝${NC}"
 echo ""
 
+_run() {
+  local platform="$1"; shift
+  if [[ "$_pipe_mode" == true ]]; then
+    bash <(curl -fsSL "https://dotfiles.rifuki.dev/${platform}") "$@"
+  else
+    exec "$_script_dir/${platform}/install.sh" "$@"
+  fi
+}
+
 if [[ "$_os" == "Darwin" ]]; then
   echo -e "  ${GREEN}✔${NC} Detected: ${BOLD}${CYAN}macOS${NC}"
   echo -e "  ${DIM}→ Running macos/install.sh${NC}"
   echo ""
-  exec "$_script_dir/macos/install.sh" "$@"
+  _run macos "$@"
 elif [[ "$_os" == "Linux" ]]; then
   echo -e "  ${GREEN}✔${NC} Detected: ${BOLD}${CYAN}Linux${NC}"
   echo -e "  ${DIM}→ Running vps/install.sh${NC}"
   echo ""
-  exec "$_script_dir/vps/install.sh" "$@"
+  _run vps "$@"
 else
   echo -e "  ${RED}✖${NC} Unsupported OS: ${BOLD}$_os${NC}"
   echo -e "  ${DIM}Supported: macOS (Darwin), Linux (Ubuntu/Debian)${NC}"
