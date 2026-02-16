@@ -504,7 +504,8 @@ if [ "${SELECTED[0]}" = "1" ]; then
   case "$_auth_mode" in
     2)
       # SSH key + password: require both key and password
-      printf '\nMatch User %s\n    AuthenticationMethods publickey,password\n' "$_custom_user" | sudo tee -a "$_sshd" > /dev/null
+      # PasswordAuthentication yes needed to re-enable password under global 'no'
+      printf '\nMatch User %s\n    PasswordAuthentication yes\n    AuthenticationMethods publickey,password\n' "$_custom_user" | sudo tee -a "$_sshd" > /dev/null
       _auth_desc="SSH key + password (both required)"
       ;;
     3)
