@@ -20,6 +20,7 @@
 .config/.git/
 .config/nvim/lazy-lock.json
 .config/tmux/plugins/
+*.zwc
 
 # But not .claude and its contents
 !.claude/

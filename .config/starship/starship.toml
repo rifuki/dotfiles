@@ -1,6 +1,10 @@
 add_newline = false
 
-format = '$time$username$directory$git_branch$git_status$line_break$character'
+format = '$hostname$time$username$directory$git_branch$git_status$line_break$character'
+
+[hostname]
+ssh_only = true
+format = '[󰒋 $hostname](bold #FF79C6) '
 
 [time]
 disabled = false
