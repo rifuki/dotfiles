@@ -23,7 +23,7 @@
 .DS_Store
 **/.DS_Store
 **/lazy-lock.json
-**/plugins/
+**/.config/tmux/plugins/
 **/*.zwc
 
 # Claude (shared, ignore runtime json files)
