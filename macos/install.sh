@@ -266,9 +266,9 @@ _total=${#LABELS[@]}
 # ========== Draw Menu ==========
 draw_menu() {
   echo ""
-  echo -e "${BOLD}${MAGENTA}╔══════════════════════════════════════════════════╗${NC}"
-  echo -e "${BOLD}${MAGENTA}║           dotfiles installer — macOS             ║${NC}"
-  echo -e "${BOLD}${MAGENTA}╚══════════════════════════════════════════════════╝${NC}"
+  echo -e "${BOLD}${CYAN}╔══════════════════════════════════════════════════╗${NC}"
+  echo -e "${BOLD}${CYAN}║           dotfiles installer — macOS             ║${NC}"
+  echo -e "${BOLD}${CYAN}╚══════════════════════════════════════════════════╝${NC}"
   echo ""
   # Check if all non-EXTERNAL items are unchecked (everything installed by script)
   local _all_unchecked=1
@@ -289,7 +289,7 @@ draw_menu() {
     if [ "${EXTERNAL[$i]}" = "1" ]; then
       echo -e "    ${ORANGE}${_num}. [!] ${_label}${NC} ${DIM}not installed by this script — manage manually${NC}${_status}"
     elif [ "${SELECTED[$i]}" = "1" ]; then
-      echo -e "    ${MAGENTA}${_num}. [x] ${_label}${NC} ${DIM}${DESCRIPTIONS[$i]}${NC}${_status}"
+      echo -e "    ${CYAN}${_num}. [x] ${_label}${NC} ${DIM}${DESCRIPTIONS[$i]}${NC}${_status}"
     else
       echo -e "    ${GRAY}${_num}. [ ] ${_label}${NC} ${DIM}${DESCRIPTIONS[$i]}${NC}${_status}"
     fi
@@ -299,13 +299,12 @@ draw_menu() {
   echo -e "    ${DIM}• Xcode CLT, Homebrew, Dotfiles repo${NC}"
   echo -e "    ${DIM}• Backup, Symlinks, Shell cleanup, Git config${NC}"
   echo ""
-  echo -e "  ${GRAY}Enter number to toggle  |  ${NC}${BOLD}${CYAN}a${NC}${GRAY} = all  |  ${NC}${BOLD}${CYAN}n${NC}${GRAY} = none  |  ${NC}${BOLD}${CYAN}Enter${NC}${GRAY} = continue  |  ${NC}${BOLD}${CYAN}q${NC}${GRAY} = quit${NC}"
+  echo -e "  Enter number to toggle  |  ${BOLD}${CYAN}a${NC} = all  |  ${BOLD}${CYAN}n${NC} = none  |  ${BOLD}${CYAN}Enter${NC} = continue  |  ${BOLD}${CYAN}q${NC} = quit"
   echo ""
 }
 
 # ========== Interactive Loop ==========
 while true; do
-  clear 2>/dev/null || true
   draw_menu
 
   printf "  > "
@@ -343,10 +342,10 @@ echo ""
 echo -e "  ${BOLD}${GREEN}Will be installed:${NC}"
 for (( i=0; i<_total; i++ )); do
   if [ "${SELECTED[$i]}" = "1" ]; then
-    echo -e "    ${MAGENTA}+${NC} ${LABELS[$i]}  ${DIM}${DESCRIPTIONS[$i]}${NC}"
+    echo -e "    ${CYAN}+${NC} ${LABELS[$i]}  ${DIM}${DESCRIPTIONS[$i]}${NC}"
   fi
 done
-echo -e "    ${MAGENTA}+${NC} Xcode CLT, Homebrew, Dotfiles, Symlinks  ${DIM}(always)${NC}"
+echo -e "    ${CYAN}+${NC} Xcode CLT, Homebrew, Dotfiles, Symlinks  ${DIM}(always)${NC}"
 echo ""
 
 printf "  ${BOLD}${CYAN}Proceed with installation?${NC} ${GRAY}[y/n]:${NC} "
@@ -914,12 +913,12 @@ fi
 
 # ========== Done ==========
 echo ""
-echo -e "${BOLD}${MAGENTA}╔══════════════════════════════════════════════════╗${NC}"
-echo -e "${BOLD}${MAGENTA}║           ✓ Installation complete!               ║${NC}"
-echo -e "${BOLD}${MAGENTA}╚══════════════════════════════════════════════════╝${NC}"
+echo -e "${BOLD}${CYAN}╔══════════════════════════════════════════════════╗${NC}"
+echo -e "${BOLD}${CYAN}║           ✓ Installation complete!               ║${NC}"
+echo -e "${BOLD}${CYAN}╚══════════════════════════════════════════════════╝${NC}"
 echo ""
 if [ "${SELECTED[1]}" = "1" ]; then
-  echo -e "  ${MAGENTA}Yabai:${NC}"
+  echo -e "  ${CYAN}Yabai:${NC}"
   echo -e "    ${DIM}1. echo \"\$(whoami) ALL=(root) NOPASSWD: sha256:\$(shasum -a 256 \$(which yabai) | cut -d \" \" -f 1) \$(which yabai) --load-sa\" | sudo tee /private/etc/sudoers.d/yabai${NC}"
   echo -e "    ${DIM}2. yabai --start-service${NC}"
   echo -e "    ${DIM}3. Allow in System Settings > Privacy & Security > Accessibility${NC}"
@@ -938,7 +937,7 @@ if [ "${SELECTED[1]}" = "1" ]; then
   fi
   echo -e "    ${DIM}Guide: https://github.com/asmvik/yabai/wiki/Disabling-System-Integrity-Protection${NC}"
   echo ""
-  echo -e "  ${MAGENTA}Skhd:${NC}"
+  echo -e "  ${CYAN}Skhd:${NC}"
   echo -e "    ${DIM}1. skhd --start-service${NC}"
   echo -e "    ${DIM}2. Allow in System Settings > Privacy & Security > Accessibility${NC}"
   echo ""

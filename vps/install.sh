@@ -206,9 +206,9 @@ _total=${#LABELS[@]}
 # ========== Draw Menu ==========
 draw_menu() {
   echo ""
-  echo -e "${BOLD}${MAGENTA}╔══════════════════════════════════════════════════╗${NC}"
-  echo -e "${BOLD}${MAGENTA}║            dotfiles installer — VPS              ║${NC}"
-  echo -e "${BOLD}${MAGENTA}╚══════════════════════════════════════════════════╝${NC}"
+  echo -e "${BOLD}${CYAN}╔══════════════════════════════════════════════════╗${NC}"
+  echo -e "${BOLD}${CYAN}║            dotfiles installer — VPS              ║${NC}"
+  echo -e "${BOLD}${CYAN}╚══════════════════════════════════════════════════╝${NC}"
   echo ""
   if [ "$_is_root" = "1" ]; then
     echo -e "  ${RED}${BOLD}⚠  Running as root!${NC}  ${DIM}It is strongly recommended to create a Custom User first.${NC}"
@@ -253,13 +253,12 @@ draw_menu() {
   echo -e "    ${DIM}• Backup, Symlinks, Shell cleanup, Git config${NC}"
   echo -e "    ${DIM}• Zsh as default shell + bashrc fallback${NC}"
   echo ""
-  echo -e "  ${GRAY}Enter number to toggle  |  ${NC}${BOLD}${CYAN}a${NC}${GRAY} = all  |  ${NC}${BOLD}${CYAN}n${NC}${GRAY} = none  |  ${NC}${BOLD}${CYAN}Enter${NC}${GRAY} = continue  |  ${NC}${BOLD}${CYAN}q${NC}${GRAY} = quit${NC}"
+  echo -e "  Enter number to toggle  |  ${BOLD}${CYAN}a${NC} = all  |  ${BOLD}${CYAN}n${NC} = none  |  ${BOLD}${CYAN}Enter${NC} = continue  |  ${BOLD}${CYAN}q${NC} = quit"
   echo ""
 }
 
 # ========== Interactive Loop ==========
 while true; do
-  clear 2>/dev/null || true
   draw_menu
 
   printf "  > "
@@ -298,7 +297,7 @@ done
 
 # ========== Confirmation ==========
 echo ""
-echo -e "  ${BOLD}${MAGENTA}Will be installed:${NC}"
+echo -e "  ${BOLD}${CYAN}Will be installed:${NC}"
 if [ "${SELECTED[0]}" = "1" ]; then
   # Custom User only — no other components will run
   echo -e "    ${GREEN}+${NC} ${LABELS[0]}  ${DIM}${DESCRIPTIONS[0]}${NC}"
@@ -314,7 +313,7 @@ else
 fi
 echo ""
 
-printf "  ${BOLD}${MAGENTA}Proceed with installation?${NC} [y/n]: "
+printf "  ${BOLD}${CYAN}Proceed with installation?${NC} [y/n]: "
 read -r _confirm < /dev/tty
 case "$_confirm" in
   [yY]|[yY][eE][sS]) ;;
@@ -536,9 +535,9 @@ if [ "${SELECTED[0]}" = "1" ]; then
 
   # Done — user must re-run the script as the new user
   echo ""
-  echo -e "${BOLD}${MAGENTA}╔══════════════════════════════════════════════════╗${NC}"
-  echo -e "${BOLD}${MAGENTA}║         ✓ Custom user setup complete!            ║${NC}"
-  echo -e "${BOLD}${MAGENTA}╚══════════════════════════════════════════════════╝${NC}"
+  echo -e "${BOLD}${CYAN}╔══════════════════════════════════════════════════╗${NC}"
+  echo -e "${BOLD}${CYAN}║         ✓ Custom user setup complete!            ║${NC}"
+  echo -e "${BOLD}${CYAN}╚══════════════════════════════════════════════════╝${NC}"
   echo ""
   echo -e "  ${DIM}👉 Now login as $_custom_user and re-run the installer:${NC}"
   echo -e "  ${CYAN}   ssh $_custom_user@<your-server>${NC}"
@@ -930,9 +929,9 @@ fi
 
 # ========== Done ==========
 echo ""
-echo -e "${BOLD}${MAGENTA}╔══════════════════════════════════════════════════╗${NC}"
-echo -e "${BOLD}${MAGENTA}║           ✓ Installation complete!               ║${NC}"
-echo -e "${BOLD}${MAGENTA}╚══════════════════════════════════════════════════╝${NC}"
+echo -e "${BOLD}${CYAN}╔══════════════════════════════════════════════════╗${NC}"
+echo -e "${BOLD}${CYAN}║           ✓ Installation complete!               ║${NC}"
+echo -e "${BOLD}${CYAN}╚══════════════════════════════════════════════════╝${NC}"
 echo ""
 echo -e "  ${DIM}👉 Restart your terminal or run: exec zsh${NC}"
 echo ""

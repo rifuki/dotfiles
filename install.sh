@@ -15,20 +15,26 @@ DOTFILES_REPO="https://github.com/rifuki/dotfiles.git"
 _os="$(uname)"
 
 echo ""
-echo -e "${BOLD}${MAGENTA}╔══════════════════════════════════════════════════╗${NC}"
-echo -e "${BOLD}${MAGENTA}║              dotfiles installer                  ║${NC}"
-echo -e "${BOLD}${MAGENTA}╚══════════════════════════════════════════════════╝${NC}"
+echo -e "${BOLD}${CYAN}╔══════════════════════════════════════════════════╗${NC}"
+echo -e "${BOLD}${CYAN}║              dotfiles installer                  ║${NC}"
+echo -e "${BOLD}${CYAN}╚══════════════════════════════════════════════════╝${NC}"
 echo ""
 
 # Clone repo if not exists
 if [[ ! -d "$DOTFILES_DIR/.git" ]]; then
   echo -e "  ${DIM}→ Cloning dotfiles...${NC}"
-  git clone --branch main "$DOTFILES_REPO" "$DOTFILES_DIR"
+  git clone --branch main "$DOTFILES_REPO" "$DOTFILES_DIR" 2>&1 | grep -v "^$" || true
+  echo -e "  ${GREEN}✔${NC} Cloned successfully"
 else
-  echo -e "  ${DIM}→ Updating dotfiles...${NC}"
-  git -C "$DOTFILES_DIR" fetch --all 2>/dev/null || true
-  git -C "$DOTFILES_DIR" checkout main 2>/dev/null || true
-  git -C "$DOTFILES_DIR" pull --ff-only 2>/dev/null || true
+  echo -e "  ${DIM}→ Checking for updates...${NC}"
+  git -C "$DOTFILES_DIR" fetch --all >/dev/null 2>&1 || true
+  git -C "$DOTFILES_DIR" checkout main >/dev/null 2>&1 || true
+  _pull_output=$(git -C "$DOTFILES_DIR" pull --ff-only 2>&1) || true
+  if echo "$_pull_output" | grep -q "Already up to date"; then
+    echo -e "  ${GREEN}✔${NC} Already up to date"
+  else
+    echo -e "  ${GREEN}✔${NC} Updated successfully"
+  fi
 fi
 
 if [[ "$_os" == "Darwin" ]]; then
