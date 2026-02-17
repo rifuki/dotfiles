@@ -364,6 +364,8 @@ if [ "${SELECTED[0]}" != "1" ]; then
       done_msg "Cloned to $DOTFILES_DIR"
     else
       done_msg "Repo exists, pulling latest..."
+      git -C "$DOTFILES_DIR" fetch --all 2>/dev/null || true
+      git -C "$DOTFILES_DIR" checkout main 2>/dev/null || true
       git -C "$DOTFILES_DIR" pull --ff-only 2>/dev/null || warn_msg "Could not pull"
     fi
   fi
