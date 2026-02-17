@@ -16,6 +16,7 @@ gray='\033[38;2;108;117;125m'    # #6C757D
 green='\033[38;2;80;250;123m'    # #50FA7B
 pink='\033[38;2;255;121;198m'    # #FF79C6
 peach='\033[38;2;240;202;164m'   # #f0caa4
+yellow='\033[38;2;241;250;140m'  # #F1FA8C
 reset='\033[0m'
 bold='\033[1m'
 
@@ -24,6 +25,12 @@ time_str=$(date +%H:%M:%S)
 
 # ── User ──────────────────────────────────────────────────────────────────────
 user_str=$(whoami)
+
+# ── SSH indicator ─────────────────────────────────────────────────────────────
+ssh_indicator=""
+if [ -n "$SSH_CONNECTION" ] || [ -n "$SSH_CLIENT" ] || [ -n "$SSH_TTY" ]; then
+    ssh_indicator="${bold}${yellow}SSH${reset} "
+fi
 
 # ── Directory (shorten $HOME to ~) ───────────────────────────────────────────
 home_dir="$HOME"
@@ -80,6 +87,9 @@ fi
 
 # ── Assemble the line ─────────────────────────────────────────────────────────
 line=""
+
+# SSH indicator (if connected via SSH)
+line="${line}${ssh_indicator}"
 
 # time
 line="${line}${bold}${cyan}${time_str}${reset}"
