@@ -341,35 +341,8 @@ if [ "${SELECTED[0]}" != "1" ]; then
   sudo apt install -y git curl wget unzip fontconfig software-properties-common
   done_msg "Essential tools ready"
 
-  # ========== Dotfiles Repo ==========
-  step "Checking dotfiles repository"
+  # ========== Dotfiles Paths ==========
   DOTFILES_DIR="$HOME/.dotfiles"
-  DOTFILES_REPO="https://github.com/rifuki/dotfiles.git"
-
-  SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-  _repo_dir="$(dirname "$SCRIPT_DIR")"
-  if [ -d "$_repo_dir/.git" ] && git -C "$_repo_dir" rev-parse --git-dir > /dev/null 2>&1; then
-    if [ "$_repo_dir" != "$DOTFILES_DIR" ]; then
-      fail_msg "install.sh must be run from $HOME/.dotfiles/vps"
-      echo -e "    ${DIM}Found at: $SCRIPT_DIR${NC}"
-      echo -e "    ${DIM}1. bash <(curl -fsSL https://dotfiles.rifuki.dev/vps)${NC}"
-      echo -e "    ${DIM}2. mv $_repo_dir $DOTFILES_DIR && bash $DOTFILES_DIR/vps/install.sh${NC}"
-      exit 1
-    fi
-    done_msg "Running from: $DOTFILES_DIR"
-  else
-    if [ ! -d "$DOTFILES_DIR/.git" ]; then
-      info_msg "Cloning dotfiles repo..."
-      git clone --branch main "$DOTFILES_REPO" "$DOTFILES_DIR"
-      done_msg "Cloned to $DOTFILES_DIR"
-    else
-      done_msg "Repo exists, pulling latest..."
-      git -C "$DOTFILES_DIR" fetch --all 2>/dev/null || true
-      git -C "$DOTFILES_DIR" checkout main 2>/dev/null || true
-      git -C "$DOTFILES_DIR" pull --ff-only 2>/dev/null || warn_msg "Could not pull"
-    fi
-  fi
-
   SHARED_DIR="$DOTFILES_DIR/shared"
   PLATFORM_DIR="$DOTFILES_DIR/vps"
 
@@ -432,7 +405,6 @@ else
   # ========== Resume Mode: load pre-selected state ==========
   IFS=',' read -ra SELECTED <<< "$_RESUME_SEL"
   DOTFILES_DIR="$HOME/.dotfiles"
-  DOTFILES_REPO="https://github.com/rifuki/dotfiles.git"
   SHARED_DIR="$DOTFILES_DIR/shared"
   PLATFORM_DIR="$DOTFILES_DIR/vps"
   echo ""

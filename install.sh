@@ -9,10 +9,10 @@ BOLD='\033[1m'
 DIM='\033[2m'
 NC='\033[0m'
 
+DOTFILES_DIR="$HOME/.dotfiles"
+DOTFILES_REPO="https://github.com/rifuki/dotfiles.git"
+
 _os="$(uname)"
-_script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" 2>/dev/null && pwd)"
-_pipe_mode=false
-[[ "$_script_dir" == "/dev/fd" || "$_script_dir" == "/proc/self/fd" ]] && _pipe_mode=true
 
 echo ""
 echo -e "${BOLD}${MAGENTA}╔══════════════════════════════════════════════════╗${NC}"
@@ -20,25 +20,27 @@ echo -e "${BOLD}${MAGENTA}║              dotfiles installer                  �
 echo -e "${BOLD}${MAGENTA}╚══════════════════════════════════════════════════╝${NC}"
 echo ""
 
-_run() {
-  local platform="$1"; shift
-  if [[ "$_pipe_mode" == true ]]; then
-    bash <(curl -fsSL "https://dotfiles.rifuki.dev/${platform}") "$@"
-  else
-    exec "$_script_dir/${platform}/install.sh" "$@"
-  fi
-}
+# Clone repo if not exists
+if [[ ! -d "$DOTFILES_DIR/.git" ]]; then
+  echo -e "  ${DIM}→ Cloning dotfiles...${NC}"
+  git clone --branch main "$DOTFILES_REPO" "$DOTFILES_DIR"
+else
+  echo -e "  ${DIM}→ Updating dotfiles...${NC}"
+  git -C "$DOTFILES_DIR" fetch --all 2>/dev/null || true
+  git -C "$DOTFILES_DIR" checkout main 2>/dev/null || true
+  git -C "$DOTFILES_DIR" pull --ff-only 2>/dev/null || true
+fi
 
 if [[ "$_os" == "Darwin" ]]; then
   echo -e "  ${GREEN}✔${NC} Detected: ${BOLD}${CYAN}macOS${NC}"
   echo -e "  ${DIM}→ Running macos/install.sh${NC}"
   echo ""
-  _run macos "$@"
+  exec "$DOTFILES_DIR/macos/install.sh" "$@"
 elif [[ "$_os" == "Linux" ]]; then
   echo -e "  ${GREEN}✔${NC} Detected: ${BOLD}${CYAN}Linux${NC}"
   echo -e "  ${DIM}→ Running vps/install.sh${NC}"
   echo ""
-  _run vps "$@"
+  exec "$DOTFILES_DIR/vps/install.sh" "$@"
 else
   echo -e "  ${RED}✖${NC} Unsupported OS: ${BOLD}$_os${NC}"
   echo -e "  ${DIM}Supported: macOS (Darwin), Linux (Ubuntu/Debian)${NC}"
