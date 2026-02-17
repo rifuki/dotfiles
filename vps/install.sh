@@ -360,7 +360,7 @@ if [ "${SELECTED[0]}" != "1" ]; then
   else
     if [ ! -d "$DOTFILES_DIR/.git" ]; then
       info_msg "Cloning dotfiles repo..."
-      git clone --branch unified "$DOTFILES_REPO" "$DOTFILES_DIR"
+      git clone --branch main "$DOTFILES_REPO" "$DOTFILES_DIR"
       done_msg "Cloned to $DOTFILES_DIR"
     else
       done_msg "Repo exists, pulling latest..."
