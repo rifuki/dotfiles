@@ -432,16 +432,21 @@ fi
 # ========== AI CLI Tools (index 8) ==========
 if [ "${SELECTED[8]}" = "1" ]; then
   step "Removing AI CLI Tools"
-  export NVM_DIR="$HOME/.nvm"
-  [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
-  if command -v npm &>/dev/null; then
-    npm uninstall -g @anthropic-ai/claude-code 2>/dev/null && done_msg "Claude Code removed" || true
-    npm uninstall -g @google/gemini-cli 2>/dev/null && done_msg "Gemini CLI removed" || true
+  # Claude Code (native installer)
+  if command -v claude &>/dev/null; then
+    rm -f "$HOME/.local/bin/claude" "$HOME/.claude/bin/claude" 2>/dev/null || true
+    done_msg "Claude Code binary removed"
   fi
   rm -rf "$HOME/.claude"
   rm -f "$HOME/.claude.json"
   rm -f "$HOME"/.claude.json.backup.*
   done_msg "Claude Code files removed"
+  # Gemini CLI (npm)
+  export NVM_DIR="$HOME/.nvm"
+  [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
+  if command -v npm &>/dev/null; then
+    npm uninstall -g @google/gemini-cli 2>/dev/null && done_msg "Gemini CLI removed" || true
+  fi
   rm -rf "$HOME/.gemini"
   done_msg "Gemini CLI files removed"
 fi

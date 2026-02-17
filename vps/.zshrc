@@ -39,14 +39,14 @@ alias n='nvim'
 alias fucking='sudo'
 
 rm() {
-  local -a paths
-  for arg in "$@"; do
-    [[ "$arg" == -* ]] || paths+=("$arg")
-  done
   if command -v trash-put &>/dev/null; then
+    local -a paths
+    for arg in "$@"; do
+      [[ "$arg" == -* ]] || paths+=("$arg")
+    done
     trash-put "${paths[@]}"
   else
-    command rm -i "${paths[@]}"
+    command rm -i "$@"
   fi
 }
 

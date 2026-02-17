@@ -177,7 +177,7 @@ else STATUS+=(""); SELECTED+=(1); EXTERNAL+=(0); fi
 
 # 8: AI CLI Tools
 LABELS+=("AI CLI Tools")
-DESCRIPTIONS+=("Claude Code + Gemini CLI (requires NVM)")
+DESCRIPTIONS+=("Claude Code (native) + Gemini CLI (requires NVM)")
 if command -v claude &>/dev/null && command -v gemini &>/dev/null; then STATUS+=("installed"); SELECTED+=(0); EXTERNAL+=(0)
 elif command -v claude &>/dev/null || command -v gemini &>/dev/null; then STATUS+=("partial"); SELECTED+=(1); EXTERNAL+=(0)
 else STATUS+=(""); SELECTED+=(1); EXTERNAL+=(0); fi
@@ -289,10 +289,8 @@ while true; do
   # Dependency: dotfiles .zshrc requires Oh My Zsh (3) — must install with APT (1)
   [ "${SELECTED[1]}" = "1" ] && SELECTED[3]=1
   [ "${SELECTED[3]}" = "0" ] && SELECTED[1]=0
-  # Dependency: AI CLI Tools (8) requires NVM (6) for npm
-  [ "${SELECTED[8]}" = "1" ] && SELECTED[6]=1
-  # Deselect NVM (6) → auto-deselect AI CLI Tools (8)
-  [ "${SELECTED[6]}" = "0" ] && SELECTED[8]=0
+  # Dependency: Gemini CLI (part of 8) requires NVM (6) for npm
+  # NVM is no longer required for Claude Code (native installer)
 done
 
 # ========== Confirmation ==========
@@ -741,26 +739,27 @@ fi
 # ========== 8: AI CLI Tools ==========
 if [ "${SELECTED[8]}" = "1" ]; then
   step "Installing AI CLI Tools"
-  # Ensure npm is available
+  # Claude Code (native installer — no npm required)
+  if ! command -v claude &>/dev/null; then
+    info_msg "Installing Claude Code (native)..."
+    curl -fsSL https://claude.ai/install.sh | bash
+    done_msg "Claude Code installed"
+  else
+    done_msg "Claude Code already installed"
+  fi
+  # Gemini CLI (requires npm)
   export NVM_DIR="$HOME/.nvm"
   [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
-  if ! command -v npm &>/dev/null; then
-    warn_msg "npm not found — NVM/Node required for AI CLI Tools"
-  else
-    if ! command -v claude &>/dev/null; then
-      info_msg "Installing Claude Code..."
-      npm install -g @anthropic-ai/claude-code
-      done_msg "Claude Code installed"
-    else
-      done_msg "Claude Code already installed"
-    fi
-    if ! command -v gemini &>/dev/null; then
+  if ! command -v gemini &>/dev/null; then
+    if command -v npm &>/dev/null; then
       info_msg "Installing Gemini CLI..."
       npm install -g @google/gemini-cli
       done_msg "Gemini CLI installed"
     else
-      done_msg "Gemini CLI already installed"
+      warn_msg "npm not found — NVM/Node required for Gemini CLI"
     fi
+  else
+    done_msg "Gemini CLI already installed"
   fi
   # Claude statusline
   mkdir -p "$HOME/.claude"
