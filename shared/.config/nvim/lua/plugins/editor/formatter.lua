@@ -14,6 +14,7 @@ return {
             yaml = { "prettierd" },
             markdown = { "prettierd" },
             lua = { "stylua" },
+            solidity = { "forge_fmt" },
         },
     },
 }

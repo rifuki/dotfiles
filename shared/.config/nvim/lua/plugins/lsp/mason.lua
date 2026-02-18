@@ -22,6 +22,7 @@ return {
                 "cssls",
                 "html",
                 "bashls",
+                "solidity_ls_nomicfoundation",
             },
             automatic_installation = true,
         })

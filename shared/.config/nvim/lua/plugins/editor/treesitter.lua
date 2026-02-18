@@ -21,9 +21,11 @@ return {
             "markdown",
             "markdown_inline",
             "caddy",
+            "solidity",
         },
         highlight = {
             enable = true,
+            disable = { "move" }, -- no tree-sitter parser; using custom vim syntax via move-lang.lua
         },
         indent = {
             enable = true,
