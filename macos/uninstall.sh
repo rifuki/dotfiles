@@ -508,6 +508,15 @@ if [ "${SELECTED[14]}" = "1" ]; then
   fi
   rm -rf "$HOME/.opencode"
   done_msg "OpenCode files removed"
+  # GitHub Copilot CLI (copilot-cli cask or github-copilot formula)
+  if brew list --cask copilot-cli &>/dev/null 2>&1; then
+    brew uninstall --cask copilot-cli && done_msg "Copilot CLI (cask) removed" || warn_msg "Failed to remove Copilot CLI cask"
+  elif brew list github-copilot &>/dev/null 2>&1; then
+    brew uninstall github-copilot && done_msg "GitHub Copilot CLI (formula) removed" || warn_msg "Failed to remove GitHub Copilot CLI"
+  fi
+  rm -rf "$HOME/.config/gh-copilot"
+  rm -rf "$HOME/.config/github-copilot"
+  done_msg "GitHub Copilot CLI files removed"
 fi
 
 # ========== SSH Keys (index 15) ==========

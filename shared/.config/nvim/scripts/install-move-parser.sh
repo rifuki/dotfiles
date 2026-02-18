@@ -8,9 +8,10 @@
 set -e
 
 PARSER_DIR=$(nvim --headless -c "echo stdpath('data')" -c "qa" 2>&1 | tr -d '\r')
-DEST="$PARSER_DIR/lazy/nvim-treesitter/parser/move.so"
+DEST="$PARSER_DIR/site/parser/move.so"
 TREE_SITTER_PATH="external-crates/move/tooling/tree-sitter"
 WORK_DIR=$(mktemp -d)
+mkdir -p "$(dirname "$DEST")"
 
 echo "==> Installing Move treesitter parser..."
 echo "    Destination: $DEST"

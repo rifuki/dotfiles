@@ -338,6 +338,8 @@ while true; do
   [ "${SELECTED[11]}" = "1" ] && SELECTED[8]=1
   # Dependency: sui-move-analyzer (13) requires Rust (8)
   [ "${SELECTED[13]}" = "1" ] && SELECTED[8]=1
+  # Dependency: AI CLI Tools (13) includes Copilot CLI which requires gh (part of 0)
+  [ "${SELECTED[13]}" = "1" ] && SELECTED[0]=1
   # Deselect Rust (8) → auto-deselect Solana AVM (11) and sui-move-analyzer (13)
   [ "${SELECTED[8]}" = "0" ] && SELECTED[11]=0
   [ "${SELECTED[8]}" = "0" ] && SELECTED[13]=0
@@ -749,10 +751,29 @@ if [ "${SELECTED[14]}" = "1" ]; then
     ln -sf "$SHARED_DIR/.claude/statusline-command.sh" "$HOME/.claude/statusline-command.sh"
     done_msg "~/.claude/statusline-command.sh"
   fi
+  # GitHub Copilot CLI (try cask first, fallback to formula)
+  if ! brew list --cask copilot-cli &>/dev/null 2>&1 && \
+     ! brew list github-copilot &>/dev/null 2>&1 && \
+     ! (command -v gh &>/dev/null && gh extension list 2>/dev/null | grep -q "github.com/github/copilot"); then
+    info_msg "Installing GitHub Copilot CLI..."
+    # Try cask first (official), fallback to formula if fails
+    if brew install --cask copilot-cli 2>/dev/null; then
+      done_msg "GitHub Copilot CLI installed (cask)"
+    else
+      warn_msg "Cask install failed, trying formula..."
+      if brew install github-copilot 2>/dev/null; then
+        done_msg "GitHub Copilot CLI installed (formula)"
+      else
+        warn_msg "Both cask and formula failed — install manually: brew install --cask copilot-cli"
+      fi
+    fi
+  else
+    done_msg "GitHub Copilot CLI already installed"
+  fi
 fi
 
-# ========== 15: SSH Keys (iCloud) ==========
-if [ "${SELECTED[15]}" = "1" ]; then
+# ========== 14: SSH Keys (iCloud) ==========
+if [ "${SELECTED[14]}" = "1" ]; then
   step "Setting up SSH keys from iCloud"
   _icloud_base="$HOME/Library/Mobile Documents/com~apple~CloudDocs"
   _ssh_target="$_icloud_base/rifuki/.ssh"
@@ -802,8 +823,8 @@ if [ "${SELECTED[15]}" = "1" ]; then
   fi
 fi
 
-# ========== 16: macOS Defaults ==========
-if [ "${SELECTED[16]}" = "1" ]; then
+# ========== 15: macOS Defaults ==========
+if [ "${SELECTED[15]}" = "1" ]; then
   step "Applying macOS defaults"
   bash "$PLATFORM_DIR/macos-defaults.sh"
 fi
