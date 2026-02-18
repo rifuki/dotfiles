@@ -3,7 +3,7 @@ set -e
 
 # ========== Packages ==========
 BREW_FORMULAE=(neovim tmux trash htop neofetch yazi fzf gh ripgrep starship)
-TOOL_NAMES=(nvim starship ghostty yazi tmux neofetch wakatime orbstack yabai skhd solana anchor claude gemini kimi opencode sui suiup walrus mvr gh ripgrep trash htop hot)
+TOOL_NAMES=(nvim starship ghostty yazi tmux neofetch wakatime orbstack yabai skhd solana anchor claude gemini kimi opencode sui suiup walrus mvr gh ripgrep trash htop hot mise)
 
 # ========== Colors (Miku Cyberpunk Theme) ==========
 # Cyan: #00D9FF | Green: #50FA7B | Magenta: #FF79C6 | Purple: #BD93F9
@@ -132,52 +132,58 @@ else
   DETECTED+=(0); SELECTED+=(0); EXTERNAL+=(0)
 fi
 
-# 6: Oh My Zsh
+# 6: mise
+LABELS+=("Mise")
+DESCRIPTIONS+=("~/.local/share/mise, brew uninstall mise")
+if command -v mise &>/dev/null || [ -d "$HOME/.local/share/mise" ]; then DETECTED+=(1); SELECTED+=(1); EXTERNAL+=(0)
+else DETECTED+=(0); SELECTED+=(0); EXTERNAL+=(0); fi
+
+# 7: Oh My Zsh
 LABELS+=("Oh My Zsh")
 DESCRIPTIONS+=("~/.oh-my-zsh")
 if [ -d "$HOME/.oh-my-zsh" ]; then DETECTED+=(1); SELECTED+=(1); EXTERNAL+=(0); else DETECTED+=(0); SELECTED+=(0); EXTERNAL+=(0); fi
 
-# 7: Rust
+# 8: Rust
 LABELS+=("Rust")
 DESCRIPTIONS+=("~/.cargo, ~/.rustup")
 if [ -d "$HOME/.cargo" ] || [ -d "$HOME/.rustup" ]; then DETECTED+=(1); SELECTED+=(1); EXTERNAL+=(0); else DETECTED+=(0); SELECTED+=(0); EXTERNAL+=(0); fi
 
-# 8: Bun
+# 9: Bun
 LABELS+=("Bun")
 DESCRIPTIONS+=("~/.bun")
 if [ -d "$HOME/.bun" ]; then DETECTED+=(1); SELECTED+=(1); EXTERNAL+=(0); else DETECTED+=(0); SELECTED+=(0); EXTERNAL+=(0); fi
 
-# 9: NVM
+# 10: NVM
 LABELS+=("NVM")
 DESCRIPTIONS+=("~/.nvm")
 if [ -d "$HOME/.nvm" ]; then DETECTED+=(1); SELECTED+=(1); EXTERNAL+=(0); else DETECTED+=(0); SELECTED+=(0); EXTERNAL+=(0); fi
 
-# 10: Solana + AVM
+# 11: Solana + AVM
 LABELS+=("Solana + AVM")
 DESCRIPTIONS+=("~/.local/share/solana, ~/.avm")
 if command -v solana &>/dev/null || [ -d "$HOME/.local/share/solana" ]; then DETECTED+=(1); SELECTED+=(1); EXTERNAL+=(0); else DETECTED+=(0); SELECTED+=(0); EXTERNAL+=(0); fi
 
-# 11: suiup + Sui
-LABELS+=("suiup + Sui")
+# 12: suiup + Sui
+LABELS+=("Suiup + Sui")
 DESCRIPTIONS+=("~/.local/bin/sui*, ~/.sui")
 if [ -f "$HOME/.local/bin/suiup" ] || [ -d "$HOME/.sui" ]; then DETECTED+=(1); SELECTED+=(1); EXTERNAL+=(0); else DETECTED+=(0); SELECTED+=(0); EXTERNAL+=(0); fi
 
-# 12: sui-move-analyzer
+# 13: sui-move-analyzer
 LABELS+=("sui-move-analyzer")
 DESCRIPTIONS+=("~/.cargo/bin/sui-move-analyzer")
 if [ -f "$HOME/.cargo/bin/sui-move-analyzer" ]; then DETECTED+=(1); SELECTED+=(1); EXTERNAL+=(0); else DETECTED+=(0); SELECTED+=(0); EXTERNAL+=(0); fi
 
-# 13: AI CLI Tools
+# 14: AI CLI Tools
 LABELS+=("AI CLI Tools")
 DESCRIPTIONS+=("Claude Code, Gemini CLI, Kimi CLI, OpenCode")
 if command -v claude &>/dev/null || command -v gemini &>/dev/null || command -v kimi &>/dev/null || command -v opencode &>/dev/null; then DETECTED+=(1); SELECTED+=(1); EXTERNAL+=(0); else DETECTED+=(0); SELECTED+=(0); EXTERNAL+=(0); fi
 
-# 14: SSH Keys (iCloud)
+# 15: SSH Keys (iCloud)
 LABELS+=("SSH Keys (iCloud)")
 DESCRIPTIONS+=("~/.ssh symlink only")
 if [ -L "$HOME/.ssh" ]; then DETECTED+=(1); SELECTED+=(1); EXTERNAL+=(0); else DETECTED+=(0); SELECTED+=(0); EXTERNAL+=(0); fi
 
-# 15: Deep Clean
+# 16: Deep Clean
 LABELS+=("Deep Clean")
 DESCRIPTIONS+=(".cache, .local, .npm, .wakatime, .gitconfig")
 DETECTED+=(1); SELECTED+=(0); EXTERNAL+=(0)
@@ -261,12 +267,12 @@ while true; do
     echo -e "\n  ${YELLOW}⏭️  Uninstallation cancelled.${NC}"
     exit 0
   fi
-  # Dependency: Rust (7) selected → auto-select Solana AVM (10) and sui-move-analyzer (12) if detected
-  [ "${SELECTED[7]}" = "1" ] && [ "${DETECTED[10]}" = "1" ] && [ "${EXTERNAL[10]}" != "1" ] && SELECTED[10]=1
-  [ "${SELECTED[7]}" = "1" ] && [ "${DETECTED[12]}" = "1" ] && [ "${EXTERNAL[12]}" != "1" ] && SELECTED[12]=1
-  # Deselect Rust (7) → auto-deselect Solana AVM (10) and sui-move-analyzer (12)
-  [ "${SELECTED[7]}" = "0" ] && SELECTED[10]=0
-  [ "${SELECTED[7]}" = "0" ] && SELECTED[12]=0
+  # Dependency: Rust (8) selected → auto-select Solana AVM (11) and sui-move-analyzer (13) if detected
+  [ "${SELECTED[8]}" = "1" ] && [ "${DETECTED[11]}" = "1" ] && [ "${EXTERNAL[11]}" != "1" ] && SELECTED[11]=1
+  [ "${SELECTED[8]}" = "1" ] && [ "${DETECTED[13]}" = "1" ] && [ "${EXTERNAL[13]}" != "1" ] && SELECTED[13]=1
+  # Deselect Rust (8) → auto-deselect Solana AVM (11) and sui-move-analyzer (13)
+  [ "${SELECTED[8]}" = "0" ] && SELECTED[11]=0
+  [ "${SELECTED[8]}" = "0" ] && SELECTED[13]=0
 done
 
 # ========== Confirmation Summary ==========
@@ -398,37 +404,49 @@ if [ "${SELECTED[5]}" = "1" ]; then
   fi
 fi
 
-# ========== Oh My Zsh (index 6) ==========
+# ========== mise (index 6) ==========
 if [ "${SELECTED[6]}" = "1" ]; then
+  step "Removing mise"
+  if brew list mise &>/dev/null; then
+    brew uninstall mise && done_msg "mise (brew) removed" || warn_msg "Failed to remove mise via brew"
+  fi
+  rm -rf "$HOME/.local/share/mise"
+  rm -rf "$HOME/.config/mise"
+  rm -rf "$HOME/.cache/mise"
+  done_msg "mise data removed"
+fi
+
+# ========== Oh My Zsh (index 7) ==========
+if [ "${SELECTED[7]}" = "1" ]; then
   step "Removing Oh My Zsh"
   rm -rf "$HOME/.oh-my-zsh"
   done_msg "Oh My Zsh removed"
 fi
 
-# ========== Rust (index 7) ==========
-if [ "${SELECTED[7]}" = "1" ]; then
+# ========== Rust (index 8) ==========
+if [ "${SELECTED[8]}" = "1" ]; then
   step "Removing Rust"
   rm -rf "$HOME/.cargo"
   rm -rf "$HOME/.rustup"
   done_msg "Rust removed"
 fi
 
-# ========== Bun (index 8) ==========
-if [ "${SELECTED[8]}" = "1" ]; then
+# ========== Bun (index 9) ==========
+if [ "${SELECTED[9]}" = "1" ]; then
   step "Removing Bun"
   rm -rf "$HOME/.bun"
   done_msg "Bun removed"
 fi
 
-# ========== NVM (index 9) ==========
-if [ "${SELECTED[9]}" = "1" ]; then
+# ========== NVM (index 10) ==========
+if [ "${SELECTED[10]}" = "1" ]; then
   step "Removing NVM"
   rm -rf "$HOME/.nvm"
   done_msg "NVM removed"
 fi
 
-# ========== Solana + AVM (index 10) ==========
-if [ "${SELECTED[10]}" = "1" ]; then
+# ========== Solana + AVM (index 11) ==========
+if [ "${SELECTED[11]}" = "1" ]; then
   step "Removing Solana + AVM"
   rm -rf "$HOME/.local/share/solana"
   rm -rf "$HOME/.config/solana"
@@ -439,8 +457,8 @@ if [ "${SELECTED[10]}" = "1" ]; then
   done_msg "AVM + Anchor removed"
 fi
 
-# ========== suiup + Sui (index 11) ==========
-if [ "${SELECTED[11]}" = "1" ]; then
+# ========== suiup + Sui (index 12) ==========
+if [ "${SELECTED[12]}" = "1" ]; then
   step "Removing suiup + Sui"
   rm -f "$HOME/.local/bin/suiup"
   done_msg "suiup removed"
@@ -456,15 +474,15 @@ if [ "${SELECTED[11]}" = "1" ]; then
   done
 fi
 
-# ========== sui-move-analyzer (index 12) ==========
-if [ "${SELECTED[12]}" = "1" ]; then
+# ========== sui-move-analyzer (index 13) ==========
+if [ "${SELECTED[13]}" = "1" ]; then
   step "Removing sui-move-analyzer"
   rm -f "$HOME/.cargo/bin/sui-move-analyzer"
   done_msg "sui-move-analyzer removed"
 fi
 
-# ========== AI CLI Tools (index 13) ==========
-if [ "${SELECTED[13]}" = "1" ]; then
+# ========== AI CLI Tools (index 14) ==========
+if [ "${SELECTED[14]}" = "1" ]; then
   step "Removing AI CLI Tools"
   if brew list --cask claude-code &>/dev/null; then
     brew uninstall --cask claude-code && done_msg "Claude Code removed" || warn_msg "Failed to remove Claude Code"
@@ -492,8 +510,8 @@ if [ "${SELECTED[13]}" = "1" ]; then
   done_msg "OpenCode files removed"
 fi
 
-# ========== SSH Keys (index 14) ==========
-if [ "${SELECTED[14]}" = "1" ]; then
+# ========== SSH Keys (index 15) ==========
+if [ "${SELECTED[15]}" = "1" ]; then
   step "Removing SSH Keys symlink"
   if [ -L "$HOME/.ssh" ]; then
     rm -f "$HOME/.ssh"
@@ -510,8 +528,8 @@ rm -f "$HOME/.node_repl_history"
 rm -rf "$HOME/.config/github-copilot" 2>/dev/null || true
 done_msg "Cache files removed"
 
-# ========== Deep Clean (index 15) ==========
-if [ "${SELECTED[15]}" = "1" ]; then
+# ========== Deep Clean (index 16) ==========
+if [ "${SELECTED[16]}" = "1" ]; then
   step "Deep cleaning residue files"
 
   # Kill running processes that might recreate files

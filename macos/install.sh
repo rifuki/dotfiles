@@ -189,7 +189,13 @@ else
   STATUS+=(""); SELECTED+=(0); EXTERNAL+=(0)
 fi
 
-# 6: Oh My Zsh
+# 6: mise
+LABELS+=("Mise")
+DESCRIPTIONS+=("Polyglot version manager (foundry, node, etc)")
+if command -v mise &>/dev/null; then STATUS+=("installed"); SELECTED+=(0); EXTERNAL+=(0)
+else STATUS+=(""); SELECTED+=(1); EXTERNAL+=(0); fi
+
+# 7: Oh My Zsh
 LABELS+=("Oh My Zsh")
 DESCRIPTIONS+=("Zsh framework + plugins")
 if [ -d "$HOME/.oh-my-zsh" ]; then STATUS+=("installed"); SELECTED+=(0); EXTERNAL+=(0); else STATUS+=(""); SELECTED+=(1); EXTERNAL+=(0); fi
@@ -215,7 +221,7 @@ DESCRIPTIONS+=("Solana CLI + Anchor Version Manager")
 if command -v solana &>/dev/null || [ -f "$HOME/.local/share/solana/install/active_release/bin/solana" ]; then STATUS+=("installed"); SELECTED+=(0); EXTERNAL+=(0); else STATUS+=(""); SELECTED+=(1); EXTERNAL+=(0); fi
 
 # 11: suiup + Sui Testnet
-LABELS+=("suiup + Sui Testnet")
+LABELS+=("Suiup + Sui Testnet")
 DESCRIPTIONS+=("Sui version manager + latest testnet binary")
 if [ -f "$HOME/.local/bin/suiup" ]; then STATUS+=("installed"); SELECTED+=(0); EXTERNAL+=(0); else STATUS+=(""); SELECTED+=(1); EXTERNAL+=(0); fi
 
@@ -328,13 +334,13 @@ while true; do
     echo -e "\n  ${YELLOW}⏭️  Installation cancelled.${NC}"
     exit 0
   fi
-  # Dependency: Solana + AVM (10) requires Rust (7)
-  [ "${SELECTED[10]}" = "1" ] && SELECTED[7]=1
-  # Dependency: sui-move-analyzer (12) requires Rust (7)
-  [ "${SELECTED[12]}" = "1" ] && SELECTED[7]=1
-  # Deselect Rust (7) → auto-deselect Solana AVM (10) and sui-move-analyzer (12)
-  [ "${SELECTED[7]}" = "0" ] && SELECTED[10]=0
-  [ "${SELECTED[7]}" = "0" ] && SELECTED[12]=0
+  # Dependency: Solana + AVM (11) requires Rust (8)
+  [ "${SELECTED[11]}" = "1" ] && SELECTED[8]=1
+  # Dependency: sui-move-analyzer (13) requires Rust (8)
+  [ "${SELECTED[13]}" = "1" ] && SELECTED[8]=1
+  # Deselect Rust (8) → auto-deselect Solana AVM (11) and sui-move-analyzer (13)
+  [ "${SELECTED[8]}" = "0" ] && SELECTED[11]=0
+  [ "${SELECTED[8]}" = "0" ] && SELECTED[13]=0
 done
 
 # ========== Confirmation ==========
@@ -555,8 +561,20 @@ if [ "${SELECTED[5]}" = "1" ]; then
   fi
 fi
 
-# ========== 6: Oh My Zsh ==========
+# ========== 6: mise ==========
 if [ "${SELECTED[6]}" = "1" ]; then
+  step "Installing mise"
+  if ! command -v mise &>/dev/null; then
+    info_msg "Installing mise..."
+    brew install mise
+    done_msg "mise installed: $(mise --version 2>/dev/null)"
+  else
+    done_msg "mise already installed: $(mise --version 2>/dev/null)"
+  fi
+fi
+
+# ========== 7: Oh My Zsh ==========
+if [ "${SELECTED[7]}" = "1" ]; then
   step "Setting up Oh My Zsh"
   if [ ! -f "$HOME/.oh-my-zsh/oh-my-zsh.sh" ]; then
     info_msg "Installing Oh My Zsh..."
@@ -581,8 +599,8 @@ if [ "${SELECTED[6]}" = "1" ]; then
   done_msg "Plugins ready"
 fi
 
-# ========== 7: Rust ==========
-if [ "${SELECTED[7]}" = "1" ]; then
+# ========== 8: Rust ==========
+if [ "${SELECTED[8]}" = "1" ]; then
   step "Setting up Rust"
   if [ ! -f "$HOME/.cargo/bin/rustup" ]; then
     info_msg "Installing Rust (stable)..."
@@ -601,8 +619,8 @@ if [ "${SELECTED[7]}" = "1" ]; then
   fi
 fi
 
-# ========== 8: Bun ==========
-if [ "${SELECTED[8]}" = "1" ]; then
+# ========== 9: Bun ==========
+if [ "${SELECTED[9]}" = "1" ]; then
   step "Setting up Bun"
   if [ ! -f "$HOME/.bun/bin/bun" ]; then
     info_msg "Installing Bun..."
@@ -614,8 +632,8 @@ if [ "${SELECTED[8]}" = "1" ]; then
   fi
 fi
 
-# ========== 9: NVM + Node ==========
-if [ "${SELECTED[9]}" = "1" ]; then
+# ========== 10: NVM + Node ==========
+if [ "${SELECTED[10]}" = "1" ]; then
   step "Setting up NVM + Node 24"
   export NVM_DIR="$HOME/.nvm"
   if [ ! -s "$NVM_DIR/nvm.sh" ]; then
@@ -637,8 +655,8 @@ if [ "${SELECTED[9]}" = "1" ]; then
   nvm use 24
 fi
 
-# ========== 10: Solana + AVM ==========
-if [ "${SELECTED[10]}" = "1" ]; then
+# ========== 11: Solana + AVM ==========
+if [ "${SELECTED[11]}" = "1" ]; then
   step "Installing Solana + AVM"
   _solana_bin="$HOME/.local/share/solana/install/active_release/bin"
   if [ ! -f "$_solana_bin/solana" ]; then
@@ -670,8 +688,8 @@ if [ "${SELECTED[10]}" = "1" ]; then
   fi
 fi
 
-# ========== 11: suiup + Sui Testnet ==========
-if [ "${SELECTED[11]}" = "1" ]; then
+# ========== 12: suiup + Sui Testnet ==========
+if [ "${SELECTED[12]}" = "1" ]; then
   step "Installing suiup + Sui Testnet"
   if [ ! -f "$HOME/.local/bin/suiup" ]; then
     info_msg "Installing suiup..."
@@ -694,8 +712,8 @@ if [ "${SELECTED[11]}" = "1" ]; then
   fi
 fi
 
-# ========== 13: AI CLI Tools ==========
-if [ "${SELECTED[13]}" = "1" ]; then
+# ========== 14: AI CLI Tools ==========
+if [ "${SELECTED[14]}" = "1" ]; then
   step "Installing AI CLI Tools"
   if ! command -v claude &>/dev/null; then
     info_msg "Installing Claude Code..."
@@ -733,8 +751,8 @@ if [ "${SELECTED[13]}" = "1" ]; then
   fi
 fi
 
-# ========== 14: SSH Keys (iCloud) ==========
-if [ "${SELECTED[14]}" = "1" ]; then
+# ========== 15: SSH Keys (iCloud) ==========
+if [ "${SELECTED[15]}" = "1" ]; then
   step "Setting up SSH keys from iCloud"
   _icloud_base="$HOME/Library/Mobile Documents/com~apple~CloudDocs"
   _ssh_target="$_icloud_base/rifuki/.ssh"
@@ -784,8 +802,8 @@ if [ "${SELECTED[14]}" = "1" ]; then
   fi
 fi
 
-# ========== 15: macOS Defaults ==========
-if [ "${SELECTED[15]}" = "1" ]; then
+# ========== 16: macOS Defaults ==========
+if [ "${SELECTED[16]}" = "1" ]; then
   step "Applying macOS defaults"
   bash "$PLATFORM_DIR/macos-defaults.sh"
 fi
@@ -888,8 +906,8 @@ if [ "$SHELL" != "$(which zsh)" ]; then
   chsh -s "$(which zsh)" || warn_msg "chsh failed"
 fi
 
-# ========== 12: sui-move-analyzer ==========
-if [ "${SELECTED[12]}" = "1" ]; then
+# ========== 13: sui-move-analyzer ==========
+if [ "${SELECTED[13]}" = "1" ]; then
   step "Checking sui-move-analyzer"
   if [ ! -f "$HOME/.cargo/bin/sui-move-analyzer" ]; then
     if command -v cargo &>/dev/null; then

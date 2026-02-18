@@ -43,6 +43,8 @@ export NVM_DIR="$HOME/.nvm"
 
 [ -s "$HOME/.bun/_bun" ] && source "$HOME/.bun/_bun"
 
+command -v mise &>/dev/null && eval "$(mise activate zsh)"
+
 # ── Aliases ───────────────────────────
 alias n='nvim'
 alias fucking='sudo'
