@@ -740,7 +740,7 @@ if [ "${SELECTED[14]}" = "1" ]; then
   fi
   if ! command -v opencode &>/dev/null; then
     info_msg "Installing OpenCode..."
-    brew install opencode-ai/tap/opencode
+    brew install opencode
     done_msg "OpenCode installed"
   else
     done_msg "OpenCode already installed"

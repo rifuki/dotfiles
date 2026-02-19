@@ -479,6 +479,7 @@ if [ "${SELECTED[13]}" = "1" ]; then
   step "Removing sui-move-analyzer"
   rm -f "$HOME/.cargo/bin/sui-move-analyzer"
   done_msg "sui-move-analyzer removed"
+
 fi
 
 # ========== AI CLI Tools (index 14) ==========
@@ -503,8 +504,8 @@ if [ "${SELECTED[14]}" = "1" ]; then
   fi
   rm -rf "$HOME/.kimi"
   done_msg "Kimi CLI files removed"
-  if brew list opencode-ai/tap/opencode &>/dev/null; then
-    brew uninstall opencode-ai/tap/opencode && done_msg "OpenCode removed" || warn_msg "Failed to remove OpenCode"
+  if brew list opencode &>/dev/null; then
+    brew uninstall opencode && done_msg "OpenCode removed" || warn_msg "Failed to remove OpenCode"
   fi
   rm -rf "$HOME/.opencode"
   done_msg "OpenCode files removed"
