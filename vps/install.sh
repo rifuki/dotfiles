@@ -177,9 +177,15 @@ else STATUS+=(""); SELECTED+=(1); EXTERNAL+=(0); fi
 
 # 8: AI CLI Tools
 LABELS+=("AI CLI Tools")
-DESCRIPTIONS+=("Claude Code (native) + Gemini CLI (requires NVM)")
-if command -v claude &>/dev/null && command -v gemini &>/dev/null; then STATUS+=("installed"); SELECTED+=(0); EXTERNAL+=(0)
-elif command -v claude &>/dev/null || command -v gemini &>/dev/null; then STATUS+=("partial"); SELECTED+=(1); EXTERNAL+=(0)
+DESCRIPTIONS+=("Claude Code + Gemini CLI + Kimi CLI + OpenCode + GitHub Copilot CLI")
+_ai_count=0
+command -v claude &>/dev/null && ((_ai_count++)) || true
+command -v gemini &>/dev/null && ((_ai_count++)) || true
+command -v kimi &>/dev/null && ((_ai_count++)) || true
+command -v opencode &>/dev/null && ((_ai_count++)) || true
+command -v copilot &>/dev/null && ((_ai_count++)) || true
+if [ "$_ai_count" -eq 5 ]; then STATUS+=("installed"); SELECTED+=(0); EXTERNAL+=(0)
+elif [ "$_ai_count" -gt 0 ]; then STATUS+=("partial"); SELECTED+=(1); EXTERNAL+=(0)
 else STATUS+=(""); SELECTED+=(1); EXTERNAL+=(0); fi
 
 # 9: Swap (2GB)
@@ -760,6 +766,45 @@ if [ "${SELECTED[8]}" = "1" ]; then
     fi
   else
     done_msg "Gemini CLI already installed"
+  fi
+  # Kimi CLI (official install script via uv)
+  if ! command -v kimi &>/dev/null; then
+    info_msg "Installing Kimi CLI..."
+    curl -fsSL https://code.kimi.com/install.sh | bash
+    done_msg "Kimi CLI installed"
+  else
+    done_msg "Kimi CLI already installed"
+  fi
+  # OpenCode (official install script)
+  if ! command -v opencode &>/dev/null; then
+    info_msg "Installing OpenCode..."
+    curl -fsSL https://opencode.ai/install | bash
+    done_msg "OpenCode installed"
+  else
+    done_msg "OpenCode already installed"
+  fi
+  # GitHub Copilot CLI (binary from GitHub releases)
+  if ! command -v copilot &>/dev/null; then
+    info_msg "Installing GitHub Copilot CLI..."
+    _cp_ver=$(curl -fsSL https://api.github.com/repos/github/copilot-cli/releases/latest | grep '"tag_name"' | cut -d'"' -f4 | sed 's/^v//')
+    _cp_arch=$(uname -m)
+    case "$_cp_arch" in
+      x86_64)  _cp_target="x64" ;;
+      aarch64) _cp_target="arm64" ;;
+      *) warn_msg "Unsupported arch: $_cp_arch — skipping Copilot CLI"; _cp_target="" ;;
+    esac
+    if [ -n "$_cp_target" ]; then
+      _cp_url="https://github.com/github/copilot-cli/releases/download/v${_cp_ver}/copilot-linux-${_cp_target}.tar.gz"
+      curl -fsSL "$_cp_url" -o /tmp/copilot.tar.gz
+      tar -xzf /tmp/copilot.tar.gz -C /tmp/
+      mkdir -p "$HOME/.local/bin"
+      mv /tmp/copilot "$HOME/.local/bin/copilot"
+      chmod +x "$HOME/.local/bin/copilot"
+      rm -f /tmp/copilot.tar.gz
+      done_msg "GitHub Copilot CLI installed"
+    fi
+  else
+    done_msg "GitHub Copilot CLI already installed"
   fi
   # Claude statusline
   mkdir -p "$HOME/.claude"

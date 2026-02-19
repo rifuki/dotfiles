@@ -2,7 +2,7 @@
 set -e
 
 # ========== Tool Names for Deep Clean ==========
-TOOL_NAMES=(nvim starship yazi tmux neofetch claude gemini gh ripgrep htop fzf)
+TOOL_NAMES=(nvim starship yazi tmux neofetch claude gemini kimi opencode gh ripgrep htop fzf)
 
 # ========== Colors (Miku Cyberpunk Theme — VPS variant) ==========
 # Cyan: #00D9FF | Green: #50FA7B | Magenta: #FF79C6 | Purple: #BD93F9
@@ -163,8 +163,8 @@ fi
 
 # 8: AI CLI Tools
 LABELS+=("AI CLI Tools")
-DESCRIPTIONS+=("Claude Code + Gemini CLI")
-if command -v claude &>/dev/null || command -v gemini &>/dev/null; then DETECTED+=(1); SELECTED+=(1); EXTERNAL+=(0); else DETECTED+=(0); SELECTED+=(0); EXTERNAL+=(0); fi
+DESCRIPTIONS+=("Claude Code + Gemini CLI + Kimi CLI + OpenCode + GitHub Copilot CLI")
+if command -v claude &>/dev/null || command -v gemini &>/dev/null || command -v kimi &>/dev/null || command -v opencode &>/dev/null || command -v copilot &>/dev/null; then DETECTED+=(1); SELECTED+=(1); EXTERNAL+=(0); else DETECTED+=(0); SELECTED+=(0); EXTERNAL+=(0); fi
 
 # 9: Swap
 LABELS+=("Swap")
@@ -449,6 +449,23 @@ if [ "${SELECTED[8]}" = "1" ]; then
   fi
   rm -rf "$HOME/.gemini"
   done_msg "Gemini CLI files removed"
+  # Kimi CLI (uv tool)
+  if command -v uv &>/dev/null; then
+    uv tool uninstall kimi-cli 2>/dev/null && done_msg "Kimi CLI removed" || true
+  else
+    rm -f "$HOME/.local/bin/kimi"
+  fi
+  rm -rf "$HOME/.kimi"
+  done_msg "Kimi CLI files removed"
+  # OpenCode (official install script puts binary in ~/.opencode/bin)
+  rm -f "$HOME/.opencode/bin/opencode" "$HOME/.local/bin/opencode"
+  rm -rf "$HOME/.opencode"
+  done_msg "OpenCode removed"
+  # GitHub Copilot CLI (binary)
+  rm -f "$HOME/.local/bin/copilot"
+  rm -rf "$HOME/.config/gh-copilot"
+  rm -rf "$HOME/.config/github-copilot"
+  done_msg "GitHub Copilot CLI removed"
 fi
 
 # ========== Swap (index 9) ==========
