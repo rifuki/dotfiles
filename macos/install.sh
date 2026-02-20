@@ -232,14 +232,15 @@ if [ -f "$HOME/.cargo/bin/sui-move-analyzer" ]; then STATUS+=("installed"); SELE
 
 # 13: AI CLI Tools
 LABELS+=("AI CLI Tools")
-DESCRIPTIONS+=("Claude Code, Gemini CLI, Kimi CLI, OpenCode")
+DESCRIPTIONS+=("Claude Code, Gemini CLI, Kimi CLI, OpenCode, Antigravity")
 _ai_count=0
 command -v claude &>/dev/null && ((_ai_count++)) || true
 command -v gemini &>/dev/null && ((_ai_count++)) || true
 command -v kimi &>/dev/null && ((_ai_count++)) || true
 command -v opencode &>/dev/null && ((_ai_count++)) || true
-if [ "$_ai_count" -eq 4 ]; then STATUS+=("all installed"); SELECTED+=(0); EXTERNAL+=(0)
-elif [ "$_ai_count" -gt 0 ]; then STATUS+=("${_ai_count}/4 installed"); SELECTED+=(1); EXTERNAL+=(0)
+[ -d "/Applications/Antigravity Tools.app" ] && ((_ai_count++)) || true
+if [ "$_ai_count" -eq 5 ]; then STATUS+=("all installed"); SELECTED+=(0); EXTERNAL+=(0)
+elif [ "$_ai_count" -gt 0 ]; then STATUS+=("${_ai_count}/5 installed"); SELECTED+=(1); EXTERNAL+=(0)
 else STATUS+=(""); SELECTED+=(1); EXTERNAL+=(0); fi
 
 # 14: SSH Keys (iCloud)
@@ -745,11 +746,27 @@ if [ "${SELECTED[14]}" = "1" ]; then
   else
     done_msg "OpenCode already installed"
   fi
-  # Claude statusline
+  if [ ! -d "/Applications/Antigravity Tools.app" ]; then
+    info_msg "Installing Antigravity..."
+    brew install --cask antigravity
+    done_msg "Antigravity installed"
+  else
+    done_msg "Antigravity already installed"
+  fi
+  # Claude config
   mkdir -p "$HOME/.claude"
   if [ -f "$SHARED_DIR/.claude/statusline-command.sh" ]; then
     ln -sf "$SHARED_DIR/.claude/statusline-command.sh" "$HOME/.claude/statusline-command.sh"
     done_msg "~/.claude/statusline-command.sh"
+  fi
+  if [ -f "$SHARED_DIR/.claude/settings.json" ]; then
+    ln -sf "$SHARED_DIR/.claude/settings.json" "$HOME/.claude/settings.json"
+    done_msg "~/.claude/settings.json"
+  fi
+  # AI tools shell config
+  if [ -f "$PLATFORM_DIR/ai-tools.sh" ]; then
+    ln -sf "$PLATFORM_DIR/ai-tools.sh" "$HOME/.claude/ai-tools.sh"
+    done_msg "~/.claude/ai-tools.sh → macos/ai-tools.sh"
   fi
   # GitHub Copilot CLI (try cask first, fallback to formula)
   if ! brew list --cask copilot-cli &>/dev/null 2>&1 && \
