@@ -1,9 +1,16 @@
 #!/usr/bin/env bash
-# macOS network speed using netstat -ib
+# Network speed for macOS and Linux
 # Usage: net_speed.sh [download|upload|max]
 
 MODE="${1:-max}"
-INTERFACE=$(route -n get default 2>/dev/null | awk '/interface:/{print $2}')
+OS="$(uname)"
+
+# Get default interface
+if [ "$OS" = "Darwin" ]; then
+  INTERFACE=$(route -n get default 2>/dev/null | awk '/interface:/{print $2}')
+else
+  INTERFACE=$(ip route 2>/dev/null | awk '/^default/{print $5; exit}')
+fi
 [ -z "$INTERFACE" ] && echo "0 B/s" && exit 0
 
 CACHE_DIR="${TMPDIR:-/tmp}/tmux-net-speed"
@@ -19,9 +26,15 @@ get_bytes() {
   prev_time=$(cat "$timef" 2>/dev/null || echo "$now")
   prev_bytes=$(cat "$cache" 2>/dev/null || echo 0)
 
-  curr_bytes=$(netstat -ib 2>/dev/null | awk -v iface="$INTERFACE" -v m="$mode" '
-    $1 == iface && /Link/ { print (m == "download") ? $7 : $10; exit }
-  ')
+  if [ "$OS" = "Darwin" ]; then
+    curr_bytes=$(netstat -ib 2>/dev/null | awk -v iface="$INTERFACE" -v m="$mode" '
+      $1 == iface && /Link/ { print (m == "download") ? $7 : $10; exit }
+    ')
+  else
+    curr_bytes=$(awk -v iface="$INTERFACE:" -v m="$mode" '
+      $1 == iface { print (m == "download") ? $2 : $10; exit }
+    ' /proc/net/dev 2>/dev/null)
+  fi
 
   echo "$now" > "$timef"
   echo "$curr_bytes" > "$cache"
