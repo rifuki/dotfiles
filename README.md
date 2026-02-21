@@ -1,6 +1,22 @@
 # dotfiles
 
-Personal dotfiles for macOS and VPS — batteries included. Miku cyberpunk themed.
+Personal dotfiles for macOS and VPS — batteries included.
+
+## Screenshots
+
+| Terminal (Neofetch) | Editor (Neovim) |
+|:---:|:---:|
+| <img src="https://github.com/user-attachments/assets/b7319a56-27d4-4ed0-80f7-e56fb3148711" width="400"> | <img src="https://github.com/user-attachments/assets/ddff5552-6e67-43fd-8f9e-1aee9148136a" width="400"> |
+
+| Tiling (Yabai) |
+|:---:|
+| <img src="https://github.com/user-attachments/assets/ce95680d-2226-4ff9-8f41-7dd82b31397c" width="400"> |
+
+**Window Switching Demo:**
+
+<video src="https://github.com/user-attachments/assets/523ac440-8b3c-40b8-b2da-8162a9b72ef7" width="100%" controls></video>
+
+*Theme: Cyan-magenta palette inspired by Miku color with Ghostty, Neovim, Yabai, and SKHD*
 
 ## Install
 
@@ -76,12 +92,12 @@ bash ~/.dotfiles/macos/uninstall-brew.sh
 ### Configs
 - `nvim` — NvChad-based config with LSP, Treesitter, and plugins
 - `tmux` — Catppuccin Frappe theme, TPM plugins (resurrect, continuum, cpu, battery)
-- `starship` — Miku cyberpunk prompt theme (cyan/green/magenta palette)
+- `starship` — Cyan-magenta prompt theme
 - `ghostty` — Terminal emulator config (macOS)
 - `yabai` + `skhd` — Tiling window manager + hotkeys (macOS)
-- `neofetch` — Custom Miku ASCII art + system info
+- `neofetch` — Miku ASCII art + config (unified)
 - `yazi` — Terminal file manager with cross-platform opener
-- `.zshrc` — Miku-themed syntax highlighting, aliases, PATH setup
+- `.zshrc` — Cyan-magenta syntax highlighting, aliases, PATH setup
 - `.claude/` — Claude Code statusline integration with Starship colors
 
 ## Structure
@@ -92,8 +108,8 @@ bash ~/.dotfiles/macos/uninstall-brew.sh
 │   ├── .claude/           # Claude Code statusline (both platforms)
 │   └── .config/
 │       ├── nvim/          # NvChad config + LSP + plugins
-│       ├── neofetch/      # Miku ASCII art + config (unified)
-│       ├── starship/      # Miku cyberpunk prompt (unified)
+│       ├── neofetch/      # Custom ASCII art + config (unified)
+│       ├── starship/      # Cyan-magenta prompt (unified)
 │       ├── tmux/          # Catppuccin theme + plugins (unified)
 │       └── yazi/          # File manager (unified, cross-platform opener)
 │
@@ -150,7 +166,7 @@ Re-running `install.sh` is safe:
 
 ## Theme
 
-**Miku Cyberpunk Color Palette** (used in Starship, Zsh, installer/uninstaller):
+**Color Palette** (used in Starship, Zsh, installer/uninstaller):
 - Cyan: `#00D9FF` — Commands, time, headers
 - Green: `#50FA7B` — Paths, success messages
 - Magenta: `#FF79C6` — Git branches, selected items
