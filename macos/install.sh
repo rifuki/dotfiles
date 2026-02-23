@@ -619,6 +619,11 @@ if [ "${SELECTED[8]}" = "1" ]; then
     else
       done_msg "Rust already installed: $("$HOME/.cargo/bin/rustc" --version)"
     fi
+    if ! "$HOME/.cargo/bin/rustup" component list --installed 2>/dev/null | grep -q "^rust-analyzer"; then
+      info_msg "Installing rust-analyzer component..."
+      "$HOME/.cargo/bin/rustup" component add rust-analyzer
+      done_msg "rust-analyzer installed"
+    fi
   fi
 fi
 

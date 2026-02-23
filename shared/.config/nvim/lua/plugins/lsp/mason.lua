@@ -10,7 +10,7 @@ return {
             ensure_installed = {
                 "lua_ls",
                 -- rust_analyzer managed by rustup + rustaceanvim
-                "taplo",
+                "taplo", -- TOML language server
                 "ts_ls",
                 "denols",
                 "intelephense",
@@ -25,6 +25,9 @@ return {
                 "solidity_ls_nomicfoundation",
             },
             automatic_installation = true,
+            automatic_enable = {
+                exclude = { "taplo" }, -- enabled manually in configs/lsp/defaults.lua
+            },
         })
     end,
 }
