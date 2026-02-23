@@ -7,7 +7,7 @@
 
 set -e
 
-PARSER_DIR=$(nvim --headless -c "echo stdpath('data')" -c "qa" 2>&1 | tr -d '\r')
+PARSER_DIR=$(nvim --clean --headless -c "echo stdpath('data')" -c "qa" 2>&1 | tr -d '\r')
 DEST="$PARSER_DIR/site/parser/move.so"
 TREE_SITTER_PATH="external-crates/move/tooling/tree-sitter"
 WORK_DIR=$(mktemp -d)

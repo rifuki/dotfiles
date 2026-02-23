@@ -1,4 +1,8 @@
 -- Custom options (NvChad options loaded from init.lua)
+
+-- Add custom parser path for Move (before plugin loads)
+vim.opt.runtimepath:prepend(vim.fn.stdpath("data") .. "/site/parser")
+
 local o = vim.opt
 
 -- Fold settings (for Treesitter)
