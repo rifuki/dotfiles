@@ -23,10 +23,13 @@ return {
                 "html",
                 "bashls",
                 "solidity_ls_nomicfoundation",
+                -- Formatters
+                "prettierd",
+                "stylua",
             },
             automatic_installation = true,
             automatic_enable = {
-                exclude = { "taplo" }, -- enabled manually in configs/lsp/defaults.lua
+                exclude = { "taplo", "move_analyzer" }, -- taplo: manual config, move_analyzer: use sui-move-analyzer from cargo instead
             },
         })
     end,

@@ -16,5 +16,8 @@ return {
             lua = { "stylua" },
             solidity = { "forge_fmt" },
         },
+        -- Note: prettierd uses .prettierrc config file (CLI args not supported well)
+        -- Create .prettierrc in project root for custom settings:
+        -- { "printWidth": 100, "proseWrap": "never" }
     },
 }
