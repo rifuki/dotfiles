@@ -70,3 +70,44 @@ vim.api.nvim_create_autocmd('FileType', {
         })
     end,
 })
+
+-- Tailwind CSS LSP
+-- Simple root detection: works for both v3 (tailwind.config.*) and v4 (package.json)
+-- Safe to use since it only activates for CSS/HTML/JSX/TSX/Vue/Svelte files anyway
+vim.lsp.config("tailwindcss", {
+    filetypes = {
+        "css", "scss", "sass",
+        "html", "htmldjango",
+        "javascript", "typescript",
+        "javascriptreact", "typescriptreact",
+        "vue", "svelte",
+    },
+    root_markers = {
+        "tailwind.config.js",
+        "tailwind.config.ts",
+        "tailwind.config.mjs",
+        "tailwind.config.cjs",
+        "package.json",  -- Fallback for v4 projects
+    },
+    settings = {
+        tailwindCSS = {
+            classAttributes = { "class", "className", "classList", "ngClass" },
+            includeLanguages = {
+                typescript = "javascript",
+                typescriptreact = "javascript",
+            },
+            lint = {
+                cssConflict = "warning",
+                invalidApply = "error",
+                invalidConfigPath = "error",
+                invalidScreen = "error",
+                invalidTailwindDirective = "error",
+                invalidVariant = "error",
+                recommendedVariantOrder = "warning",
+            },
+            validate = true,
+            colorDecorators = true,
+        },
+    },
+})
+vim.lsp.enable("tailwindcss")

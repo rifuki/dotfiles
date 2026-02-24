@@ -23,6 +23,7 @@ return {
                 "html",
                 "bashls",
                 "solidity_ls_nomicfoundation",
+                "tailwindcss", -- Tailwind CSS intellisense
                 -- Formatters
                 "prettierd",
                 "stylua",
