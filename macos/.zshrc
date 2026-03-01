@@ -75,3 +75,6 @@ export PATH="/Users/rifuki/.antigravity/antigravity/bin:$PATH"
 
 # ─── AI Tools Configuration ─────────────────────────────────────────────────
 [ -f "$HOME/.dotfiles/macos/ai-tools.sh" ] && source "$HOME/.dotfiles/macos/ai-tools.sh"
+
+# OpenClaw Completion
+source "/Users/rifuki/.openclaw/completions/openclaw.zsh"

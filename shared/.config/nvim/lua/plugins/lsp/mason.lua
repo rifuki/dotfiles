@@ -5,7 +5,13 @@ return {
         "neovim/nvim-lspconfig",
     },
     config = function()
-        require("mason").setup()
+        require("mason").setup({
+            ensure_installed = {
+                -- Formatters
+                "prettierd",
+                "stylua",
+            },
+        })
         require("mason-lspconfig").setup({
             ensure_installed = {
                 "lua_ls",
@@ -24,9 +30,6 @@ return {
                 "bashls",
                 "solidity_ls_nomicfoundation",
                 "tailwindcss", -- Tailwind CSS intellisense
-                -- Formatters
-                "prettierd",
-                "stylua",
             },
             automatic_installation = true,
             automatic_enable = {
