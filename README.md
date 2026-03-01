@@ -35,9 +35,9 @@ Auto-detects OS (macOS or Linux). Uses `bash <()` instead of `curl | bash` to pr
 bash <(curl -fsSL https://dotfiles.rifuki.dev/macos/uninstall.sh)
 ```
 
-**VPS:**
+**Ubuntu:**
 ```bash
-bash <(curl -fsSL https://dotfiles.rifuki.dev/vps/uninstall.sh)
+bash <(curl -fsSL https://dotfiles.rifuki.dev/ubuntu/uninstall.sh)
 ```
 
 ### Remove Homebrew completely (macOS)
@@ -126,10 +126,10 @@ bash ~/.dotfiles/macos/uninstall-brew.sh
 │   ├── macos-defaults.sh  # macOS system defaults
 │   └── macos-defaults-check.sh
 │
-├── vps/
-│   ├── .zshrc             # VPS shell config
-│   ├── install.sh         # VPS installer
-│   └── uninstall.sh       # VPS uninstaller
+├── ubuntu/
+│   ├── .zshrc             # Ubuntu shell config
+│   ├── install.sh         # Ubuntu installer
+│   └── uninstall.sh       # Ubuntu uninstaller
 │
 ├── install.sh             # Entry point (detects OS, delegates)
 ├── .gitignore

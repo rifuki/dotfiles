@@ -300,7 +300,7 @@ echo ""
 # ========== Backup Current Configs ==========
 DOTFILES_DIR="$HOME/.dotfiles"
 SHARED_DIR="$DOTFILES_DIR/shared"
-PLATFORM_DIR="$DOTFILES_DIR/vps"
+PLATFORM_DIR="$DOTFILES_DIR/ubuntu"
 UNINSTALL_BACKUP_DIR="$HOME/.config/backup-uninstall-$(date +%Y%m%d-%H%M%S)"
 _did_backup=0
 

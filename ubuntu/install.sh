@@ -1,7 +1,7 @@
 #!/bin/bash
 set -e
 
-# ========== Colors (Miku Cyberpunk Theme — VPS variant) ==========
+# ========== Colors (Miku Cyberpunk Theme — Ubuntu variant) ==========
 # Cyan: #00D9FF | Green: #50FA7B | Magenta: #FF79C6 | Purple: #BD93F9
 # Teal: #01CBC6 | Orange: #FFB86C | Peach: #F0CAA4 | Gray: #6C757D
 CYAN='\033[38;2;0;217;255m'
@@ -69,6 +69,14 @@ if [ "$EUID" = "0" ] || [ "$USER" = "root" ]; then
 fi
 _cur_pw_status=$(sudo -n passwd -S "$USER" 2>/dev/null | awk '{print $2}' || true)
 [ "$_cur_pw_status" = "NP" ] && _user_no_password=1 || true
+
+# ========== VPS Detection ==========
+# cloud-init is present on all major cloud VPS (AWS, GCP, Azure, DO, etc.)
+# but NOT on local Ubuntu Desktop/Server
+_is_vps=0
+if [ -d /run/cloud-init ] || [ -d /var/lib/cloud/instance ]; then
+  _is_vps=1
+fi
 
 echo ""
 
@@ -193,19 +201,21 @@ LABELS+=("Swap (2GB)")
 DESCRIPTIONS+=("Create 2GB swap file")
 if [ -f /swapfile ]; then STATUS+=("active"); SELECTED+=(0); EXTERNAL+=(0); else STATUS+=(""); SELECTED+=(1); EXTERNAL+=(0); fi
 
-# 10: fail2ban
+# 10: fail2ban — default unchecked; auto-check on VPS
 LABELS+=("fail2ban")
 DESCRIPTIONS+=("Intrusion prevention")
 if dpkg -s fail2ban &>/dev/null 2>&1; then STATUS+=("installed"); SELECTED+=(0); EXTERNAL+=(0)
 elif command -v fail2ban-client &>/dev/null; then STATUS+=("installed (external)"); SELECTED+=(0); EXTERNAL+=(1)
-else STATUS+=(""); SELECTED+=(1); EXTERNAL+=(0); fi
+elif [ "$_is_vps" = "1" ]; then STATUS+=("VPS detected"); SELECTED+=(1); EXTERNAL+=(0)
+else STATUS+=(""); SELECTED+=(0); EXTERNAL+=(0); fi
 
-# 11: UFW
+# 11: UFW — default unchecked; auto-check on VPS
 LABELS+=("UFW")
 DESCRIPTIONS+=("Firewall (allow SSH + HTTP/S)")
 if command -v ufw &>/dev/null && sudo -n ufw status 2>/dev/null | grep -qw "active"; then STATUS+=("active"); SELECTED+=(0); EXTERNAL+=(0)
-elif command -v ufw &>/dev/null; then STATUS+=("installed (inactive)"); SELECTED+=(1); EXTERNAL+=(0)
-else STATUS+=(""); SELECTED+=(1); EXTERNAL+=(0); fi
+elif command -v ufw &>/dev/null; then STATUS+=("installed (inactive)"); SELECTED+=($_is_vps); EXTERNAL+=(0)
+elif [ "$_is_vps" = "1" ]; then STATUS+=("VPS detected"); SELECTED+=(1); EXTERNAL+=(0)
+else STATUS+=(""); SELECTED+=(0); EXTERNAL+=(0); fi
 
 _total=${#LABELS[@]}
 
@@ -213,7 +223,7 @@ _total=${#LABELS[@]}
 draw_menu() {
   echo ""
   echo -e "${BOLD}${CYAN}╔══════════════════════════════════════════════════╗${NC}"
-  echo -e "${BOLD}${CYAN}║            dotfiles installer — VPS              ║${NC}"
+  echo -e "${BOLD}${CYAN}║          dotfiles installer — Ubuntu             ║${NC}"
   echo -e "${BOLD}${CYAN}╚══════════════════════════════════════════════════╝${NC}"
   echo ""
   if [ "$_is_root" = "1" ]; then
@@ -221,6 +231,10 @@ draw_menu() {
     echo ""
   elif [ "$_user_no_password" = "1" ]; then
     echo -e "  ${YELLOW}${BOLD}⚠  User '${USER}' has no password!${NC}  ${DIM}Enable the Custom User option to create a secure user.${NC}"
+    echo ""
+  fi
+  if [ "$_is_vps" = "1" ]; then
+    echo -e "  ${TEAL}${BOLD}ℹ  VPS environment detected${NC}  ${DIM}fail2ban and UFW are pre-selected.${NC}"
     echo ""
   fi
   local _all_unchecked=1
@@ -347,7 +361,7 @@ if [ "${SELECTED[0]}" != "1" ]; then
   # ========== Dotfiles Paths ==========
   DOTFILES_DIR="$HOME/.dotfiles"
   SHARED_DIR="$DOTFILES_DIR/shared"
-  PLATFORM_DIR="$DOTFILES_DIR/vps"
+  PLATFORM_DIR="$DOTFILES_DIR/ubuntu"
 
   # ========== Backup ==========
   step "Checking for existing configs"
@@ -385,7 +399,7 @@ if [ "${SELECTED[0]}" != "1" ]; then
       fi
     fi
   done
-  for _f in vps/.zshrc; do
+  for _f in ubuntu/.zshrc; do
     if git -C "$DOTFILES_DIR" status --porcelain "$_f" 2>/dev/null | grep -q .; then
       _basename="$(basename "$_f")"
       if [ -L "$HOME/$_basename" ] || [ -e "$HOME/$_basename" ]; then
@@ -409,7 +423,7 @@ else
   IFS=',' read -ra SELECTED <<< "$_RESUME_SEL"
   DOTFILES_DIR="$HOME/.dotfiles"
   SHARED_DIR="$DOTFILES_DIR/shared"
-  PLATFORM_DIR="$DOTFILES_DIR/vps"
+  PLATFORM_DIR="$DOTFILES_DIR/ubuntu"
   echo ""
   echo -e "  ${BOLD}${CYAN}Resuming installation as $(whoami)...${NC}"
   echo ""
@@ -644,6 +658,11 @@ fi
 # ========== 3: Oh My Zsh ==========
 if [ "${SELECTED[3]}" = "1" ]; then
   step "Setting up Oh My Zsh"
+  # dpkg may report zsh as installed but binary can be missing (e.g. interrupted install)
+  if ! command -v zsh &>/dev/null; then
+    info_msg "zsh binary not found, reinstalling..."
+    sudo apt install -y --reinstall zsh
+  fi
   if [ ! -f "$HOME/.oh-my-zsh/oh-my-zsh.sh" ]; then
     info_msg "Installing Oh My Zsh..."
     RUNZSH=no KEEP_ZSHRC=yes CHSH=no bash -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)" || {
@@ -693,7 +712,7 @@ if [ "${SELECTED[5]}" = "1" ]; then
   if [ ! -f "$HOME/.bun/bin/bun" ]; then
     info_msg "Installing Bun..."
     curl -fsSL https://bun.sh/install | bash
-    git -C "$DOTFILES_DIR" restore .zshrc 2>/dev/null || true
+    git -C "$DOTFILES_DIR" restore ubuntu/.zshrc 2>/dev/null || true
     done_msg "Bun installed"
   else
     done_msg "Bun already installed: $("$HOME/.bun/bin/bun" --version)"
@@ -821,7 +840,7 @@ if [ "${SELECTED[9]}" = "1" ]; then
   step "Setting up 2GB swap"
   if [ ! -f /swapfile ]; then
     info_msg "Creating 2GB swap file..."
-    sudo fallocate -l 2G /swapfile
+    sudo fallocate -l 2G /swapfile 2>/dev/null || sudo dd if=/dev/zero of=/swapfile bs=1M count=2048 status=none
     sudo chmod 600 /swapfile
     sudo mkswap /swapfile
     sudo swapon /swapfile

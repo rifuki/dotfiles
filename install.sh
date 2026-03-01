@@ -44,9 +44,9 @@ if [[ "$_os" == "Darwin" ]]; then
   exec "$DOTFILES_DIR/macos/install.sh" "$@"
 elif [[ "$_os" == "Linux" ]]; then
   echo -e "  ${GREEN}✔${NC} Detected: ${BOLD}${CYAN}Linux${NC}"
-  echo -e "  ${DIM}→ Running vps/install.sh${NC}"
+  echo -e "  ${DIM}→ Running ubuntu/install.sh${NC}"
   echo ""
-  exec "$DOTFILES_DIR/vps/install.sh" "$@"
+  exec "$DOTFILES_DIR/ubuntu/install.sh" "$@"
 else
   echo -e "  ${RED}✖${NC} Unsupported OS: ${BOLD}$_os${NC}"
   echo -e "  ${DIM}Supported: macOS (Darwin), Linux (Ubuntu/Debian)${NC}"
