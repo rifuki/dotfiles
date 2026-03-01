@@ -15,9 +15,13 @@
 !macos/
 !macos/**
 
-# VPS platform
-!vps/
-!vps/**
+# Ubuntu platform
+!ubuntu/
+!ubuntu/**
+
+# Gentoo platform
+!gentoo/
+!gentoo/**
 
 # Ignore specific files
 .DS_Store

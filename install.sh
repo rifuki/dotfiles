@@ -43,13 +43,20 @@ if [[ "$_os" == "Darwin" ]]; then
   echo ""
   exec "$DOTFILES_DIR/macos/install.sh" "$@"
 elif [[ "$_os" == "Linux" ]]; then
-  echo -e "  ${GREEN}✔${NC} Detected: ${BOLD}${CYAN}Linux${NC}"
-  echo -e "  ${DIM}→ Running ubuntu/install.sh${NC}"
-  echo ""
-  exec "$DOTFILES_DIR/ubuntu/install.sh" "$@"
+  if [[ -f /etc/gentoo-release ]]; then
+    echo -e "  ${GREEN}✔${NC} Detected: ${BOLD}${CYAN}Gentoo Linux${NC}"
+    echo -e "  ${DIM}→ Running gentoo/install.sh${NC}"
+    echo ""
+    exec "$DOTFILES_DIR/gentoo/install.sh" "$@"
+  else
+    echo -e "  ${GREEN}✔${NC} Detected: ${BOLD}${CYAN}Linux (Ubuntu/Debian)${NC}"
+    echo -e "  ${DIM}→ Running ubuntu/install.sh${NC}"
+    echo ""
+    exec "$DOTFILES_DIR/ubuntu/install.sh" "$@"
+  fi
 else
   echo -e "  ${RED}✖${NC} Unsupported OS: ${BOLD}$_os${NC}"
-  echo -e "  ${DIM}Supported: macOS (Darwin), Linux (Ubuntu/Debian)${NC}"
+  echo -e "  ${DIM}Supported: macOS (Darwin), Gentoo Linux, Ubuntu/Debian${NC}"
   echo ""
   exit 1
 fi
