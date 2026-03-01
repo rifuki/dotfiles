@@ -79,6 +79,24 @@ for _d in "$SHARED_DIR/.config"/*/; do
     done_msg "~/.config/$_name removed"
   fi
 done
+for _d in "$PLATFORM_DIR/.config"/*/; do
+  [ -d "$_d" ] || continue
+  _name="$(basename "$_d")"
+  _link="$HOME/.config/$_name"
+  if [ -L "$_link" ]; then
+    rm -f "$_link"
+    done_msg "~/.config/$_name removed"
+  fi
+done
+for _f in "$PLATFORM_DIR/.local/bin"/*; do
+  [ -f "$_f" ] || continue
+  _name="$(basename "$_f")"
+  _link="$HOME/.local/bin/$_name"
+  if [ -L "$_link" ]; then
+    rm -f "$_link"
+    done_msg "~/.local/bin/$_name removed"
+  fi
+done
 
 # ========== Remove Claude statusline ==========
 if [ -L "$HOME/.claude/statusline-command.sh" ]; then

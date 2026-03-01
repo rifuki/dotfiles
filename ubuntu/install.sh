@@ -185,14 +185,11 @@ else STATUS+=(""); SELECTED+=(1); EXTERNAL+=(0); fi
 
 # 8: AI CLI Tools
 LABELS+=("AI CLI Tools")
-DESCRIPTIONS+=("Claude Code + Gemini CLI + Kimi CLI + OpenCode + GitHub Copilot CLI")
+DESCRIPTIONS+=("Kimi CLI + OpenCode")
 _ai_count=0
-command -v claude &>/dev/null && ((_ai_count++)) || true
-command -v gemini &>/dev/null && ((_ai_count++)) || true
 command -v kimi &>/dev/null && ((_ai_count++)) || true
 command -v opencode &>/dev/null && ((_ai_count++)) || true
-command -v copilot &>/dev/null && ((_ai_count++)) || true
-if [ "$_ai_count" -eq 5 ]; then STATUS+=("installed"); SELECTED+=(0); EXTERNAL+=(0)
+if [ "$_ai_count" -eq 2 ]; then STATUS+=("installed"); SELECTED+=(0); EXTERNAL+=(0)
 elif [ "$_ai_count" -gt 0 ]; then STATUS+=("partial"); SELECTED+=(1); EXTERNAL+=(0)
 else STATUS+=(""); SELECTED+=(1); EXTERNAL+=(0); fi
 
@@ -309,8 +306,7 @@ while true; do
   # Dependency: dotfiles .zshrc requires Oh My Zsh (3) — must install with APT (1)
   [ "${SELECTED[1]}" = "1" ] && SELECTED[3]=1
   [ "${SELECTED[3]}" = "0" ] && SELECTED[1]=0
-  # Dependency: Gemini CLI (part of 8) requires NVM (6) for npm
-  # NVM is no longer required for Claude Code (native installer)
+  # No cross-dependencies for AI tools
 done
 
 # ========== Confirmation ==========
@@ -764,28 +760,6 @@ fi
 # ========== 8: AI CLI Tools ==========
 if [ "${SELECTED[8]}" = "1" ]; then
   step "Installing AI CLI Tools"
-  # Claude Code (native installer — no npm required)
-  if ! command -v claude &>/dev/null; then
-    info_msg "Installing Claude Code (native)..."
-    curl -fsSL https://claude.ai/install.sh | bash
-    done_msg "Claude Code installed"
-  else
-    done_msg "Claude Code already installed"
-  fi
-  # Gemini CLI (requires npm)
-  export NVM_DIR="$HOME/.nvm"
-  [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
-  if ! command -v gemini &>/dev/null; then
-    if command -v npm &>/dev/null; then
-      info_msg "Installing Gemini CLI..."
-      npm install -g @google/gemini-cli
-      done_msg "Gemini CLI installed"
-    else
-      warn_msg "npm not found — NVM/Node required for Gemini CLI"
-    fi
-  else
-    done_msg "Gemini CLI already installed"
-  fi
   # Kimi CLI (official install script via uv)
   if ! command -v kimi &>/dev/null; then
     info_msg "Installing Kimi CLI..."
@@ -803,29 +777,6 @@ if [ "${SELECTED[8]}" = "1" ]; then
     done_msg "OpenCode installed"
   else
     done_msg "OpenCode already installed"
-  fi
-  # GitHub Copilot CLI (binary from GitHub releases)
-  if ! command -v copilot &>/dev/null; then
-    info_msg "Installing GitHub Copilot CLI..."
-    _cp_ver=$(curl -fsSL https://api.github.com/repos/github/copilot-cli/releases/latest | grep '"tag_name"' | cut -d'"' -f4 | sed 's/^v//')
-    _cp_arch=$(uname -m)
-    case "$_cp_arch" in
-      x86_64)  _cp_target="x64" ;;
-      aarch64) _cp_target="arm64" ;;
-      *) warn_msg "Unsupported arch: $_cp_arch — skipping Copilot CLI"; _cp_target="" ;;
-    esac
-    if [ -n "$_cp_target" ]; then
-      _cp_url="https://github.com/github/copilot-cli/releases/download/v${_cp_ver}/copilot-linux-${_cp_target}.tar.gz"
-      curl -fsSL "$_cp_url" -o /tmp/copilot.tar.gz
-      tar -xzf /tmp/copilot.tar.gz -C /tmp/
-      mkdir -p "$HOME/.local/bin"
-      mv /tmp/copilot "$HOME/.local/bin/copilot"
-      chmod +x "$HOME/.local/bin/copilot"
-      rm -f /tmp/copilot.tar.gz
-      done_msg "GitHub Copilot CLI installed"
-    fi
-  else
-    done_msg "GitHub Copilot CLI already installed"
   fi
   # Claude statusline
   mkdir -p "$HOME/.claude"

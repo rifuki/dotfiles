@@ -1,0 +1,9 @@
+mode=drun
+allow_images=true
+height=50%
+width=35%
+prompt=search
+search=
+no_actions=false
+filter_rate=100
+ignore_apps=vim,htop,git-gui,Qt6Linguist,Qt6Assistant

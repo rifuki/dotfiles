@@ -3,7 +3,14 @@ export PATH="$HOME/.local/bin:$PATH"
 export PATH="$HOME/.bun/bin:$PATH"
 export PATH="$HOME/.cargo/bin:$PATH"
 
+[ -f "$HOME/.cargo/env" ] && source "$HOME/.cargo/env"
+
 export EDITOR=nvim
+
+# ── Hyprland ──────────────────────────
+if [ -d "/run/user/$(id -u)/hypr" ]; then
+  export HYPRLAND_INSTANCE_SIGNATURE=$(ls /run/user/$(id -u)/hypr/ | head -n1)
+fi
 
 # ── Oh My Zsh ─────────────────────────
 export ZSH="$HOME/.oh-my-zsh"

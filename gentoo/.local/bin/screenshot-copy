@@ -1,0 +1,6 @@
+#!/bin/bash
+if grim - | wl-copy; then
+    dunstify -u normal -t 2000 "Screenshot Copied" "Fullscreen copied to clipboard"
+else
+    dunstify -u critical -t 3000 "Screenshot Failed" "Could not copy to clipboard"
+fi

@@ -244,6 +244,23 @@ if [ "${#_missing_tools[@]}" -gt 0 ]; then
   fi
 fi
 
+step "Checking Hyprland / desktop tools"
+_hypr_missing=()
+for _tool in hyprctl waybar wofi ghostty hyprlock hyprpaper grim slurp dunstify brightnessctl wl-copy; do
+  if command -v "$_tool" &>/dev/null; then
+    done_msg "$_tool found"
+  else
+    warn_msg "$_tool not found"
+    _hypr_missing+=("$_tool")
+  fi
+done
+if [ "${#_hypr_missing[@]}" -gt 0 ]; then
+  echo ""
+  warn_msg "Missing desktop tools: ${_hypr_missing[*]}"
+  warn_msg "Install via portage, e.g.: sudo emerge gui-wm/hyprland gui-apps/waybar gui-apps/wofi"
+  warn_msg "Configs will still be symlinked — tools can be installed later."
+fi
+
 # ========== Dotfiles Paths ==========
 DOTFILES_DIR="$HOME/.dotfiles"
 SHARED_DIR="$DOTFILES_DIR/shared"
@@ -253,7 +270,7 @@ PLATFORM_DIR="$DOTFILES_DIR/gentoo"
 step "Checking for existing configs"
 BACKUP_DIR="$HOME/.config/backup-$(date +%Y%m%d-%H%M%S)"
 _did_backup=0
-for _d in "$SHARED_DIR/.config"/*/; do
+for _d in "$SHARED_DIR/.config"/*/ "$PLATFORM_DIR/.config"/*/; do
   [ -d "$_d" ] || continue
   _name="$(basename "$_d")"
   _p="$HOME/.config/$_name"
@@ -472,13 +489,19 @@ fi
 # ========== Symlinks ==========
 step "Setting up dotfiles symlinks"
 
-# Remove old symlinks
+mkdir -p "$HOME/.config" "$HOME/.local/bin"
+
+# Remove old shared symlinks
 for _d in "$SHARED_DIR/.config"/*/; do
   [ -d "$_d" ] || continue
   rm -f "$HOME/.config/$(basename "$_d")"
 done
+# Remove old platform symlinks
+for _d in "$PLATFORM_DIR/.config"/*/; do
+  [ -d "$_d" ] || continue
+  rm -f "$HOME/.config/$(basename "$_d")"
+done
 rm -f "$HOME/.zshrc"
-mkdir -p "$HOME/.config"
 
 # Symlink shared configs
 for _d in "$SHARED_DIR/.config"/*/; do
@@ -486,6 +509,23 @@ for _d in "$SHARED_DIR/.config"/*/; do
   _name="$(basename "$_d")"
   ln -sf "$SHARED_DIR/.config/$_name" "$HOME/.config/$_name"
   done_msg "~/.config/$_name"
+done
+
+# Symlink Gentoo-specific configs (ghostty, hypr, waybar, wofi)
+for _d in "$PLATFORM_DIR/.config"/*/; do
+  [ -d "$_d" ] || continue
+  _name="$(basename "$_d")"
+  ln -sf "$PLATFORM_DIR/.config/$_name" "$HOME/.config/$_name"
+  done_msg "~/.config/$_name"
+done
+
+# Symlink screenshot scripts to ~/.local/bin
+for _f in "$PLATFORM_DIR/.local/bin"/*; do
+  [ -f "$_f" ] || continue
+  _name="$(basename "$_f")"
+  ln -sf "$_f" "$HOME/.local/bin/$_name"
+  chmod +x "$_f"
+  done_msg "~/.local/bin/$_name"
 done
 
 # Root dotfiles

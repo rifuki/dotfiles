@@ -1,0 +1,6 @@
+#!/bin/bash
+if grim -g "$(slurp)" - | wl-copy; then
+    dunstify -u normal -t 2000 "Area Screenshot Copied" "Selected area copied to clipboard"
+else
+    dunstify -u critical -t 3000 "Screenshot Failed" "Could not copy area to clipboard"
+fi

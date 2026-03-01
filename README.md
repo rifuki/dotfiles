@@ -1,6 +1,6 @@
 # dotfiles
 
-Personal dotfiles for macOS and VPS — batteries included.
+Personal dotfiles for macOS, Ubuntu, and Gentoo Linux — batteries included.
 
 ## Screenshots
 
@@ -24,7 +24,7 @@ Personal dotfiles for macOS and VPS — batteries included.
 bash <(curl -fsSL https://dotfiles.rifuki.dev)
 ```
 
-Auto-detects OS (macOS or Linux). Uses `bash <()` instead of `curl | bash` to preserve interactive TTY for password prompts.
+Auto-detects OS (macOS, Gentoo Linux, or Ubuntu/Debian). Uses `bash <()` instead of `curl | bash` to preserve interactive TTY for password prompts.
 
 > Restart terminal or run `exec zsh` after install.
 
@@ -38,6 +38,11 @@ bash <(curl -fsSL https://dotfiles.rifuki.dev/macos/uninstall.sh)
 **Ubuntu:**
 ```bash
 bash <(curl -fsSL https://dotfiles.rifuki.dev/ubuntu/uninstall.sh)
+```
+
+**Gentoo:**
+```bash
+bash <(curl -fsSL https://dotfiles.rifuki.dev/gentoo/uninstall.sh)
 ```
 
 ### Remove Homebrew completely (macOS)
@@ -84,16 +89,28 @@ bash ~/.dotfiles/macos/uninstall-brew.sh
 ### AI Tools (optional)
 | Tool | Description |
 |------|-------------|
-| [Claude Code](https://github.com/anthropics/claude-code) | AI-powered CLI |
-| [Gemini CLI](https://ai.google.dev) | Google Gemini CLI |
-| [Kimi CLI](https://github.com/anthropics/kimi-cli) | Kimi CLI |
-| [OpenCode](https://github.com/opencode-ai/opencode) | OpenCode AI |
+| [Kimi CLI](https://github.com/MoonshotAI/kimi-cli) | Kimi AI CLI |
+| [OpenCode](https://opencode.ai) | OpenCode AI |
+
+### Tools (Gentoo — Hyprland Desktop)
+| Tool | Description |
+|------|-------------|
+| [Hyprland](https://hyprland.org) | Wayland tiling compositor |
+| [Waybar](https://github.com/Alexays/Waybar) | Status bar |
+| [Wofi](https://hg.sr.ht/~scoopta/wofi) | App launcher |
+| [Ghostty](https://ghostty.org) | Terminal emulator |
+| [hyprlock](https://github.com/hyprwm/hyprlock) | Screen locker |
+| [hyprpaper](https://github.com/hyprwm/hyprpaper) | Wallpaper daemon |
+| [grim](https://sr.ht/~emersion/grim) + [slurp](https://github.com/emersion/slurp) | Screenshots |
+| [dunst](https://dunst-project.org) | Notification daemon |
+
+> **Note:** Hyprland-related tools are installed via portage by the user. The dotfiles installer symlinks configs and warns about missing tools.
 
 ### Configs
 - `nvim` — NvChad-based config with LSP, Treesitter, and plugins
 - `tmux` — Catppuccin Frappe theme, TPM plugins (resurrect, continuum, cpu, battery)
 - `starship` — Cyan-magenta prompt theme
-- `ghostty` — Terminal emulator config (macOS)
+- `ghostty` — Terminal emulator config (macOS + Gentoo)
 - `yabai` + `skhd` — Tiling window manager + hotkeys (macOS)
 - `neofetch` — Miku ASCII art + config (unified)
 - `yazi` — Terminal file manager with cross-platform opener
@@ -130,6 +147,21 @@ bash ~/.dotfiles/macos/uninstall-brew.sh
 │   ├── .zshrc             # Ubuntu shell config
 │   ├── install.sh         # Ubuntu installer
 │   └── uninstall.sh       # Ubuntu uninstaller
+│
+├── gentoo/
+│   ├── .config/
+│   │   ├── ghostty/       # Terminal emulator config
+│   │   ├── hypr/          # Hyprland + hyprlock + hyprpaper
+│   │   ├── waybar/        # Status bar (TokyoNight theme)
+│   │   └── wofi/          # App launcher
+│   ├── .local/
+│   │   └── bin/           # Screenshot scripts (grim + slurp)
+│   ├── system/            # System config backup (reference only, not installed)
+│   │   ├── boot/grub/     # grub.cfg snapshot
+│   │   └── etc/           # /etc/profile + profile.d/tty-bash.sh
+│   ├── .zshrc             # Gentoo shell config
+│   ├── install.sh         # Gentoo installer
+│   └── uninstall.sh       # Gentoo uninstaller
 │
 ├── install.sh             # Entry point (detects OS, delegates)
 ├── .gitignore
