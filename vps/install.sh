@@ -336,7 +336,7 @@ echo ""
 if [ "${SELECTED[0]}" != "1" ]; then
   # ========== System Update ==========
   step "Updating system packages"
-  sudo apt update && sudo apt upgrade -y
+  sudo apt update
   done_msg "System updated"
 
   # ========== Essential Tools ==========
@@ -770,6 +770,8 @@ if [ "${SELECTED[8]}" = "1" ]; then
   # Kimi CLI (official install script via uv)
   if ! command -v kimi &>/dev/null; then
     info_msg "Installing Kimi CLI..."
+    mkdir -p "$HOME/.local/bin"
+    export PATH="$HOME/.local/bin:$PATH"
     curl -fsSL https://code.kimi.com/install.sh | bash
     done_msg "Kimi CLI installed"
   else
