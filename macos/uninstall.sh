@@ -440,9 +440,7 @@ fi
 
 # ========== NVM (index 10) ==========
 if [ "${SELECTED[10]}" = "1" ]; then
-  step "Removing NVM"
-  rm -rf "$HOME/.nvm"
-  done_msg "NVM removed"
+  bash "$(dirname "$0")/nvm.sh" uninstall
 fi
 
 # ========== Solana + AVM (index 11) ==========

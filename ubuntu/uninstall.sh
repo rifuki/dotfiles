@@ -415,9 +415,7 @@ fi
 
 # ========== NVM (index 6) ==========
 if [ "${SELECTED[6]}" = "1" ]; then
-  step "Removing NVM"
-  rm -rf "$HOME/.nvm"
-  done_msg "NVM removed"
+  bash "$(dirname "$0")/nvm.sh" uninstall
 fi
 
 # ========== Docker (index 7) ==========
@@ -442,8 +440,6 @@ if [ "${SELECTED[8]}" = "1" ]; then
   rm -f "$HOME"/.claude.json.backup.*
   done_msg "Claude Code files removed"
   # Gemini CLI (npm)
-  export NVM_DIR="$HOME/.nvm"
-  [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
   if command -v npm &>/dev/null; then
     npm uninstall -g @google/gemini-cli 2>/dev/null && done_msg "Gemini CLI removed" || true
   fi

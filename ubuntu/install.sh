@@ -171,10 +171,10 @@ LABELS+=("Bun")
 DESCRIPTIONS+=("JavaScript runtime")
 if [ -d "$HOME/.bun" ]; then STATUS+=("installed"); SELECTED+=(0); EXTERNAL+=(0); else STATUS+=(""); SELECTED+=(1); EXTERNAL+=(0); fi
 
-# 6: NVM + Node 24
-LABELS+=("NVM + Node 24")
-DESCRIPTIONS+=("Node Version Manager + Node.js")
-if [ -d "$HOME/.nvm" ]; then STATUS+=("installed"); SELECTED+=(0); EXTERNAL+=(0); else STATUS+=(""); SELECTED+=(1); EXTERNAL+=(0); fi
+# 6: Node 24 (Mise)
+LABELS+=("Node 24 (via Mise)")
+DESCRIPTIONS+=("Node.js via Mise (Fast, no nvm overhead)")
+if [ -d "$HOME/.local/share/mise/installs/node" ] || command -v node &>/dev/null; then STATUS+=("installed"); SELECTED+=(0); EXTERNAL+=(0); else STATUS+=(""); SELECTED+=(1); EXTERNAL+=(0); fi
 
 # 7: Docker — expected via apt docker-ce repo
 LABELS+=("Docker")
@@ -715,27 +715,24 @@ if [ "${SELECTED[5]}" = "1" ]; then
   fi
 fi
 
-# ========== 6: NVM + Node ==========
+# ========== 6: Node 24 (Mise) ==========
 if [ "${SELECTED[6]}" = "1" ]; then
-  step "Setting up NVM + Node 24"
-  export NVM_DIR="$HOME/.nvm"
-  if [ ! -s "$NVM_DIR/nvm.sh" ]; then
-    info_msg "Installing NVM..."
-    curl -fsSL https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.3/install.sh | PROFILE=/dev/null bash
-    [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
-    done_msg "NVM installed"
+  step "Setting up Node.js 24 via Mise"
+  if ! command -v mise &>/dev/null; then
+    info_msg "Installing Mise..."
+    curl https://mise.run | sh
+    export PATH="$HOME/.local/bin:$PATH"
+    done_msg "Mise installed: $(mise --version 2>/dev/null)"
   else
-    done_msg "NVM already installed"
-    \. "$NVM_DIR/nvm.sh"
+    done_msg "Mise already installed: $(mise --version 2>/dev/null)"
   fi
-  if ! nvm ls 24 &>/dev/null; then
-    info_msg "Installing Node.js 24..."
-    nvm install 24
-    done_msg "Node.js 24 installed"
+  if ! mise ls node 2>/dev/null | grep -q "24"; then
+    info_msg "Installing Node.js 24 via Mise..."
+    mise use --global node@24
+    done_msg "Node.js 24 installed: $(node --version 2>/dev/null)"
   else
-    done_msg "Node.js 24 already installed"
+    done_msg "Node.js 24 already installed: $(mise ls node 2>/dev/null | grep 24 | awk '{print $2}')"
   fi
-  nvm use 24
 fi
 
 # ========== 7: Docker ==========
