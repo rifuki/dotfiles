@@ -210,10 +210,10 @@ LABELS+=("Bun")
 DESCRIPTIONS+=("JavaScript runtime")
 if [ -d "$HOME/.bun" ]; then STATUS+=("installed"); SELECTED+=(0); EXTERNAL+=(0); else STATUS+=(""); SELECTED+=(1); EXTERNAL+=(0); fi
 
-# 9: NVM + Node
-LABELS+=("NVM + Node 24")
-DESCRIPTIONS+=("Node Version Manager + Node.js")
-if [ -d "$HOME/.nvm" ]; then STATUS+=("installed"); SELECTED+=(0); EXTERNAL+=(0); else STATUS+=(""); SELECTED+=(1); EXTERNAL+=(0); fi
+# 9: Node (Homebrew)
+LABELS+=("Node (Homebrew)")
+DESCRIPTIONS+=("Node.js via Homebrew — system default, managed per-project by mise")
+if brew list node &>/dev/null 2>&1; then STATUS+=("installed"); SELECTED+=(0); EXTERNAL+=(0); else STATUS+=(""); SELECTED+=(1); EXTERNAL+=(0); fi
 
 # 10: Solana + AVM
 LABELS+=("Solana + AVM")
@@ -640,27 +640,16 @@ if [ "${SELECTED[9]}" = "1" ]; then
   fi
 fi
 
-# ========== 10: NVM + Node ==========
+# ========== 10: Node (Homebrew) ==========
 if [ "${SELECTED[10]}" = "1" ]; then
-  step "Setting up NVM + Node 24"
-  export NVM_DIR="$HOME/.nvm"
-  if [ ! -s "$NVM_DIR/nvm.sh" ]; then
-    info_msg "Installing NVM..."
-    curl -fsSL https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.3/install.sh | PROFILE=/dev/null bash
-    [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
-    done_msg "NVM installed"
+  step "Setting up Node.js via Homebrew"
+  if ! brew list node &>/dev/null 2>&1; then
+    info_msg "Installing Node.js..."
+    brew install node
+    done_msg "Node.js installed: $(node --version 2>/dev/null)"
   else
-    done_msg "NVM already installed"
-    \. "$NVM_DIR/nvm.sh"
+    done_msg "Node.js already installed: $(node --version 2>/dev/null)"
   fi
-  if ! nvm ls 24 &>/dev/null; then
-    info_msg "Installing Node.js 24..."
-    nvm install 24
-    done_msg "Node.js 24 installed"
-  else
-    done_msg "Node.js 24 already installed"
-  fi
-  nvm use 24
 fi
 
 # ========== 11: Solana + AVM ==========
