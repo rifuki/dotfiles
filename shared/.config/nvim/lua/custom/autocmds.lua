@@ -1,5 +1,13 @@
 -- Custom autocmds (load after NvChad autocmds if any)
 
+-- Treat openclaw.json as json5 (openclaw uses json5 parser internally)
+vim.filetype.add({
+    pattern = {
+        [".*/%.openclaw/.*%.json"] = "json5",
+    },
+})
+
+
 -- Set commentstring for JSX/TSX files
 vim.api.nvim_create_autocmd("FileType", {
     pattern = { "javascriptreact", "typescriptreact", "html" },

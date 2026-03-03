@@ -5,6 +5,11 @@ vim.opt.runtimepath:prepend(vim.fn.stdpath("data") .. "/site/parser")
 
 local o = vim.opt
 
+-- Disable swap/backup, use undofile instead (persistent undo, no annoying warnings)
+o.swapfile = false
+o.backup = false
+o.undofile = true
+
 -- Fold settings (for Treesitter)
 o.foldmethod = "expr"
 o.foldexpr = "nvim_treesitter#foldexpr()"

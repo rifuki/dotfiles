@@ -110,16 +110,16 @@ EXTERNAL=()   # 1 = found but not installed by this script — cannot manage
 
 # 0: Homebrew Formulae + Nerd Font
 LABELS+=("Homebrew Formulae + Nerd Font")
-DESCRIPTIONS+=("neovim, tmux, trash, htop, ripgrep, starship, neofetch, yazi, fzf, gh, JetBrainsMono")
+DESCRIPTIONS+=("neovim, tmux, trash, htop, ripgrep, starship, neofetch, yazi, fzf, gh, imagemagick, JetBrainsMono")
 _fi=0
-for _cmd in nvim tmux trash htop rg starship neofetch yazi fzf gh; do
+for _cmd in nvim tmux trash htop rg starship neofetch yazi fzf gh magick; do
   command -v "$_cmd" &>/dev/null && ((_fi++)) || true
 done
 if brew list --cask font-jetbrains-mono-nerd-font &>/dev/null || ls "$HOME/Library/Fonts/JetBrainsMono"*"NerdFont"* &>/dev/null 2>&1; then
   ((_fi++))
 fi
-if [ "$_fi" -eq 11 ]; then STATUS+=("all installed"); SELECTED+=(0)
-elif [ "$_fi" -gt 0 ]; then STATUS+=("${_fi}/11 installed"); SELECTED+=(1)
+if [ "$_fi" -eq 12 ]; then STATUS+=("all installed"); SELECTED+=(0)
+elif [ "$_fi" -gt 0 ]; then STATUS+=("${_fi}/12 installed"); SELECTED+=(1)
 else STATUS+=(""); SELECTED+=(1); fi
 EXTERNAL+=(0)
 
@@ -469,6 +469,7 @@ if [ "${SELECTED[0]}" = "1" ]; then
     "yazi:yazi"
     "fzf:fzf"
     "gh:gh"
+    "imagemagick:magick"
   )
   for _entry in "${_formulae[@]}"; do
     IFS=':' read -r _pkg _cmd <<< "$_entry"
