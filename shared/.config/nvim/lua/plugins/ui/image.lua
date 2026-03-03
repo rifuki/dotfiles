@@ -6,10 +6,18 @@ return {
         package.path = package.path .. ";" .. home .. "/.luarocks/share/lua/5.1/?.lua;" .. home .. "/.luarocks/share/lua/5.1/?/init.lua"
         package.cpath = package.cpath .. ";" .. home .. "/.luarocks/lib/lua/5.1/?.so"
 
+        -- Load MagickWand library (needed on macOS where Homebrew is not in system path)
         local ffi = require("ffi")
-        pcall(function()
-            ffi.load("/opt/homebrew/lib/libMagickWand-7.Q16HDRI.dylib")
-        end)
+        local magick_libs = {
+            "/opt/homebrew/lib/libMagickWand-7.Q16HDRI.dylib", -- macOS Apple Silicon
+            "/usr/local/lib/libMagickWand-7.Q16HDRI.dylib",    -- macOS Intel
+            "libMagickWand-7.Q16HDRI.so",                      -- Linux (system path)
+            "libMagickWand-7.Q16.so",                          -- Linux alt
+            "libMagickWand-6.Q16.so",                          -- Linux ImageMagick 6
+        }
+        for _, lib in ipairs(magick_libs) do
+            if pcall(ffi.load, lib) then break end
+        end
 
         require("image").setup({
             backend = "kitty",

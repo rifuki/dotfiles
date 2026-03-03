@@ -145,10 +145,10 @@ LABELS+=("Bun")
 DESCRIPTIONS+=("~/.bun")
 if [ -d "$HOME/.bun" ]; then DETECTED+=(1); SELECTED+=(1); EXTERNAL+=(0); else DETECTED+=(0); SELECTED+=(0); EXTERNAL+=(0); fi
 
-# 6: NVM
-LABELS+=("NVM")
-DESCRIPTIONS+=("~/.nvm")
-if [ -d "$HOME/.nvm" ]; then DETECTED+=(1); SELECTED+=(1); EXTERNAL+=(0); else DETECTED+=(0); SELECTED+=(0); EXTERNAL+=(0); fi
+# 6: mise
+LABELS+=("mise")
+DESCRIPTIONS+=("~/.local/share/mise, ~/.local/bin/mise")
+if command -v mise &>/dev/null || [ -d "$HOME/.local/share/mise" ]; then DETECTED+=(1); SELECTED+=(1); EXTERNAL+=(0); else DETECTED+=(0); SELECTED+=(0); EXTERNAL+=(0); fi
 
 # 7: Docker — expected via apt docker-ce repo
 LABELS+=("Docker")
@@ -413,9 +413,14 @@ if [ "${SELECTED[5]}" = "1" ]; then
   done_msg "Bun removed"
 fi
 
-# ========== NVM (index 6) ==========
+# ========== mise (index 6) ==========
 if [ "${SELECTED[6]}" = "1" ]; then
-  bash "$(dirname "$0")/nvm.sh" uninstall
+  step "Removing mise"
+  rm -rf "$HOME/.local/share/mise"
+  rm -rf "$HOME/.config/mise"
+  rm -rf "$HOME/.cache/mise"
+  rm -f "$HOME/.local/bin/mise"
+  done_msg "mise removed"
 fi
 
 # ========== Docker (index 7) ==========

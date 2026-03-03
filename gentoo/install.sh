@@ -103,10 +103,10 @@ DESCRIPTIONS+=("JavaScript runtime")
 if [ -d "$HOME/.bun" ]; then STATUS+=("installed"); SELECTED+=(0); EXTERNAL+=(0)
 else STATUS+=(""); SELECTED+=(1); EXTERNAL+=(0); fi
 
-# 4: NVM + Node 24
-LABELS+=("NVM + Node 24")
-DESCRIPTIONS+=("Node Version Manager + Node.js")
-if [ -d "$HOME/.nvm" ]; then STATUS+=("installed"); SELECTED+=(0); EXTERNAL+=(0)
+# 4: mise + Node 24
+LABELS+=("mise + Node 24")
+DESCRIPTIONS+=("Blazingly-fast polyglot version manager + Node.js 24")
+if command -v mise &>/dev/null; then STATUS+=("installed"); SELECTED+=(0); EXTERNAL+=(0)
 else STATUS+=(""); SELECTED+=(1); EXTERNAL+=(0); fi
 
 # 5: Docker
@@ -411,27 +411,24 @@ if [ "${SELECTED[3]}" = "1" ]; then
   fi
 fi
 
-# ========== 4: NVM + Node 24 ==========
+# ========== 4: mise + Node 24 ==========
 if [ "${SELECTED[4]}" = "1" ]; then
-  step "Setting up NVM + Node 24"
-  export NVM_DIR="$HOME/.nvm"
-  if [ ! -s "$NVM_DIR/nvm.sh" ]; then
-    info_msg "Installing NVM..."
-    curl -fsSL https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.3/install.sh | PROFILE=/dev/null bash
-    [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
-    done_msg "NVM installed"
+  step "Setting up mise + Node 24"
+  if ! command -v mise &>/dev/null; then
+    info_msg "Installing mise..."
+    curl https://mise.run | sh
+    export PATH="$HOME/.local/bin:$PATH"
+    done_msg "mise installed: $(mise --version 2>/dev/null)"
   else
-    done_msg "NVM already installed"
-    \. "$NVM_DIR/nvm.sh"
+    done_msg "mise already installed: $(mise --version 2>/dev/null)"
   fi
-  if ! nvm ls 24 &>/dev/null; then
-    info_msg "Installing Node.js 24..."
-    nvm install 24
-    done_msg "Node.js 24 installed"
+  if ! mise ls node 2>/dev/null | grep -q "24"; then
+    info_msg "Installing Node.js 24 via mise..."
+    mise use --global node@24
+    done_msg "Node.js 24 installed: $(mise exec node -- node --version 2>/dev/null)"
   else
     done_msg "Node.js 24 already installed"
   fi
-  nvm use 24
 fi
 
 # ========== 5: Docker ==========
@@ -540,7 +537,7 @@ step "Cleaning up shell profiles"
 for _f in "$HOME/.zprofile" "$HOME/.zshenv" "$HOME/.profile" "$HOME/.bash_profile" "$HOME/.bashrc"; do
   [ -f "$_f" ] || continue
   grep -qE 'cargo/env|NVM_DIR|nvm\.sh|bun\.sh|BUN_INSTALL|_bun' "$_f" 2>/dev/null || continue
-  grep -vE 'cargo/env|NVM_DIR|nvm\.sh|bun\.sh|BUN_INSTALL|_bun|Added by.*installer' "$_f" > "${_f}.tmp" || true
+  grep -vE 'cargo/env|NVM_DIR|nvm\.sh|bun\.sh|BUN_INSTALL|_bun|Added by.*installer|Added by nvm' "$_f" > "${_f}.tmp" || true
   if [ -s "${_f}.tmp" ]; then
     mv "${_f}.tmp" "$_f"
   else

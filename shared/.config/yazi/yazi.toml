@@ -6,9 +6,11 @@ sort_reverse  = false
 sort_dir_first = true
 
 [preview]
-tab_size   = 2
-max_width  = 600
-max_height = 900
+tab_size      = 2
+max_width     = 600
+max_height    = 900
+image_filter  = "triangle"
+image_quality = 75
 
 [opener]
 edit = [

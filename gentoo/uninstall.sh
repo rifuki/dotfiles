@@ -145,9 +145,10 @@ if confirm "Remove Bun (~/.bun)?"; then
   done_msg "Bun removed"
 fi
 
-if confirm "Remove NVM (~/.nvm)?"; then
-  rm -rf "$HOME/.nvm"
-  done_msg "NVM removed"
+if confirm "Remove mise (~/.local/share/mise, ~/.local/bin/mise)?"; then
+  rm -rf "$HOME/.local/share/mise"
+  rm -f "$HOME/.local/bin/mise"
+  done_msg "mise removed"
 fi
 
 if confirm "Remove Tmux plugins (~/.config/tmux/plugins)?"; then
