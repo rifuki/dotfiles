@@ -67,9 +67,6 @@ function y() {
 export STARSHIP_CONFIG="$HOME/.config/starship/starship.toml"
 eval "$(starship init zsh)"
 
-# Added by Antigravity
-export PATH="/Users/rifuki/.antigravity/antigravity/bin:$PATH"
-
 # ─── AI Tools Configuration ─────────────────────────────────────────────────
 [ -f "$HOME/.dotfiles/macos/ai-tools.sh" ] && source "$HOME/.dotfiles/macos/ai-tools.sh"
 

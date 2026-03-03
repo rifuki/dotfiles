@@ -35,11 +35,10 @@ plugins=(
 source $ZSH/oh-my-zsh.sh
 
 # ── Tools ─────────────────────────────
-export NVM_DIR="$HOME/.nvm"
-[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
-[ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"
-
 [ -s "$HOME/.bun/_bun" ] && source "$HOME/.bun/_bun"
+
+# Mise: global Node + per-project override via .mise.toml or .nvmrc
+command -v mise &>/dev/null && eval "$(mise activate zsh)"
 
 # ── Aliases ───────────────────────────
 alias n='nvim'
