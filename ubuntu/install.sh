@@ -351,7 +351,7 @@ if [ "${SELECTED[0]}" != "1" ]; then
 
   # ========== Essential Tools ==========
   step "Installing essential tools"
-  sudo apt install -y git curl wget unzip fontconfig software-properties-common
+  sudo apt install -y git curl wget unzip fontconfig software-properties-common trash-cli
   done_msg "Essential tools ready"
 
   # ========== Dotfiles Paths ==========

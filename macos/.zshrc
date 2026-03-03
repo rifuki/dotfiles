@@ -47,11 +47,15 @@ alias n='nvim'
 alias fucking='sudo'
 
 rm() {
-  local -a paths
-  for arg in "$@"; do
-    [[ "$arg" == -* ]] || paths+=("$arg")
-  done
-  trash "${paths[@]}"
+  if command -v trash &>/dev/null; then
+    local -a paths
+    for arg in "$@"; do
+      [[ "$arg" == -* ]] || paths+=("$arg")
+    done
+    trash "${paths[@]}"
+  else
+    command rm -i "$@"
+  fi
 }
 
 # ── Yazi ──────────────────────────────

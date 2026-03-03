@@ -226,7 +226,7 @@ echo ""
 # ========== Essential Tools Check ==========
 step "Checking essential tools"
 _missing_tools=()
-for _tool in git curl wget unzip zsh tmux nvim; do
+for _tool in git curl wget unzip zsh tmux nvim trash-put; do
   if command -v "$_tool" &>/dev/null; then
     done_msg "$_tool found"
   else

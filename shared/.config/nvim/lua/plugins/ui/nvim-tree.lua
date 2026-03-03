@@ -1,8 +1,9 @@
 return {
     "nvim-tree/nvim-tree.lua",
     opts = function(_, opts)
+        local trash_cmd = vim.fn.has("mac") == 1 and "trash" or "trash-put"
         opts.trash = {
-            cmd = "trash",
+            cmd = trash_cmd,
         }
 
         opts.on_attach = function(bufnr)
