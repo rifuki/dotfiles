@@ -128,13 +128,13 @@ fi
 # 1: APT Packages + Nerd Font
 # Expected: nvim → /opt/nvim-linux-x86_64, yazi → /usr/local/bin/yazi, others via dpkg
 LABELS+=("APT Packages + Nerd Font")
-DESCRIPTIONS+=("build-essential, neovim, tmux, zsh, htop, ripgrep, neofetch, yazi, fzf, imagemagick, gh, JetBrainsMono")
+DESCRIPTIONS+=("build-essential, neovim, tmux, zsh, htop, ripgrep, neofetch, yazi, fzf, imagemagick, gh, lua5.4, JetBrainsMono")
 _fi=0; _fi_ext=0; _fi_installed=""
 # nvim
 if [ -d /opt/nvim-linux-x86_64 ]; then ((_fi++)) || true; _fi_installed="nvim"
 elif command -v nvim &>/dev/null; then ((_fi++)) || true; _fi_ext=1; _fi_installed="nvim"; fi
 # APT-managed packages
-for _pkg in build-essential tmux zsh htop ripgrep neofetch fzf imagemagick gh; do
+for _pkg in build-essential tmux zsh htop ripgrep neofetch fzf imagemagick gh lua5.4; do
   _cmd="$_pkg"; [ "$_pkg" = "ripgrep" ] && _cmd="rg"; [ "$_pkg" = "imagemagick" ] && _cmd="convert"; [ "$_pkg" = "build-essential" ] && _cmd="make"
   if dpkg -s "$_pkg" &>/dev/null 2>&1; then ((_fi++)) || true; [ -z "$_fi_installed" ] && _fi_installed="$_pkg" || _fi_installed="$_fi_installed, $_pkg"
   elif command -v "$_cmd" &>/dev/null 2>&1; then ((_fi++)) || true; _fi_ext=1; [ -z "$_fi_installed" ] && _fi_installed="$_pkg" || _fi_installed="$_fi_installed, $_pkg"; fi
@@ -144,9 +144,9 @@ if [ -f /usr/local/bin/yazi ]; then ((_fi++)) || true; [ -z "$_fi_installed" ] &
 elif command -v yazi &>/dev/null; then ((_fi++)) || true; _fi_ext=1; [ -z "$_fi_installed" ] && _fi_installed="yazi" || _fi_installed="$_fi_installed, yazi"; fi
 # Nerd Font
 if ls "$HOME/.local/share/fonts/JetBrainsMono"*"NerdFont"* &>/dev/null 2>&1; then ((_fi++)) || true; [ -z "$_fi_installed" ] && _fi_installed="font" || _fi_installed="$_fi_installed, font"; fi
-if [ "$_fi" -gt 0 ] && [ "$_fi_ext" = "1" ]; then STATUS+=("${_fi}/12 installed (external): ${_fi_installed}"); SELECTED+=(0); EXTERNAL+=(1)
-elif [ "$_fi" -eq 12 ]; then STATUS+=("all installed"); SELECTED+=(0); EXTERNAL+=(0)
-elif [ "$_fi" -gt 0 ]; then STATUS+=("${_fi}/12 installed: ${_fi_installed}"); SELECTED+=(1); EXTERNAL+=(0)
+if [ "$_fi" -gt 0 ] && [ "$_fi_ext" = "1" ]; then STATUS+=("${_fi}/13 installed (external): ${_fi_installed}"); SELECTED+=(0); EXTERNAL+=(1)
+elif [ "$_fi" -eq 13 ]; then STATUS+=("all installed"); SELECTED+=(0); EXTERNAL+=(0)
+elif [ "$_fi" -gt 0 ]; then STATUS+=("${_fi}/13 installed: ${_fi_installed}"); SELECTED+=(1); EXTERNAL+=(0)
 else STATUS+=(""); SELECTED+=(1); EXTERNAL+=(0); fi
 
 # 2: Starship — expected at /usr/local/bin/starship
@@ -578,7 +578,7 @@ if [ "${SELECTED[1]}" = "1" ]; then
   fi
 
   # Standard apt packages
-  _apt_pkgs=("build-essential" "tmux" "zsh" "htop" "ripgrep" "neofetch" "fzf" "imagemagick" "luarocks")
+  _apt_pkgs=("build-essential" "tmux" "zsh" "htop" "ripgrep" "neofetch" "fzf" "imagemagick" "gh" "lua5.4" "luarocks")
   for _pkg in "${_apt_pkgs[@]}"; do
     if ! dpkg -s "$_pkg" &>/dev/null; then
       info_msg "Installing ${_pkg}..."
