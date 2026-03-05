@@ -7,7 +7,20 @@
 
 set -e
 
-PARSER_DIR=$(nvim --clean --headless -c "lua print(vim.fn.stdpath('data'))" -c "qa" 2>/dev/null)
+if ! command -v nvim &>/dev/null; then
+    echo "Error: nvim not found in PATH. Install nvim first."
+    exit 1
+fi
+
+# Try headless mode first, fallback to default path
+PARSER_DIR=$(nvim --clean --headless -c "lua print(vim.fn.stdpath('data'))" -c "qa" 2>/dev/null | tr -d '\r')
+
+if [ -z "$PARSER_DIR" ]; then
+    # Fallback to XDG default
+    PARSER_DIR="${XDG_DATA_HOME:-$HOME/.local/share}/nvim"
+    echo "Warning: headless nvim failed, using default: $PARSER_DIR"
+fi
+
 DEST="$PARSER_DIR/site/parser/move.so"
 TREE_SITTER_PATH="external-crates/move/tooling/tree-sitter"
 WORK_DIR=$(mktemp -d)
