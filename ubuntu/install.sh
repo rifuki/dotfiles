@@ -770,6 +770,8 @@ if [ "${SELECTED[8]}" = "1" ]; then
   # OpenCode (official install script)
   if ! command -v opencode &>/dev/null; then
     info_msg "Installing OpenCode..."
+    mkdir -p "$HOME/.local/bin"
+    export PATH="$HOME/.opencode/bin:$HOME/.local/bin:$PATH"
     curl -fsSL https://opencode.ai/install | bash
     done_msg "OpenCode installed"
   else
