@@ -578,7 +578,7 @@ if [ "${SELECTED[1]}" = "1" ]; then
   fi
 
   # Standard apt packages
-  _apt_pkgs=("build-essential" "tmux" "zsh" "htop" "ripgrep" "neofetch" "fzf" "imagemagick")
+  _apt_pkgs=("build-essential" "tmux" "zsh" "htop" "ripgrep" "neofetch" "fzf" "imagemagick" "luarocks")
   for _pkg in "${_apt_pkgs[@]}"; do
     if ! dpkg -s "$_pkg" &>/dev/null; then
       info_msg "Installing ${_pkg}..."

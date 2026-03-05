@@ -1,6 +1,11 @@
 return {
     "3rd/image.nvim",
     lazy = false,
+    opts = {
+        rocks = {
+            hererocks = false,
+        },
+    },
     config = function()
         local home = os.getenv("HOME")
         package.path = package.path .. ";" .. home .. "/.luarocks/share/lua/5.1/?.lua;" .. home .. "/.luarocks/share/lua/5.1/?/init.lua"

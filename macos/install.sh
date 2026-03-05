@@ -470,6 +470,7 @@ if [ "${SELECTED[0]}" = "1" ]; then
     "fzf:fzf"
     "gh:gh"
     "imagemagick:magick"
+    "luarocks:luarocks"
   )
   for _entry in "${_formulae[@]}"; do
     IFS=':' read -r _pkg _cmd <<< "$_entry"
