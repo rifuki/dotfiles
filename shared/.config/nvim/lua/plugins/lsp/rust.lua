@@ -36,18 +36,6 @@ return {
                     -- Disable inlay hints by default (can be toggled)
                     vim.lsp.inlay_hint.enable(false)
 
-                    -- Check if this is an Anchor project
-                    local cwd = client.config.root_dir or vim.fn.getcwd()
-                    local is_anchor = vim.fn.filereadable(cwd .. "/Anchor.toml") == 1
-
-                    if is_anchor then
-                        -- For Anchor projects, notify user about expected false positives
-                        vim.notify(
-                            "Anchor project detected. Some macro diagnostics may be false positives.",
-                            vim.log.levels.INFO,
-                            { title = "rust-analyzer" }
-                        )
-                    end
                 end,
                 default_settings = {
                     ["rust-analyzer"] = {
