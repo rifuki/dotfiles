@@ -23,6 +23,15 @@ return {
 
         vim.g.rustaceanvim = {
             server = {
+                -- Neovim 0.11 switched to pull diagnostics (textDocument/diagnostic)
+                -- when server supports diagnosticProvider. Pull only triggers on save.
+                -- Disable pull capability → forces rust-analyzer to use push
+                -- (publishDiagnostics) which sends errors live on every change.
+                capabilities = (function()
+                    local caps = vim.lsp.protocol.make_client_capabilities()
+                    caps.textDocument.diagnostic = nil
+                    return caps
+                end)(),
                 on_attach = function(client, bufnr)
                     -- Disable inlay hints by default (can be toggled)
                     vim.lsp.inlay_hint.enable(false)
@@ -43,7 +52,9 @@ return {
                 default_settings = {
                     ["rust-analyzer"] = {
                         cargo = {
-                            allFeatures = true,
+                            -- allFeatures = true breaks Anchor: enables idl-build feature
+                            -- which changes macro expansion and crate resolution (solana_program error)
+                            allFeatures = false,
                             buildScripts = {
                                 enable = true,
                             },
@@ -64,7 +75,6 @@ return {
                             excludeDirs = {},
                             watcher = "client",
                         },
-                        -- IMPORTANT: checkOnSave always enabled for typo detection!
                         checkOnSave = {
                             enable = true,
                             command = "clippy",

@@ -17,6 +17,17 @@ vim.api.nvim_create_autocmd("FileType", {
     desc = "Set JSX/TSX comment style",
 })
 
+-- Auto-save Rust files on idle so rust-analyzer checkOnSave runs without manual :w
+vim.api.nvim_create_autocmd("CursorHold", {
+    pattern = "*.rs",
+    callback = function()
+        if vim.bo.modified and vim.bo.buftype == "" then
+            vim.cmd("silent! write")
+        end
+    end,
+    desc = "Auto-save Rust files for live LSP diagnostics",
+})
+
 -- Git commit message formatting (best practices)
 vim.api.nvim_create_autocmd("FileType", {
     pattern = "gitcommit",

@@ -5,6 +5,12 @@ vim.opt.runtimepath:prepend(vim.fn.stdpath("data") .. "/site/parser")
 
 local o = vim.opt
 
+-- Faster CursorHold (used for auto-save → live LSP diagnostics on Rust files)
+o.updatetime = 500
+
+-- Show LSP diagnostics live while typing in insert mode
+vim.diagnostic.config({ update_in_insert = true })
+
 -- Disable swap/backup, use undofile instead (persistent undo, no annoying warnings)
 o.swapfile = false
 o.backup = false
