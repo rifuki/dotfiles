@@ -28,6 +28,7 @@ return {
                 "cssls",
                 "html",
                 "bashls",
+                "clangd",
                 "solidity_ls_nomicfoundation",
                 "tailwindcss", -- Tailwind CSS intellisense
             },

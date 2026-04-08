@@ -75,5 +75,79 @@ eval "$(starship init zsh)"
 # ─── AI Tools Configuration ─────────────────────────────────────────────────
 [ -f "$HOME/.dotfiles/macos/ai-tools.sh" ] && source "$HOME/.dotfiles/macos/ai-tools.sh"
 
-# OpenClaw Completion
-source "/Users/rifuki/.openclaw/completions/openclaw.zsh"
+# Added by Antigravity
+export PATH="/Users/rifuki/.antigravity/antigravity/bin:$PATH"
+export PATH="$HOME/.browser-use-env/bin:$PATH"
+export PATH="$HOME/.browser-use-env/bin:$PATH"
+
+# Added by Antigravity
+export PATH="/Users/rifuki/.antigravity/antigravity/bin:$PATH"
+
+# Added by Antigravity
+export PATH="/Users/rifuki/.antigravity/antigravity/bin:$PATH"
+
+# Added by Antigravity
+export PATH="/Users/rifuki/.antigravity/antigravity/bin:$PATH"
+
+# Added by Antigravity
+export PATH="/Users/rifuki/.antigravity/antigravity/bin:$PATH"
+
+# Added by Antigravity
+export PATH="/Users/rifuki/.antigravity/antigravity/bin:$PATH"
+
+# Added by Antigravity
+export PATH="/Users/rifuki/.antigravity/antigravity/bin:$PATH"
+
+# Added by Antigravity
+export PATH="/Users/rifuki/.antigravity/antigravity/bin:$PATH"
+
+# Added by Antigravity
+export PATH="/Users/rifuki/.antigravity/antigravity/bin:$PATH"
+
+# Added by Antigravity
+export PATH="/Users/rifuki/.antigravity/antigravity/bin:$PATH"
+
+# Added by Antigravity
+export PATH="/Users/rifuki/.antigravity/antigravity/bin:$PATH"
+
+# Added by Antigravity
+export PATH="/Users/rifuki/.antigravity/antigravity/bin:$PATH"
+
+# Added by Antigravity
+export PATH="/Users/rifuki/.antigravity/antigravity/bin:$PATH"
+
+# Added by Antigravity
+export PATH="/Users/rifuki/.antigravity/antigravity/bin:$PATH"
+
+# Added by Antigravity
+export PATH="/Users/rifuki/.antigravity/antigravity/bin:$PATH"
+
+# Added by Antigravity
+export PATH="/Users/rifuki/.antigravity/antigravity/bin:$PATH"
+
+# Added by Antigravity
+export PATH="/Users/rifuki/.antigravity/antigravity/bin:$PATH"
+
+# Added by Antigravity
+export PATH="/Users/rifuki/.antigravity/antigravity/bin:$PATH"
+
+# Added by Antigravity
+export PATH="/Users/rifuki/.antigravity/antigravity/bin:$PATH"
+
+# Added by Antigravity
+export PATH="/Users/rifuki/.antigravity/antigravity/bin:$PATH"
+
+# Added by Antigravity
+export PATH="/Users/rifuki/.antigravity/antigravity/bin:$PATH"
+
+# Added by Antigravity
+export PATH="/Users/rifuki/.antigravity/antigravity/bin:$PATH"
+
+# Added by Antigravity
+export PATH="/Users/rifuki/.antigravity/antigravity/bin:$PATH"
+
+# Added by Antigravity
+export PATH="/Users/rifuki/.antigravity/antigravity/bin:$PATH"
+
+# Added by Antigravity
+export PATH="/Users/rifuki/.antigravity/antigravity/bin:$PATH"

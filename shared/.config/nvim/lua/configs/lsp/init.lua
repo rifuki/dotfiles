@@ -3,6 +3,7 @@ require("nvchad.configs.lspconfig").defaults()
 
 -- Load all LSP configurations
 require("configs.lsp.defaults")
+require("configs.lsp.c")
 require("configs.lsp.web")
 require("configs.lsp.yaml")
 require("configs.lsp.prisma")
