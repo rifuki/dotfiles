@@ -2,7 +2,7 @@
 set -e
 
 # ========== Packages ==========
-BREW_FORMULAE=(neovim tmux trash htop neofetch yazi fzf gh ripgrep starship)
+BREW_FORMULAE=(neovim tmux trash htop ripgrep starship neofetch yazi fzf gh imagemagick luarocks wakatime-cli)
 TOOL_NAMES=(nvim starship ghostty yazi tmux neofetch wakatime orbstack yabai skhd solana anchor claude gemini kimi opencode sui suiup walrus mvr gh ripgrep trash htop hot mise)
 
 # ========== Colors (Miku Cyberpunk Theme) ==========

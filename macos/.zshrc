@@ -32,7 +32,7 @@ plugins=(
     git
     zsh-autosuggestions
     zsh-syntax-highlighting
-    wakatime
+    zsh-wakatime
 )
 
 source $ZSH/oh-my-zsh.sh
