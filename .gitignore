@@ -26,6 +26,7 @@
 # Ignore specific files
 .DS_Store
 **/.DS_Store
+**/.zcompdump*
 **/lazy-lock.json
 **/.config/tmux/plugins/
 **/*.zwc
