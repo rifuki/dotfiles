@@ -924,7 +924,6 @@ if command -v nvim &>/dev/null && [ -d "$HOME/.config/nvim" ]; then
   info_msg "Installing Mason packages..."
   nvim --headless \
     -c "luafile $HOME/.config/nvim/scripts/mason-headless.lua" \
-    "+MasonInstallAll" \
     2>/dev/null
   done_msg "Mason packages installed"
 fi
