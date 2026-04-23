@@ -15,9 +15,9 @@
 !macos/
 !macos/**
 
-# Ubuntu platform
-!ubuntu/
-!ubuntu/**
+# Debian platform
+!debian/
+!debian/**
 
 # Gentoo platform
 !gentoo/
