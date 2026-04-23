@@ -86,12 +86,6 @@ bash ~/.dotfiles/macos/uninstall-brew.sh
 | [suiup](https://sui.io) | Sui version manager |
 | [sui-move-analyzer](https://github.com/movebit/sui-move-analyzer) | Sui Move LSP (~10min build) |
 
-### AI Tools (optional)
-| Tool | Description |
-|------|-------------|
-| [Kimi CLI](https://github.com/MoonshotAI/kimi-cli) | Kimi AI CLI |
-| [OpenCode](https://opencode.ai) | OpenCode AI |
-
 ### Tools (Gentoo — Hyprland Desktop)
 | Tool | Description |
 |------|-------------|
@@ -115,14 +109,12 @@ bash ~/.dotfiles/macos/uninstall-brew.sh
 - `neofetch` — Miku ASCII art + config (unified)
 - `yazi` — Terminal file manager with cross-platform opener
 - `.zshrc` — Cyan-magenta syntax highlighting, aliases, PATH setup
-- `.claude/` — Claude Code statusline integration with Starship colors
 
 ## Structure
 
 ```
 ~/.dotfiles/
 ├── shared/
-│   ├── .claude/           # Claude Code statusline (both platforms)
 │   └── .config/
 │       ├── nvim/          # NvChad config + LSP + plugins
 │       ├── neofetch/      # Custom ASCII art + config (unified)
@@ -211,5 +203,4 @@ Re-running `install.sh` is safe:
 Colors are consistent across:
 - `.zshrc` syntax highlighting
 - `starship.toml` prompt
-- `.claude/statusline-command.sh`
 - `install.sh` / `uninstall.sh` UI

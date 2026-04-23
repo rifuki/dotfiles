@@ -3,7 +3,7 @@ set -e
 
 # ========== Packages ==========
 BREW_FORMULAE=(neovim tmux trash htop ripgrep starship neofetch yazi fzf gh imagemagick luarocks wakatime-cli)
-TOOL_NAMES=(nvim starship ghostty yazi tmux neofetch wakatime orbstack yabai skhd solana anchor claude gemini kimi opencode sui suiup walrus mvr gh ripgrep trash htop hot mise)
+TOOL_NAMES=(nvim starship ghostty yazi tmux neofetch wakatime orbstack yabai skhd solana anchor sui suiup walrus mvr gh ripgrep trash htop hot mise)
 
 # ========== Colors (Miku Cyberpunk Theme) ==========
 # Cyan: #00D9FF | Green: #50FA7B | Magenta: #FF79C6 | Purple: #BD93F9
@@ -173,12 +173,7 @@ LABELS+=("sui-move-analyzer")
 DESCRIPTIONS+=("~/.cargo/bin/sui-move-analyzer")
 if [ -f "$HOME/.cargo/bin/sui-move-analyzer" ]; then DETECTED+=(1); SELECTED+=(1); EXTERNAL+=(0); else DETECTED+=(0); SELECTED+=(0); EXTERNAL+=(0); fi
 
-# 14: AI CLI Tools
-LABELS+=("AI CLI Tools")
-DESCRIPTIONS+=("Claude Code, Gemini CLI, Kimi CLI, OpenCode")
-if command -v claude &>/dev/null || command -v gemini &>/dev/null || command -v kimi &>/dev/null || command -v opencode &>/dev/null; then DETECTED+=(1); SELECTED+=(1); EXTERNAL+=(0); else DETECTED+=(0); SELECTED+=(0); EXTERNAL+=(0); fi
-
-# 15: SSH Keys (iCloud)
+# 14: SSH Keys (iCloud)
 LABELS+=("SSH Keys (iCloud)")
 DESCRIPTIONS+=("~/.ssh symlink only")
 if [ -L "$HOME/.ssh" ]; then DETECTED+=(1); SELECTED+=(1); EXTERNAL+=(0); else DETECTED+=(0); SELECTED+=(0); EXTERNAL+=(0); fi
@@ -480,46 +475,8 @@ if [ "${SELECTED[13]}" = "1" ]; then
 
 fi
 
-# ========== AI CLI Tools (index 14) ==========
+# ========== SSH Keys (index 14) ==========
 if [ "${SELECTED[14]}" = "1" ]; then
-  step "Removing AI CLI Tools"
-  if brew list --cask claude-code &>/dev/null; then
-    brew uninstall --cask claude-code && done_msg "Claude Code removed" || warn_msg "Failed to remove Claude Code"
-  fi
-  rm -f "$HOME/.local/bin/claude"
-  rm -rf "$HOME/.local/share/claude"
-  rm -rf "$HOME/.claude"
-  rm -f "$HOME/.claude.json"
-  rm -f "$HOME"/.claude.json.backup.*
-  done_msg "Claude Code files removed"
-  if brew list gemini-cli &>/dev/null; then
-    brew uninstall gemini-cli && done_msg "Gemini CLI removed" || warn_msg "Failed to remove Gemini CLI"
-  fi
-  rm -rf "$HOME/.gemini"
-  done_msg "Gemini CLI files removed"
-  if brew list kimi-cli &>/dev/null; then
-    brew uninstall kimi-cli && done_msg "Kimi CLI removed" || warn_msg "Failed to remove Kimi CLI"
-  fi
-  rm -rf "$HOME/.kimi"
-  done_msg "Kimi CLI files removed"
-  if brew list opencode &>/dev/null; then
-    brew uninstall opencode && done_msg "OpenCode removed" || warn_msg "Failed to remove OpenCode"
-  fi
-  rm -rf "$HOME/.opencode"
-  done_msg "OpenCode files removed"
-  # GitHub Copilot CLI (copilot-cli cask or github-copilot formula)
-  if brew list --cask copilot-cli &>/dev/null 2>&1; then
-    brew uninstall --cask copilot-cli && done_msg "Copilot CLI (cask) removed" || warn_msg "Failed to remove Copilot CLI cask"
-  elif brew list github-copilot &>/dev/null 2>&1; then
-    brew uninstall github-copilot && done_msg "GitHub Copilot CLI (formula) removed" || warn_msg "Failed to remove GitHub Copilot CLI"
-  fi
-  rm -rf "$HOME/.config/gh-copilot"
-  rm -rf "$HOME/.config/github-copilot"
-  done_msg "GitHub Copilot CLI files removed"
-fi
-
-# ========== SSH Keys (index 15) ==========
-if [ "${SELECTED[15]}" = "1" ]; then
   step "Removing SSH Keys symlink"
   if [ -L "$HOME/.ssh" ]; then
     rm -f "$HOME/.ssh"
@@ -536,8 +493,8 @@ rm -f "$HOME/.node_repl_history"
 rm -rf "$HOME/.config/github-copilot" 2>/dev/null || true
 done_msg "Cache files removed"
 
-# ========== Deep Clean (index 16) ==========
-if [ "${SELECTED[16]}" = "1" ]; then
+# ========== Deep Clean (index 15) ==========
+if [ "${SELECTED[15]}" = "1" ]; then
   step "Deep cleaning residue files"
 
   # Kill running processes that might recreate files
@@ -580,8 +537,6 @@ if [ "${SELECTED[16]}" = "1" ]; then
   rm -rf "$HOME/.npm"
   rm -rf "$HOME/.orbstack"
   rm -rf "$HOME/OrbStack" 2>/dev/null || warn_msg "~/OrbStack: permission denied — remove manually"
-  rm -rf "$HOME/.claude"
-  rm -f "$HOME/.claude.json"
   rm -f "$HOME/.viminfo"
 
   done_msg "Residue files removed"

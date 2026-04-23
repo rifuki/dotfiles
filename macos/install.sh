@@ -235,20 +235,7 @@ LABELS+=("sui-move-analyzer")
 DESCRIPTIONS+=("Sui Move language server (~10min)")
 if [ -f "$HOME/.cargo/bin/sui-move-analyzer" ]; then STATUS+=("installed"); SELECTED+=(0); EXTERNAL+=(0); else STATUS+=(""); SELECTED+=(1); EXTERNAL+=(0); fi
 
-# 13: AI CLI Tools
-LABELS+=("AI CLI Tools")
-DESCRIPTIONS+=("Claude Code, Gemini CLI, Kimi CLI, OpenCode, Antigravity")
-_ai_count=0
-command -v claude &>/dev/null && ((_ai_count++)) || true
-command -v gemini &>/dev/null && ((_ai_count++)) || true
-command -v kimi &>/dev/null && ((_ai_count++)) || true
-command -v opencode &>/dev/null && ((_ai_count++)) || true
-[ -d "/Applications/Antigravity Tools.app" ] && ((_ai_count++)) || true
-if [ "$_ai_count" -eq 5 ]; then STATUS+=("all installed"); SELECTED+=(0); EXTERNAL+=(0)
-elif [ "$_ai_count" -gt 0 ]; then STATUS+=("${_ai_count}/5 installed"); SELECTED+=(1); EXTERNAL+=(0)
-else STATUS+=(""); SELECTED+=(1); EXTERNAL+=(0); fi
-
-# 14: SSH Keys (iCloud)
+# 13: SSH Keys (iCloud)
 LABELS+=("SSH Keys (iCloud)")
 DESCRIPTIONS+=("Symlink ~/.ssh → iCloud/rifuki/.ssh")
 _icloud_base="$HOME/Library/Mobile Documents/com~apple~CloudDocs"
@@ -342,13 +329,11 @@ while true; do
   fi
   # Dependency: Solana + AVM (11) requires Rust (8)
   [ "${SELECTED[11]}" = "1" ] && SELECTED[8]=1
-  # Dependency: sui-move-analyzer (13) requires Rust (8)
-  [ "${SELECTED[13]}" = "1" ] && SELECTED[8]=1
-  # Dependency: AI CLI Tools (13) includes Copilot CLI which requires gh (part of 0)
-  [ "${SELECTED[13]}" = "1" ] && SELECTED[0]=1
-  # Deselect Rust (8) → auto-deselect Solana AVM (11) and sui-move-analyzer (13)
+  # Dependency: sui-move-analyzer (12) requires Rust (8)
+  [ "${SELECTED[12]}" = "1" ] && SELECTED[8]=1
+  # Deselect Rust (8) → auto-deselect Solana AVM (11) and sui-move-analyzer (12)
   [ "${SELECTED[8]}" = "0" ] && SELECTED[11]=0
-  [ "${SELECTED[8]}" = "0" ] && SELECTED[13]=0
+  [ "${SELECTED[8]}" = "0" ] && SELECTED[12]=0
 done
 
 # ========== Confirmation ==========
@@ -721,82 +706,8 @@ if [ "${SELECTED[12]}" = "1" ]; then
   fi
 fi
 
-# ========== 14: AI CLI Tools ==========
-if [ "${SELECTED[14]}" = "1" ]; then
-  step "Installing AI CLI Tools"
-  if ! command -v claude &>/dev/null; then
-    info_msg "Installing Claude Code..."
-    brew install --cask claude-code
-    done_msg "Claude Code installed"
-  else
-    done_msg "Claude Code already installed"
-  fi
-  if ! command -v gemini &>/dev/null; then
-    info_msg "Installing Gemini CLI..."
-    brew install gemini-cli
-    done_msg "Gemini CLI installed"
-  else
-    done_msg "Gemini CLI already installed"
-  fi
-  if ! command -v kimi &>/dev/null; then
-    info_msg "Installing Kimi CLI..."
-    brew install kimi-cli
-    done_msg "Kimi CLI installed"
-  else
-    done_msg "Kimi CLI already installed"
-  fi
-  if ! command -v opencode &>/dev/null; then
-    info_msg "Installing OpenCode..."
-    brew install opencode
-    done_msg "OpenCode installed"
-  else
-    done_msg "OpenCode already installed"
-  fi
-  if [ ! -d "/Applications/Antigravity Tools.app" ]; then
-    info_msg "Installing Antigravity..."
-    brew install --cask antigravity
-    done_msg "Antigravity installed"
-  else
-    done_msg "Antigravity already installed"
-  fi
-  # Claude config
-  mkdir -p "$HOME/.claude"
-  if [ -f "$SHARED_DIR/.claude/statusline-command.sh" ]; then
-    ln -sf "$SHARED_DIR/.claude/statusline-command.sh" "$HOME/.claude/statusline-command.sh"
-    done_msg "~/.claude/statusline-command.sh"
-  fi
-  if [ -f "$SHARED_DIR/.claude/settings.json" ]; then
-    ln -sf "$SHARED_DIR/.claude/settings.json" "$HOME/.claude/settings.json"
-    done_msg "~/.claude/settings.json"
-  fi
-  # AI tools shell config
-  if [ -f "$PLATFORM_DIR/ai-tools.sh" ]; then
-    ln -sf "$PLATFORM_DIR/ai-tools.sh" "$HOME/.claude/ai-tools.sh"
-    done_msg "~/.claude/ai-tools.sh → macos/ai-tools.sh"
-  fi
-  # GitHub Copilot CLI (try cask first, fallback to formula)
-  if ! brew list --cask copilot-cli &>/dev/null 2>&1 && \
-     ! brew list github-copilot &>/dev/null 2>&1 && \
-     ! (command -v gh &>/dev/null && gh extension list 2>/dev/null | grep -q "github.com/github/copilot"); then
-    info_msg "Installing GitHub Copilot CLI..."
-    # Try cask first (official), fallback to formula if fails
-    if brew install --cask copilot-cli 2>/dev/null; then
-      done_msg "GitHub Copilot CLI installed (cask)"
-    else
-      warn_msg "Cask install failed, trying formula..."
-      if brew install github-copilot 2>/dev/null; then
-        done_msg "GitHub Copilot CLI installed (formula)"
-      else
-        warn_msg "Both cask and formula failed — install manually: brew install --cask copilot-cli"
-      fi
-    fi
-  else
-    done_msg "GitHub Copilot CLI already installed"
-  fi
-fi
-
-# ========== 14: SSH Keys (iCloud) ==========
-if [ "${SELECTED[14]}" = "1" ]; then
+# ========== 13: SSH Keys (iCloud) ==========
+if [ "${SELECTED[13]}" = "1" ]; then
   step "Setting up SSH keys from iCloud"
   _icloud_base="$HOME/Library/Mobile Documents/com~apple~CloudDocs"
   _ssh_target="$_icloud_base/rifuki/.ssh"
@@ -846,8 +757,8 @@ if [ "${SELECTED[14]}" = "1" ]; then
   fi
 fi
 
-# ========== 15: macOS Defaults ==========
-if [ "${SELECTED[15]}" = "1" ]; then
+# ========== 14: macOS Defaults ==========
+if [ "${SELECTED[14]}" = "1" ]; then
   step "Applying macOS defaults"
   bash "$PLATFORM_DIR/macos-defaults.sh"
 fi
@@ -950,8 +861,8 @@ if [ "$SHELL" != "$(which zsh)" ]; then
   chsh -s "$(which zsh)" || warn_msg "chsh failed"
 fi
 
-# ========== 13: sui-move-analyzer ==========
-if [ "${SELECTED[13]}" = "1" ]; then
+# ========== 12: sui-move-analyzer ==========
+if [ "${SELECTED[12]}" = "1" ]; then
   step "Checking sui-move-analyzer"
   if [ ! -f "$HOME/.cargo/bin/sui-move-analyzer" ]; then
     if command -v cargo &>/dev/null; then
