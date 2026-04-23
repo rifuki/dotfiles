@@ -621,7 +621,10 @@ if command -v nvim &>/dev/null && [ -d "$HOME/.config/nvim" ]; then
   done_msg "Lazy plugins synced"
   
   info_msg "Installing Mason packages..."
-  nvim --headless "+MasonInstallAll" +qa 2>/dev/null || true
+  nvim --headless \
+    -c "lua local r=require('mason-registry');local n=0;r:on('package:install:start',function()n=n+1 end);local function d()n=n-1;if n==0 then vim.schedule(function()vim.cmd('qa!')end)end end;r:on('package:install:success',d);r:on('package:install:failed',d);vim.defer_fn(function()if n==0 then vim.cmd('qa!')end end,5000)" \
+    "+MasonInstallAll" \
+    2>/dev/null || true
   done_msg "Mason packages installed"
 fi
 

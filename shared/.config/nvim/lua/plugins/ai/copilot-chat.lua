@@ -1,5 +1,6 @@
 return {
     "CopilotC-Nvim/CopilotChat.nvim",
+    enabled = not require("utils.profile").is_minimal,
     dependencies = {
         { "github/copilot.vim" },
         { "nvim-lua/plenary.nvim", branch = "master" },

@@ -1,5 +1,6 @@
 return {
     "3rd/image.nvim",
+    enabled = not require("utils.profile").is_minimal,
     lazy = false,
     opts = {
         rocks = {

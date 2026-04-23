@@ -5,6 +5,7 @@
 return {
     dir = vim.fn.stdpath("config"),
     name = "move-lang",
+    enabled = not require("utils.profile").is_minimal,
     lazy = false,
     config = function()
         local parser_so = vim.fn.stdpath("data") .. "/site/parser/move.so"
