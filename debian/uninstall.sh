@@ -65,7 +65,7 @@ _custom_users=()
 while IFS=: read -r _u _ _uid _; do
   if [ "$_uid" -ge 1000 ] && [ "$_uid" -lt 65534 ]; then
     case "$_u" in
-      ubuntu|azureuser|ec2-user|admin|centos|fedora|debian|cloud) ;;
+      debian|azureuser|ec2-user|admin|centos|fedora|debian|cloud) ;;
       *) _custom_users+=("$_u") ;;
     esac
   fi
@@ -300,7 +300,7 @@ echo ""
 # ========== Backup Current Configs ==========
 DOTFILES_DIR="$HOME/.dotfiles"
 SHARED_DIR="$DOTFILES_DIR/shared"
-PLATFORM_DIR="$DOTFILES_DIR/ubuntu"
+PLATFORM_DIR="$DOTFILES_DIR/debian"
 UNINSTALL_BACKUP_DIR="$HOME/.config/backup-uninstall-$(date +%Y%m%d-%H%M%S)"
 _did_backup=0
 

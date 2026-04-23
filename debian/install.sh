@@ -1,7 +1,7 @@
 #!/bin/bash
 set -e
 
-# ========== Colors (Miku Cyberpunk Theme — Ubuntu variant) ==========
+# ========== Colors (Miku Cyberpunk Theme — Debian variant) ==========
 # Cyan: #00D9FF | Green: #50FA7B | Magenta: #FF79C6 | Purple: #BD93F9
 # Teal: #01CBC6 | Orange: #FFB86C | Peach: #F0CAA4 | Gray: #6C757D
 CYAN='\033[38;2;0;217;255m'
@@ -45,7 +45,7 @@ if [[ "$(uname)" != "Linux" ]]; then
   exit 1
 fi
 if ! command -v apt &>/dev/null; then
-  echo -e "${RED}❌ This script requires apt (Debian/Ubuntu).${NC}"
+  echo -e "${RED}❌ This script requires apt (Debian/Debian).${NC}"
   exit 1
 fi
 
@@ -72,7 +72,7 @@ _cur_pw_status=$(sudo -n passwd -S "$USER" 2>/dev/null | awk '{print $2}' || tru
 
 # ========== VPS Detection ==========
 # cloud-init is present on all major cloud VPS (AWS, GCP, Azure, DO, etc.)
-# but NOT on local Ubuntu Desktop/Server
+# but NOT on local Debian Desktop/Server
 _is_vps=0
 if [ -d /run/cloud-init ] || [ -d /var/lib/cloud/instance ]; then
   _is_vps=1
@@ -95,7 +95,7 @@ _found_user_has_pw=0
 while IFS=: read -r _u _ _uid _; do
   if [ "$_uid" -ge 1000 ] && [ "$_uid" -lt 65534 ]; then
     case "$_u" in
-      ubuntu|azureuser|ec2-user|admin|centos|fedora|debian|cloud) ;;
+      debian|azureuser|ec2-user|admin|centos|fedora|debian|cloud) ;;
       *) _found_user="$_u"; break ;;
     esac
   fi
@@ -220,7 +220,7 @@ _total=${#LABELS[@]}
 draw_menu() {
   echo ""
   echo -e "${BOLD}${CYAN}╔══════════════════════════════════════════════════╗${NC}"
-  echo -e "${BOLD}${CYAN}║          dotfiles installer — Ubuntu             ║${NC}"
+  echo -e "${BOLD}${CYAN}║          dotfiles installer — Debian             ║${NC}"
   echo -e "${BOLD}${CYAN}╚══════════════════════════════════════════════════╝${NC}"
   echo ""
   if [ "$_is_root" = "1" ]; then
@@ -357,7 +357,7 @@ if [ "${SELECTED[0]}" != "1" ]; then
   # ========== Dotfiles Paths ==========
   DOTFILES_DIR="$HOME/.dotfiles"
   SHARED_DIR="$DOTFILES_DIR/shared"
-  PLATFORM_DIR="$DOTFILES_DIR/ubuntu"
+  PLATFORM_DIR="$DOTFILES_DIR/debian"
 
   # ========== Backup ==========
   step "Checking for existing configs"
@@ -395,7 +395,7 @@ if [ "${SELECTED[0]}" != "1" ]; then
       fi
     fi
   done
-  for _f in ubuntu/.zshrc; do
+  for _f in debian/.zshrc; do
     if git -C "$DOTFILES_DIR" status --porcelain "$_f" 2>/dev/null | grep -q .; then
       _basename="$(basename "$_f")"
       if [ -L "$HOME/$_basename" ] || [ -e "$HOME/$_basename" ]; then
@@ -419,7 +419,7 @@ else
   IFS=',' read -ra SELECTED <<< "$_RESUME_SEL"
   DOTFILES_DIR="$HOME/.dotfiles"
   SHARED_DIR="$DOTFILES_DIR/shared"
-  PLATFORM_DIR="$DOTFILES_DIR/ubuntu"
+  PLATFORM_DIR="$DOTFILES_DIR/debian"
   echo ""
   echo -e "  ${BOLD}${CYAN}Resuming installation as $(whoami)...${NC}"
   echo ""
@@ -527,7 +527,7 @@ if [ "${SELECTED[0]}" = "1" ]; then
   info_msg "Login: ssh $_custom_user@<your-server> ($_auth_desc)"
 
   # Auto-lock all passwordless default cloud users (no per-user prompt)
-  _cloud_defaults=(ubuntu azureuser ec2-user admin centos fedora debian cloud)
+  _cloud_defaults=(debian azureuser ec2-user admin centos fedora debian cloud)
   for _default_user in "${_cloud_defaults[@]}"; do
     if id "$_default_user" &>/dev/null && [ "$_default_user" != "$_custom_user" ]; then
       _pw_status=$(sudo passwd -S "$_default_user" 2>/dev/null | awk '{print $2}' || true)
@@ -708,7 +708,7 @@ if [ "${SELECTED[5]}" = "1" ]; then
   if [ ! -f "$HOME/.bun/bin/bun" ]; then
     info_msg "Installing Bun..."
     curl -fsSL https://bun.sh/install | bash
-    git -C "$DOTFILES_DIR" restore ubuntu/.zshrc 2>/dev/null || true
+    git -C "$DOTFILES_DIR" restore debian/.zshrc 2>/dev/null || true
     done_msg "Bun installed"
   else
     done_msg "Bun already installed: $("$HOME/.bun/bin/bun" --version)"

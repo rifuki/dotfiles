@@ -1,10 +1,10 @@
 #!/bin/bash
-# nvm.sh — Standalone NVM migration helper for Ubuntu/Linux
+# nvm.sh — Standalone NVM migration helper for Debian/Linux
 #
 # Usage:
-#   Install NVM:   bash ~/.dotfiles/ubuntu/nvm.sh install
-#   Uninstall NVM: bash ~/.dotfiles/ubuntu/nvm.sh uninstall
-#   Status:        bash ~/.dotfiles/ubuntu/nvm.sh status
+#   Install NVM:   bash ~/.dotfiles/debian/nvm.sh install
+#   Uninstall NVM: bash ~/.dotfiles/debian/nvm.sh uninstall
+#   Status:        bash ~/.dotfiles/debian/nvm.sh status
 #
 # This script is intentionally kept separate from install.sh and uninstall.sh.
 # The main setup (install.sh) uses Mise to manage Node instead of NVM.

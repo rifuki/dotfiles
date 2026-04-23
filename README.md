@@ -1,6 +1,6 @@
 # dotfiles
 
-Personal dotfiles for macOS, Ubuntu, and Gentoo Linux — batteries included.
+Personal dotfiles for macOS, Debian, and Gentoo Linux — batteries included.
 
 ## Screenshots
 
@@ -24,7 +24,7 @@ Personal dotfiles for macOS, Ubuntu, and Gentoo Linux — batteries included.
 bash <(curl -fsSL https://dotfiles.rifuki.dev)
 ```
 
-Auto-detects OS (macOS, Gentoo Linux, or Ubuntu/Debian). Uses `bash <()` instead of `curl | bash` to preserve interactive TTY for password prompts.
+Auto-detects OS (macOS, Gentoo Linux, or Debian/Debian). Uses `bash <()` instead of `curl | bash` to preserve interactive TTY for password prompts.
 
 > Restart terminal or run `exec zsh` after install.
 
@@ -35,9 +35,9 @@ Auto-detects OS (macOS, Gentoo Linux, or Ubuntu/Debian). Uses `bash <()` instead
 bash <(curl -fsSL https://dotfiles.rifuki.dev/macos/uninstall.sh)
 ```
 
-**Ubuntu:**
+**Debian:**
 ```bash
-bash <(curl -fsSL https://dotfiles.rifuki.dev/ubuntu/uninstall.sh)
+bash <(curl -fsSL https://dotfiles.rifuki.dev/debian/uninstall.sh)
 ```
 
 **Gentoo:**
@@ -143,10 +143,10 @@ bash ~/.dotfiles/macos/uninstall-brew.sh
 │   ├── macos-defaults.sh  # macOS system defaults
 │   └── macos-defaults-check.sh
 │
-├── ubuntu/
-│   ├── .zshrc             # Ubuntu shell config
-│   ├── install.sh         # Ubuntu installer
-│   └── uninstall.sh       # Ubuntu uninstaller
+├── debian/
+│   ├── .zshrc             # Debian shell config
+│   ├── install.sh         # Debian installer
+│   └── uninstall.sh       # Debian uninstaller
 │
 ├── gentoo/
 │   ├── .config/

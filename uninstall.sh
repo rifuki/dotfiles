@@ -36,14 +36,14 @@ elif [[ "$_os" == "Linux" ]]; then
     echo ""
     exec "$DOTFILES_DIR/gentoo/uninstall.sh" "$@"
   else
-    echo -e "  ${GREEN}✔${NC} Detected: ${BOLD}${CYAN}Linux (Ubuntu/Debian)${NC}"
-    echo -e "  ${DIM}→ Running ubuntu/uninstall.sh${NC}"
+    echo -e "  ${GREEN}✔${NC} Detected: ${BOLD}${CYAN}Linux (Debian/Debian)${NC}"
+    echo -e "  ${DIM}→ Running debian/uninstall.sh${NC}"
     echo ""
-    exec "$DOTFILES_DIR/ubuntu/uninstall.sh" "$@"
+    exec "$DOTFILES_DIR/debian/uninstall.sh" "$@"
   fi
 else
   echo -e "  ${RED}✖${NC} Unsupported OS: ${BOLD}$_os${NC}"
-  echo -e "  ${DIM}Supported: macOS (Darwin), Gentoo Linux, Ubuntu/Debian${NC}"
+  echo -e "  ${DIM}Supported: macOS (Darwin), Gentoo Linux, Debian/Debian${NC}"
   echo ""
   exit 1
 fi
