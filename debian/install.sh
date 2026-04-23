@@ -183,22 +183,12 @@ if dpkg -s docker-ce &>/dev/null 2>&1; then STATUS+=("installed"); SELECTED+=(0)
 elif command -v docker &>/dev/null; then STATUS+=("installed (external)"); SELECTED+=(0); EXTERNAL+=(1)
 else STATUS+=(""); SELECTED+=(1); EXTERNAL+=(0); fi
 
-# 8: AI CLI Tools
-LABELS+=("AI CLI Tools")
-DESCRIPTIONS+=("Kimi CLI + OpenCode")
-_ai_count=0
-command -v kimi &>/dev/null && ((_ai_count++)) || true
-command -v opencode &>/dev/null && ((_ai_count++)) || true
-if [ "$_ai_count" -eq 2 ]; then STATUS+=("installed"); SELECTED+=(0); EXTERNAL+=(0)
-elif [ "$_ai_count" -gt 0 ]; then STATUS+=("partial"); SELECTED+=(1); EXTERNAL+=(0)
-else STATUS+=(""); SELECTED+=(1); EXTERNAL+=(0); fi
-
-# 9: Swap (2GB)
+# 8: Swap (2GB)
 LABELS+=("Swap (2GB)")
 DESCRIPTIONS+=("Create 2GB swap file")
 if [ -f /swapfile ]; then STATUS+=("active"); SELECTED+=(0); EXTERNAL+=(0); else STATUS+=(""); SELECTED+=(1); EXTERNAL+=(0); fi
 
-# 10: fail2ban — default unchecked; auto-check on VPS
+# 9: fail2ban — default unchecked; auto-check on VPS
 LABELS+=("fail2ban")
 DESCRIPTIONS+=("Intrusion prevention")
 if dpkg -s fail2ban &>/dev/null 2>&1; then STATUS+=("installed"); SELECTED+=(0); EXTERNAL+=(0)
@@ -206,7 +196,7 @@ elif command -v fail2ban-client &>/dev/null; then STATUS+=("installed (external)
 elif [ "$_is_vps" = "1" ]; then STATUS+=("VPS detected"); SELECTED+=(1); EXTERNAL+=(0)
 else STATUS+=(""); SELECTED+=(0); EXTERNAL+=(0); fi
 
-# 11: UFW — default unchecked; auto-check on VPS
+# 10: UFW — default unchecked; auto-check on VPS
 LABELS+=("UFW")
 DESCRIPTIONS+=("Firewall (allow SSH + HTTP/S)")
 if command -v ufw &>/dev/null && sudo -n ufw status 2>/dev/null | grep -qw "active"; then STATUS+=("active"); SELECTED+=(0); EXTERNAL+=(0)
@@ -754,39 +744,8 @@ if [ "${SELECTED[7]}" = "1" ]; then
   fi
 fi
 
-# ========== 8: AI CLI Tools ==========
+# ========== 8: Swap ==========
 if [ "${SELECTED[8]}" = "1" ]; then
-  step "Installing AI CLI Tools"
-  # Kimi CLI (official install script via uv)
-  if ! command -v kimi &>/dev/null; then
-    info_msg "Installing Kimi CLI..."
-    mkdir -p "$HOME/.local/bin"
-    export PATH="$HOME/.local/bin:$PATH"
-    curl -fsSL https://code.kimi.com/install.sh | bash
-    done_msg "Kimi CLI installed"
-  else
-    done_msg "Kimi CLI already installed"
-  fi
-  # OpenCode (official install script)
-  if ! command -v opencode &>/dev/null; then
-    info_msg "Installing OpenCode..."
-    mkdir -p "$HOME/.local/bin"
-    export PATH="$HOME/.opencode/bin:$HOME/.local/bin:$PATH"
-    curl -fsSL https://opencode.ai/install | bash
-    done_msg "OpenCode installed"
-  else
-    done_msg "OpenCode already installed"
-  fi
-  # Claude statusline
-  mkdir -p "$HOME/.claude"
-  if [ -f "$SHARED_DIR/.claude/statusline-command.sh" ]; then
-    ln -sf "$SHARED_DIR/.claude/statusline-command.sh" "$HOME/.claude/statusline-command.sh"
-    done_msg "~/.claude/statusline-command.sh"
-  fi
-fi
-
-# ========== 9: Swap ==========
-if [ "${SELECTED[9]}" = "1" ]; then
   step "Setting up 2GB swap"
   if [ ! -f /swapfile ]; then
     info_msg "Creating 2GB swap file..."
@@ -801,8 +760,8 @@ if [ "${SELECTED[9]}" = "1" ]; then
   fi
 fi
 
-# ========== 10: fail2ban ==========
-if [ "${SELECTED[10]}" = "1" ]; then
+# ========== 9: fail2ban ==========
+if [ "${SELECTED[9]}" = "1" ]; then
   step "Installing fail2ban"
   if ! command -v fail2ban-client &>/dev/null; then
     info_msg "Installing fail2ban..."
@@ -815,8 +774,8 @@ if [ "${SELECTED[10]}" = "1" ]; then
   fi
 fi
 
-# ========== 11: UFW ==========
-if [ "${SELECTED[11]}" = "1" ]; then
+# ========== 10: UFW ==========
+if [ "${SELECTED[10]}" = "1" ]; then
   step "Setting up UFW firewall"
   if ! command -v ufw &>/dev/null; then
     info_msg "Installing UFW..."
