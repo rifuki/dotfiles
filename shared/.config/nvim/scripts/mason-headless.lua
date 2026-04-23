@@ -1,29 +1,33 @@
 -- Headless Mason installer: waits for all package installs to complete before quitting.
---
--- Two sources of installs:
---   1. mason-lspconfig ensure_installed → triggered during init.lua (before this script runs)
---   2. MasonInstallAll → triggered after this script via -c "+MasonInstallAll"
---
--- Strategy: attach to handles already in-flight, then listen for any new ones.
 
-local registry = require("mason-registry")
+local function log(msg)
+    vim.api.nvim_out_write(msg .. "\n")
+end
+
+-- Force-load mason in headless mode (Lazy won't load it without a buffer event)
+local ok, lazy = pcall(require, "lazy")
+if ok then
+    lazy.load({ plugins = { "mason.nvim" } })
+end
+
+local registry_ok, registry = pcall(require, "mason-registry")
+if not registry_ok then
+    log("[mason] ERROR: cannot load mason-registry: " .. tostring(registry))
+    vim.cmd("qa!")
+    return
+end
+
+log("[mason] starting headless install...")
+
 local pending = 0
 local total = 0
 
-local function log(msg)
-    io.write(msg .. "\n")
-    io.flush()
-end
-
 local function on_done(pkg_name, success)
     pending = pending - 1
-    if success then
-        log("  [mason] ✓ " .. pkg_name .. " (" .. (total - pending) .. "/" .. total .. ")")
-    else
-        log("  [mason] ✗ " .. pkg_name .. " FAILED (" .. (total - pending) .. "/" .. total .. ")")
-    end
+    local status = success and "✓" or "✗ FAILED"
+    log(("  [mason] %s %s (%d/%d)"):format(status, pkg_name, total - pending, total))
     if pending == 0 then
-        log("  [mason] all done")
+        log("[mason] all done")
         vim.schedule(function() vim.cmd("qa!") end)
     end
 end
@@ -51,10 +55,10 @@ registry:on("package:install:start", function(pkg)
     attach(pkg)
 end)
 
--- Fallback: if nothing is installing at all, quit after 3s
+-- Fallback: if nothing is installing, quit after 3s
 vim.defer_fn(function()
     if pending == 0 then
-        log("  [mason] nothing to install")
+        log("[mason] nothing to install")
         vim.cmd("qa!")
     end
 end, 3000)
