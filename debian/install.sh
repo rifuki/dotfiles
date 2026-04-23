@@ -942,6 +942,18 @@ if [ "${SELECTED[0]}" != "1" ]; then
   fi
 fi
 
+# ========== Neovim: Lazy + Mason Headless Install ==========
+if command -v nvim &>/dev/null && [ -d "$HOME/.config/nvim" ]; then
+  step "Installing Neovim plugins (Lazy + Mason)"
+  info_msg "Running Lazy sync..."
+  nvim --headless "+Lazy! sync" +qa 2>/dev/null || true
+  done_msg "Lazy plugins synced"
+  
+  info_msg "Installing Mason packages..."
+  nvim --headless "+MasonInstallAll" +qa 2>/dev/null || true
+  done_msg "Mason packages installed"
+fi
+
 # ========== Done ==========
 echo ""
 echo -e "${BOLD}${CYAN}╔══════════════════════════════════════════════════╗${NC}"
