@@ -1,6 +1,9 @@
 return {
     "CopilotC-Nvim/CopilotChat.nvim",
-    enabled = not require("utils.profile").is_minimal,
+    enabled = function()
+        local ok, profile = pcall(require, "utils.profile")
+        return not (ok and profile.is_minimal)
+    end,
     dependencies = {
         { "github/copilot.vim" },
         { "nvim-lua/plenary.nvim", branch = "master" },

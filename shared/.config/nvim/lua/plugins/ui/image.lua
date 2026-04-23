@@ -1,6 +1,9 @@
 return {
     "3rd/image.nvim",
-    enabled = not require("utils.profile").is_minimal,
+    enabled = function()
+        local ok, profile = pcall(require, "utils.profile")
+        return not (ok and profile.is_minimal)
+    end,
     lazy = false,
     opts = {
         rocks = {

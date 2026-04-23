@@ -5,7 +5,10 @@
 return {
     dir = vim.fn.stdpath("config"),
     name = "move-lang",
-    enabled = not require("utils.profile").is_minimal,
+    enabled = function()
+        local ok, profile = pcall(require, "utils.profile")
+        return not (ok and profile.is_minimal)
+    end,
     lazy = false,
     config = function()
         local parser_so = vim.fn.stdpath("data") .. "/site/parser/move.so"

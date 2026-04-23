@@ -1,5 +1,3 @@
-local is_minimal = require("utils.profile").is_minimal
-
 return {
     "williamboman/mason.nvim",
     dependencies = {
@@ -7,6 +5,10 @@ return {
         "neovim/nvim-lspconfig",
     },
     config = function()
+        -- Evaluated inside config so a missing utils/profile.lua never breaks spec loading
+        local ok, profile = pcall(require, "utils.profile")
+        local is_minimal = ok and profile.is_minimal or false
+
         require("mason").setup({
             ensure_installed = {
                 -- Formatters
