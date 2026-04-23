@@ -1,64 +1,59 @@
--- Headless Mason installer: waits for all package installs to complete before quitting.
+-- Headless Mason installer.
+--
+-- Problem: mason-lspconfig triggers installs during init.lua (before -c commands run),
+-- so event-based listeners miss the "install:start" signals.
+-- Solution: combine event listeners (for logging + new installs) with polling
+-- (rawget(pkg, "handle") to detect in-flight installs regardless of when they started).
 
 local function log(msg)
     vim.api.nvim_out_write(msg .. "\n")
 end
 
--- Force-load mason in headless mode (Lazy won't load it without a buffer event)
-local ok, lazy = pcall(require, "lazy")
-if ok then
-    lazy.load({ plugins = { "mason.nvim" } })
-end
-
-local registry_ok, registry = pcall(require, "mason-registry")
-if not registry_ok then
+local reg_ok, registry = pcall(require, "mason-registry")
+if not reg_ok then
     log("[mason] ERROR: cannot load mason-registry: " .. tostring(registry))
     vim.cmd("qa!")
     return
 end
 
-log("[mason] starting headless install...")
+-- Log new installs for visibility
+registry:on("package:install:start",   function(pkg) log("  [mason] → " .. pkg.name) end)
+registry:on("package:install:success", function(pkg) log("  [mason] ✓ " .. pkg.name) end)
+registry:on("package:install:failed",  function(pkg) log("  [mason] ✗ FAILED: " .. pkg.name) end)
 
-local pending = 0
-local total = 0
+-- Force-load mason.nvim via Lazy (runs config → mason.setup + mason-lspconfig.setup).
+-- If already loaded this is a no-op; if not, this triggers the ensure_installed installs.
+local lazy_ok, lazy = pcall(require, "lazy")
+if lazy_ok then
+    lazy.load({ plugins = { "mason.nvim" } })
+end
 
-local function on_done(pkg_name, success)
-    pending = pending - 1
-    local status = success and "✓" or "✗ FAILED"
-    log(("  [mason] %s %s (%d/%d)"):format(status, pkg_name, total - pending, total))
-    if pending == 0 then
-        log("[mason] all done")
-        vim.schedule(function() vim.cmd("qa!") end)
+log("[mason] waiting for installs...")
+
+-- Poll every 2s. rawget(pkg, "handle") is non-nil while a package is installing
+-- (mason sets pkg.handle = nil on completion), so this catches both pre-existing
+-- in-flight installs and ones triggered by the lazy.load above.
+local idle = 0
+local function poll()
+    local busy = false
+    for _, pkg in ipairs(registry.get_all_packages()) do
+        if rawget(pkg, "handle") then
+            busy = true
+            break
+        end
     end
-end
-
-local function attach(pkg)
-    local handle = pkg:get_handle()
-    if not handle or handle:is_closed() then return end
-    pending = pending + 1
-    total = total + 1
-    log("  [mason] installing " .. pkg.name .. "...")
-    handle:on("closed", function()
-        vim.schedule(function()
-            on_done(pkg.name, pkg:is_installed())
-        end)
-    end)
-end
-
--- Attach to packages already being installed (started by mason-lspconfig during init.lua)
-for _, pkg in ipairs(registry.get_all_packages()) do
-    attach(pkg)
-end
-
--- Attach to any new installs triggered after this script (e.g. MasonInstallAll)
-registry:on("package:install:start", function(pkg)
-    attach(pkg)
-end)
-
--- Fallback: if nothing is installing, quit after 3s
-vim.defer_fn(function()
-    if pending == 0 then
-        log("[mason] nothing to install")
+    if busy then
+        idle = 0
+        vim.defer_fn(poll, 2000)
+    elseif idle < 2 then
+        -- confirm twice (4s) that nothing is installing before quitting
+        idle = idle + 1
+        vim.defer_fn(poll, 2000)
+    else
+        log("[mason] all done")
         vim.cmd("qa!")
     end
-end, 3000)
+end
+
+-- Initial delay: give mason-lspconfig time to queue installs after lazy.load
+vim.defer_fn(poll, 3000)
