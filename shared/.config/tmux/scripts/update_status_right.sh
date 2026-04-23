@@ -2,12 +2,17 @@
 
 width=$(tmux display-message -p '#{client_width}' 2>/dev/null || echo 0)
 
-# Always reserve at least 50 chars for the left (window list) area
-left_reserve=50
-max_right=120
+# Prioritize window list: hide status-right if terminal too small
+min_width=100  # Minimum terminal width to show status-right
+left_reserve=60
+max_right=80
 
-right_len=$(( width - left_reserve ))
-[ "$right_len" -gt "$max_right" ] && right_len=$max_right
-[ "$right_len" -lt 0 ] && right_len=0
-
-tmux set -g status-right-length "$right_len"
+if [ "$width" -lt "$min_width" ]; then
+  # Hide status-right completely on small terminals
+  tmux set -g status-right-length 0
+else
+  right_len=$(( width - left_reserve ))
+  [ "$right_len" -gt "$max_right" ] && right_len=$max_right
+  [ "$right_len" -lt 0 ] && right_len=0
+  tmux set -g status-right-length "$right_len"
+fi
