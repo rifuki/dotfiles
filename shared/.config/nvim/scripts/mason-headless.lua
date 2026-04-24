@@ -33,15 +33,12 @@ end)
 
 log("[mason] waiting for installs...")
 
--- Poll every 2s. rawget(pkg, "handle") is non-nil while installing, nil when done.
+-- Poll every 2s using registry.get_installing_packages() — the proper Mason API.
 -- Confirm 2× (4s) that nothing is running before quitting.
 local idle = 0
 local function poll()
-    local busy = false
-    for _, pkg in ipairs(registry.get_all_packages()) do
-        if rawget(pkg, "handle") then busy = true; break end
-    end
-    if busy then
+    local installing = registry.get_installing_packages()
+    if #installing > 0 then
         idle = 0
         vim.defer_fn(poll, 2000)
     elseif idle < 2 then
