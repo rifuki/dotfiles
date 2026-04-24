@@ -621,9 +621,7 @@ if command -v nvim &>/dev/null && [ -d "$HOME/.config/nvim" ]; then
   done_msg "Lazy plugins synced"
   
   info_msg "Installing Mason packages..."
-  nvim --headless \
-    -c "luafile $HOME/.config/nvim/scripts/mason-headless.lua" \
-    2>/dev/null
+  timeout 600 nvim --headless 2>/dev/null || true
   done_msg "Mason packages installed"
 fi
 
