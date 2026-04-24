@@ -31,6 +31,12 @@ registry.refresh(function()
     end
 end)
 
+-- Print available registry functions to find the right API for this Mason version
+log("[mason] registry API:")
+for k, v in pairs(registry) do
+    if type(v) == "function" then log("  fn: " .. k) end
+end
+
 log("[mason] waiting for installs...")
 
 -- Poll every 2s using registry.get_installing_packages() — the proper Mason API.
