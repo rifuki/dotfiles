@@ -1,8 +1,10 @@
 -- Headless Mason installer.
 --
--- mason-lspconfig.setup() triggers LSP installs during init.lua (lazy=false on mason.nvim).
--- Formatters are not handled by mason-lspconfig, so we install them explicitly here.
--- Polling via rawget(pkg, "handle") catches all in-flight installs regardless of timing.
+-- mason-lspconfig schedules installs via vim.schedule (queued after init.lua).
+-- Our -c script runs after init.lua but BEFORE the event loop, so listeners
+-- registered here will catch all package:install:* events when the loop starts.
+--
+-- No polling needed — we wait via the event counter and quit when pending == 0.
 
 local function log(msg)
     vim.api.nvim_out_write(msg .. "\n")
@@ -15,15 +17,32 @@ if not reg_ok then
     return
 end
 
--- Log all install events for visibility
-registry:on("package:install:start",   function(pkg) log("  [mason] → " .. pkg.name) end)
-registry:on("package:install:success", function(pkg) log("  [mason] ✓ " .. pkg.name) end)
-registry:on("package:install:failed",  function(pkg) log("  [mason] ✗ FAILED: " .. pkg.name) end)
+-- ── Event counter ────────────────────────────────────────────────────────────
+local pending = 0
 
--- Explicitly install formatters (mason-lspconfig only handles LSPs)
-local formatters = { "prettierd", "stylua" }
+local function on_finish(pkg, success)
+    pending = pending - 1
+    log(("  [mason] %s %s (pending: %d)"):format(success and "✓" or "✗ FAILED", pkg.name, pending))
+    if pending == 0 then
+        log("[mason] all done")
+        vim.schedule(function() vim.cmd("qa!") end)
+    end
+end
+
+registry:on("package:install:start", function(pkg)
+    pending = pending + 1
+    log("  [mason] → " .. pkg.name)
+end)
+registry:on("package:install:success", function(pkg) on_finish(pkg, true) end)
+registry:on("package:install:failed",  function(pkg) on_finish(pkg, false) end)
+
+-- ── Force-load mason (belt-and-suspenders if lazy = false somehow missed it) ─
+local lazy_ok, lazy = pcall(require, "lazy")
+if lazy_ok then pcall(lazy.load, { plugins = { "mason.nvim" } }) end
+
+-- ── Explicitly install formatters (mason-lspconfig only handles LSPs) ────────
 registry.refresh(function()
-    for _, name in ipairs(formatters) do
+    for _, name in ipairs({ "prettierd", "stylua" }) do
         local ok, pkg = pcall(registry.get_package, name)
         if ok and not pkg:is_installed() then
             pkg:install()
@@ -31,29 +50,12 @@ registry.refresh(function()
     end
 end)
 
--- Print available registry functions to find the right API for this Mason version
-log("[mason] registry API:")
-for k, v in pairs(registry) do
-    if type(v) == "function" then log("  fn: " .. k) end
-end
-
 log("[mason] waiting for installs...")
 
--- Poll every 2s using registry.get_installing_packages() — the proper Mason API.
--- Confirm 2× (4s) that nothing is running before quitting.
-local idle = 0
-local function poll()
-    local installing = registry.get_installing_packages()
-    if #installing > 0 then
-        idle = 0
-        vim.defer_fn(poll, 2000)
-    elseif idle < 2 then
-        idle = idle + 1
-        vim.defer_fn(poll, 2000)
-    else
-        log("[mason] all done")
+-- ── Fallback: if nothing started after 5s, all packages are already installed ─
+vim.defer_fn(function()
+    if pending == 0 then
+        log("[mason] nothing to install")
         vim.cmd("qa!")
     end
-end
-
-vim.defer_fn(poll, 3000)
+end, 5000)
