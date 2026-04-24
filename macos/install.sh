@@ -892,7 +892,15 @@ if command -v nvim &>/dev/null && [ -d "$HOME/.config/nvim" ]; then
   done_msg "Lazy plugins synced"
   
   info_msg "Installing Mason packages..."
-  timeout 600 nvim --headless 2>/dev/null || true
+  # MasonInstall is blocking in headless mode — waits until all packages finish
+  # Package names use Mason registry names (not lspconfig names)
+  nvim --headless -c "MasonInstall \
+    lua-language-server taplo typescript-language-server deno \
+    intelephense dockerfile-language-server yaml-language-server \
+    gh-actions-language-server json-lsp css-lsp html-lsp \
+    bash-language-server clangd prettierd stylua \
+    prisma-language-server nomicfoundation-solidity-language-server tailwindcss-language-server" \
+    -c "qall" 2>/dev/null || true
   done_msg "Mason packages installed"
 fi
 
