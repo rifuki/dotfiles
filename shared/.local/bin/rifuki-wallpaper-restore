@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+script_dir="$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)"
+
 state_file="${XDG_STATE_HOME:-$HOME/.local/state}/rifuki-shell/current-wallpaper"
 default_wallpaper="$HOME/.wallpapers/muuko.png"
 
@@ -11,4 +13,4 @@ else
 fi
 
 [ -f "$wallpaper_path" ] || exit 0
-exec rifuki-wallpaper-set "$wallpaper_path"
+exec "$script_dir/rifuki-wallpaper-set" "$wallpaper_path"

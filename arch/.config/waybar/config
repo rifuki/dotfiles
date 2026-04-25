@@ -26,7 +26,7 @@
   "custom/launcher": {
     "format": "󰣇",
     "tooltip": false,
-    "on-click": "$HOME/.config/wofi/launch.sh"
+    "on-click": "sh -lc '$HOME/.config/wofi/launch.sh'"
   },
 
   "hyprland/workspaces": {
@@ -130,19 +130,19 @@
   "custom/wallpaper": {
     "tooltip": false,
     "format": "",
-    "on-click": "$HOME/.local/bin/rifuki-wallpaper-picker",
-    "on-click-right": "$HOME/.local/bin/rifuki-wallpaper-next"
+    "on-click": "sh -lc '$HOME/.local/bin/rifuki-wallpaper-picker'",
+    "on-click-right": "sh -lc '$HOME/.local/bin/rifuki-wallpaper-next'"
   },
 
   "custom/actions": {
     "tooltip": false,
     "format": "󰒓",
-    "on-click": "$HOME/.local/bin/rifuki-actions"
+    "on-click": "sh -lc '$HOME/.local/bin/rifuki-actions'"
   },
 
   "custom/lock": {
   "tooltip": false,
-  "on-click": "$HOME/.local/bin/rifuki-power-menu",
+  "on-click": "sh -lc '$HOME/.local/bin/rifuki-power-menu'",
   "format" : ""
   },
 

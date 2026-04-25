@@ -10,5 +10,6 @@ insensitive=true
 prompt=search apps
 search=
 no_actions=true
+single_click=true
 filter_rate=100
 ignore_apps=vim,htop,git-gui,Qt6Linguist,Qt6Assistant

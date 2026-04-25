@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+script_dir="$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)"
+
 state_file="${XDG_STATE_HOME:-$HOME/.local/state}/rifuki-shell/current-wallpaper"
 current=""
 [ -f "$state_file" ] && current="$(sed -n '1p' "$state_file")"
@@ -28,4 +30,4 @@ for i in "${!wallpapers[@]}"; do
   fi
 done
 
-exec rifuki-wallpaper-set "$next"
+exec "$script_dir/rifuki-wallpaper-set" "$next"
