@@ -299,7 +299,7 @@ class ScreenshotThumbnail(Gtk.Window):
             and dx >= ady * SWIPE_DOMINANCE
         )
         if is_right_swipe:
-            self.save_now(show_notification=False)
+            self.save_now(show_notification=True)
             GLib.timeout_add(80, self.quit)
             return True
 
@@ -345,7 +345,7 @@ class ScreenshotThumbnail(Gtk.Window):
 
         self.touchpad_swipe_dx += dx
         if abs(self.touchpad_swipe_dx) >= TOUCHPAD_SWIPE_THRESHOLD:
-            self.save_now(show_notification=False)
+            self.save_now(show_notification=True)
             GLib.timeout_add(80, self.quit)
         return True
 
