@@ -1,0 +1,275 @@
+#!/usr/bin/env python3
+"""macOS-style three-finger drag for Hyprland touchpads.
+
+libinput exposes three-finger motion as gesture deltas, not pointer motion.
+This daemon turns those deltas into a held left mouse button via ydotoold.
+"""
+
+from __future__ import annotations
+
+import atexit
+import fcntl
+import os
+import re
+import shutil
+import signal
+import socket
+import struct
+import subprocess
+import sys
+import time
+from pathlib import Path
+
+
+FINGERS = int(os.environ.get("RIFUKI_THREE_FINGER_DRAG_FINGERS", "3"))
+SCALE = float(os.environ.get("RIFUKI_THREE_FINGER_DRAG_SCALE", "1.15"))
+
+EV_SYN = 0x00
+EV_KEY = 0x01
+EV_REL = 0x02
+SYN_REPORT = 0x00
+REL_X = 0x00
+REL_Y = 0x01
+BTN_LEFT = 0x110
+
+INPUT_EVENT = struct.Struct("@llHHi")
+
+BEGIN_RE = re.compile(r"GESTURE_SWIPE_BEGIN\s+\S+\s+(\d+)")
+UPDATE_RE = re.compile(
+    r"GESTURE_SWIPE_UPDATE\s+\S+\s+(\d+)\s+"
+    r"([+-]?\d+(?:\.\d+)?)\s*/\s*([+-]?\d+(?:\.\d+)?)"
+)
+END_RE = re.compile(r"GESTURE_SWIPE_(?:END|CANCELLED)\s+\S+\s+(\d+)")
+
+
+def runtime_dir() -> Path:
+    return Path(os.environ.get("XDG_RUNTIME_DIR", f"/run/user/{os.getuid()}"))
+
+
+def state_dir() -> Path:
+    return Path(os.environ.get("XDG_STATE_HOME", Path.home() / ".local/state"))
+
+
+LOG_FILE = state_dir() / "rifuki-three-finger-drag.log"
+
+
+def log(message: str) -> None:
+    timestamp = time.strftime("%Y-%m-%d %H:%M:%S")
+    try:
+        LOG_FILE.parent.mkdir(parents=True, exist_ok=True)
+        with LOG_FILE.open("a", encoding="utf-8") as fh:
+            fh.write(f"[{timestamp}] {message}\n")
+    except OSError:
+        print(f"rifuki-three-finger-drag: {message}", file=sys.stderr)
+
+
+def candidate_sockets() -> list[Path]:
+    sockets: list[Path] = []
+    if os.environ.get("YDOTOOL_SOCKET"):
+        sockets.append(Path(os.environ["YDOTOOL_SOCKET"]))
+    sockets.append(runtime_dir() / ".ydotool_socket")
+    sockets.append(Path("/tmp/.ydotool_socket"))
+    deduped: list[Path] = []
+    for path in sockets:
+        if path not in deduped:
+            deduped.append(path)
+    return deduped
+
+
+class YdotooldClient:
+    def __init__(self) -> None:
+        self.sock: socket.socket | None = None
+        self.path: Path | None = None
+
+    def connect(self) -> bool:
+        for path in candidate_sockets():
+            sock = socket.socket(socket.AF_UNIX, socket.SOCK_DGRAM)
+            try:
+                sock.connect(str(path))
+            except OSError:
+                sock.close()
+                continue
+            self.sock = sock
+            self.path = path
+            log(f"connected to ydotoold socket: {path}")
+            return True
+
+        if self._start_user_daemon():
+            return self.connect()
+
+        log(
+            "ydotoold socket unavailable; start ydotoold with a socket "
+            "readable by this user"
+        )
+        return False
+
+    def _start_user_daemon(self) -> bool:
+        if shutil.which("ydotoold") is None:
+            log("ydotoold not found")
+            return False
+        if not os.access("/dev/uinput", os.W_OK):
+            log("/dev/uinput is not writable by this user; cannot auto-start ydotoold")
+            return False
+
+        path = runtime_dir() / ".ydotool_socket"
+        try:
+            path.parent.mkdir(parents=True, exist_ok=True)
+            subprocess.Popen(
+                ["ydotoold", "-p", str(path), "-P", "0600"],
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.DEVNULL,
+                start_new_session=True,
+            )
+        except OSError as exc:
+            log(f"failed to start ydotoold: {exc}")
+            return False
+
+        for _ in range(20):
+            if path.exists():
+                time.sleep(0.05)
+                log(f"auto-started ydotoold at {path}")
+                return True
+            time.sleep(0.1)
+        log("timed out waiting for ydotoold socket")
+        return False
+
+    def emit(self, ev_type: int, code: int, value: int) -> None:
+        if self.sock is None:
+            raise RuntimeError("ydotoold socket is not connected")
+        self.sock.send(INPUT_EVENT.pack(0, 0, ev_type, code, value))
+
+    def sync(self) -> None:
+        self.emit(EV_SYN, SYN_REPORT, 0)
+
+    def button(self, pressed: bool) -> None:
+        self.emit(EV_KEY, BTN_LEFT, 1 if pressed else 0)
+        self.sync()
+
+    def move(self, dx: int, dy: int) -> None:
+        if dx:
+            self.emit(EV_REL, REL_X, dx)
+        if dy:
+            self.emit(EV_REL, REL_Y, dy)
+        self.sync()
+
+    def close(self) -> None:
+        if self.sock is not None:
+            self.sock.close()
+            self.sock = None
+
+
+class ThreeFingerDrag:
+    def __init__(self) -> None:
+        self.client = YdotooldClient()
+        self.dragging = False
+        self.frac_x = 0.0
+        self.frac_y = 0.0
+        self.proc: subprocess.Popen[str] | None = None
+
+    def start(self) -> int:
+        if shutil.which("libinput") is None:
+            log("libinput command not found")
+            return 1
+        if not self.client.connect():
+            return 1
+
+        atexit.register(self.stop)
+        signal.signal(signal.SIGTERM, self._handle_signal)
+        signal.signal(signal.SIGINT, self._handle_signal)
+
+        try:
+            self.proc = subprocess.Popen(
+                ["libinput", "debug-events", "--udev"],
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                text=True,
+                bufsize=1,
+            )
+        except OSError as exc:
+            log(f"failed to start libinput debug-events: {exc}")
+            return 1
+
+        log("three-finger drag daemon started")
+        assert self.proc.stdout is not None
+        for line in self.proc.stdout:
+            self.handle_line(line)
+
+        stderr = ""
+        if self.proc.stderr is not None:
+            stderr = self.proc.stderr.read().strip()
+        if stderr:
+            log(f"libinput debug-events stopped: {stderr}")
+        return self.proc.wait()
+
+    def _handle_signal(self, _signum: int, _frame: object) -> None:
+        self.stop()
+        raise SystemExit(0)
+
+    def stop(self) -> None:
+        if self.dragging:
+            try:
+                self.client.button(False)
+            except Exception as exc:  # noqa: BLE001
+                log(f"failed to release left button: {exc}")
+            self.dragging = False
+        if self.proc is not None and self.proc.poll() is None:
+            self.proc.terminate()
+        self.client.close()
+
+    def handle_line(self, line: str) -> None:
+        begin = BEGIN_RE.search(line)
+        if begin:
+            if int(begin.group(1)) == FINGERS and not self.dragging:
+                self.frac_x = 0.0
+                self.frac_y = 0.0
+                self.client.button(True)
+                self.dragging = True
+            return
+
+        update = UPDATE_RE.search(line)
+        if update:
+            if self.dragging and int(update.group(1)) == FINGERS:
+                self._move(float(update.group(2)), float(update.group(3)))
+            return
+
+        end = END_RE.search(line)
+        if end and self.dragging and int(end.group(1)) == FINGERS:
+            self.client.button(False)
+            self.dragging = False
+
+    def _move(self, dx: float, dy: float) -> None:
+        total_x = (dx * SCALE) + self.frac_x
+        total_y = (dy * SCALE) + self.frac_y
+        move_x = int(total_x)
+        move_y = int(total_y)
+        self.frac_x = total_x - move_x
+        self.frac_y = total_y - move_y
+        if move_x or move_y:
+            self.client.move(move_x, move_y)
+
+
+def acquire_lock() -> object | None:
+    lock_path = runtime_dir() / "rifuki-three-finger-drag.lock"
+    try:
+        lock_path.parent.mkdir(parents=True, exist_ok=True)
+        lock_file = lock_path.open("a+", encoding="utf-8")
+        fcntl.flock(lock_file, fcntl.LOCK_EX | fcntl.LOCK_NB)
+        lock_file.seek(0)
+        lock_file.truncate()
+        lock_file.write(str(os.getpid()))
+        lock_file.flush()
+        return lock_file
+    except OSError as exc:
+        log(f"could not acquire daemon lock: {exc}")
+        return None
+
+
+def main() -> int:
+    lock_file = acquire_lock()
+    if lock_file is None:
+        return 0
+    return ThreeFingerDrag().start()
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

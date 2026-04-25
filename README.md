@@ -102,6 +102,7 @@ bash ~/.dotfiles/macos/uninstall-brew.sh
 | [hyprpaper](https://github.com/hyprwm/hyprpaper) | Wallpaper daemon |
 | [grim](https://sr.ht/~emersion/grim) + [slurp](https://github.com/emersion/slurp) | Screenshots |
 | Floating Screenshot | macOS-style draggable screenshot thumbnail with swipe-to-save (`Print` / `Shift+Print`) |
+| Three-Finger Drag | macOS-style touchpad drag/select on Hyprland via `libinput` + `ydotoold` |
 | [dunst](https://dunst-project.org) | Notification daemon |
 | Rifuki Shell menus | Waybar quick actions, power menu, and wallpaper picker (`swww` with `hyprpaper` fallback) |
 
@@ -125,6 +126,7 @@ bash ~/.dotfiles/macos/uninstall-brew.sh
 - `ghostty` — Terminal emulator config (macOS + Gentoo)
 - `yabai` + `skhd` — Tiling window manager + hotkeys (macOS)
 - `screenshot-floating` — Gentoo/Hyprland screenshot app with temporary draggable thumbnails
+- `rifuki-three-finger-drag` — Gentoo/Hyprland touchpad daemon for macOS-style three-finger drag/select
 - `rifuki-wallpaper-picker` / `rifuki-actions` — shared Waybar popup scripts for Arch + Gentoo
 - `neofetch` — Miku ASCII art + config (unified)
 - `yazi` — Terminal file manager with cross-platform opener
@@ -182,7 +184,7 @@ bash ~/.dotfiles/macos/uninstall-brew.sh
 │   │   ├── waybar/        # Status bar (TokyoNight theme)
 │   │   └── wofi/          # App launcher
 │   ├── .local/
-│   │   └── bin/           # Screenshot scripts (grim + slurp)
+│   │   └── bin/           # Screenshot scripts + three-finger drag daemon
 │   ├── system/            # System config backup (reference only, not installed)
 │   │   ├── boot/grub/     # grub.cfg snapshot
 │   │   └── etc/           # /etc/profile + profile.d/tty-bash.sh
@@ -196,6 +198,17 @@ bash ~/.dotfiles/macos/uninstall-brew.sh
 ```
 
 Shared configs use cross-platform strategies (uname checks, ssh_only, graceful fallbacks) so the same files work on both macOS and Linux.
+
+## Post-Installation (Gentoo Three-Finger Drag)
+
+The `rifuki-three-finger-drag` daemon autostarts from Hyprland and maps a 3-finger touchpad swipe into left-click hold + pointer motion for drag/drop and area selection.
+
+Requirements:
+- `x11-misc/ydotool` and `dev-libs/libinput`
+- `libinput debug-events` access to the touchpad device
+- an accessible `ydotoold` socket for injecting mouse events
+
+If it does not start, check `~/.local/state/rifuki-three-finger-drag.log`. Sensitivity can be tuned with `RIFUKI_THREE_FINGER_DRAG_SCALE`.
 
 ## Post-Installation (Yabai & Skhd)
 
