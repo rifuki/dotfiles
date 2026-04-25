@@ -246,7 +246,7 @@ fi
 
 step "Checking Hyprland / desktop tools"
 _hypr_missing=()
-for _tool in hyprctl waybar wofi ghostty hyprlock hyprpaper grim slurp dunstify brightnessctl wl-copy; do
+for _tool in hyprctl waybar wofi ghostty hyprlock hyprpaper grim slurp dunstify brightnessctl wl-copy python3; do
   if command -v "$_tool" &>/dev/null; then
     done_msg "$_tool found"
   else
@@ -254,10 +254,25 @@ for _tool in hyprctl waybar wofi ghostty hyprlock hyprpaper grim slurp dunstify 
     _hypr_missing+=("$_tool")
   fi
 done
+if command -v python3 &>/dev/null; then
+  if python3 - <<'PY' >/dev/null 2>&1
+import gi
+gi.require_version("Gtk", "3.0")
+gi.require_version("Gdk", "3.0")
+gi.require_version("GdkPixbuf", "2.0")
+from gi.repository import Gtk, Gdk, GdkPixbuf
+PY
+  then
+    done_msg "Python GTK bindings found"
+  else
+    warn_msg "Python GTK bindings not found"
+    _hypr_missing+=("python-gtk")
+  fi
+fi
 if [ "${#_hypr_missing[@]}" -gt 0 ]; then
   echo ""
   warn_msg "Missing desktop tools: ${_hypr_missing[*]}"
-  warn_msg "Install via portage, e.g.: sudo emerge gui-wm/hyprland gui-apps/waybar gui-apps/wofi"
+  warn_msg "Install via portage, e.g.: sudo emerge gui-wm/hyprland gui-apps/waybar gui-apps/wofi gui-apps/grim gui-apps/slurp gui-apps/wl-clipboard x11-misc/dunst x11-libs/gtk+ x11-libs/gdk-pixbuf dev-python/pygobject"
   warn_msg "Configs will still be symlinked — tools can be installed later."
 fi
 
@@ -486,7 +501,7 @@ fi
 # ========== Symlinks ==========
 step "Setting up dotfiles symlinks"
 
-mkdir -p "$HOME/.config" "$HOME/.local/bin"
+mkdir -p "$HOME/.config" "$HOME/.local/bin" "$HOME/.local/share"
 
 # Remove old shared symlinks
 for _d in "$SHARED_DIR/.config"/*/; do
@@ -524,6 +539,28 @@ for _f in "$PLATFORM_DIR/.local/bin"/*; do
   chmod +x "$_f"
   done_msg "~/.local/bin/$_name"
 done
+
+# Symlink application launchers/icons without taking over ~/.local/share
+if [ -d "$PLATFORM_DIR/.local/share" ]; then
+  while IFS= read -r _f; do
+    _rel="${_f#"$PLATFORM_DIR/.local/share/"}"
+    _target="$HOME/.local/share/$_rel"
+    if [[ "$_rel" == *.desktop.in ]]; then
+      _target="${_target%.in}"
+      mkdir -p "$(dirname "$_target")"
+      sed "s|@HOME@|$HOME|g" "$_f" > "$_target"
+      chmod 644 "$_target"
+      done_msg "~/.local/share/${_rel%.in}"
+      continue
+    fi
+    mkdir -p "$(dirname "$_target")"
+    ln -sf "$_f" "$_target"
+    done_msg "~/.local/share/$_rel"
+  done < <(find "$PLATFORM_DIR/.local/share" -type f | sort)
+  if command -v update-desktop-database &>/dev/null; then
+    update-desktop-database "$HOME/.local/share/applications" >/dev/null 2>&1 || true
+  fi
+fi
 
 # Root dotfiles
 ln -sf "$PLATFORM_DIR/.zshrc" "$HOME/.zshrc"

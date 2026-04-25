@@ -1,0 +1,115 @@
+#!/bin/bash
+set -euo pipefail
+
+usage() {
+  cat <<'EOF'
+Usage: screenshot-floating [--full|--area]
+
+Captures a screenshot to a temporary file, copies it to the clipboard, and
+shows a floating thumbnail that can be dragged to another app. If the thumbnail
+is left alone, it is saved to ~/Pictures/Screenshots.
+EOF
+}
+
+notify() {
+  local _summary="$1"
+  local _body="${2:-}"
+  if command -v dunstify >/dev/null 2>&1; then
+    dunstify -u normal -t 2500 "$_summary" "$_body" || true
+  fi
+}
+
+fail() {
+  local _message="$1"
+  if command -v dunstify >/dev/null 2>&1; then
+    dunstify -u critical -t 3500 "Screenshot Failed" "$_message" || true
+  fi
+  echo "screenshot-floating: $_message" >&2
+  exit 1
+}
+
+_mode="${1:---area}"
+case "$_mode" in
+  --full|full|-f)
+    _capture_area=0
+    ;;
+  --area|area|-a)
+    _capture_area=1
+    ;;
+  --help|-h)
+    usage
+    exit 0
+    ;;
+  *)
+    usage >&2
+    exit 2
+    ;;
+esac
+
+for _tool in grim wl-copy python3; do
+  command -v "$_tool" >/dev/null 2>&1 || fail "$_tool is not installed"
+done
+if [ "$_capture_area" = "1" ]; then
+  command -v slurp >/dev/null 2>&1 || fail "slurp is not installed"
+fi
+
+_user="${USER:-$(id -un 2>/dev/null || echo user)}"
+_tmp_dir="${SCREENSHOT_FLOATING_TMPDIR:-/var/tmp/${_user}-screenshot-thumbnails}"
+_pictures_dir="$(xdg-user-dir PICTURES 2>/dev/null || printf '%s/Pictures' "$HOME")"
+_save_dir="${SCREENSHOT_SAVE_DIR:-${_pictures_dir}/Screenshots}"
+_timeout="${SCREENSHOT_FLOATING_TIMEOUT:-5}"
+_drag_keep="${SCREENSHOT_FLOATING_DRAG_KEEP:-120}"
+
+if ! mkdir -p "$_tmp_dir" 2>/dev/null; then
+  _tmp_root="${TMPDIR:-/tmp}"
+  _tmp_dir="${_tmp_root}/${_user}-screenshot-thumbnails"
+  mkdir -p "$_tmp_dir"
+fi
+chmod 700 "$_tmp_dir" 2>/dev/null || true
+find "$_tmp_dir" -type f -name 'screenshot-*.png' -mmin +120 -delete 2>/dev/null || true
+
+_stamp="$(date +'%Y%m%d-%H%M%S')"
+_tmp_file="$(mktemp "${_tmp_dir}/screenshot-${_stamp}.XXXXXX.png")"
+
+cleanup_tmp() {
+  rm -f "$_tmp_file"
+}
+
+if [ "$_capture_area" = "1" ]; then
+  if ! _geometry="$(slurp 2>/dev/null)"; then
+    cleanup_tmp
+    exit 0
+  fi
+  [ -n "$_geometry" ] || {
+    cleanup_tmp
+    exit 0
+  }
+  grim -g "$_geometry" "$_tmp_file" || {
+    cleanup_tmp
+    fail "Could not capture selected area"
+  }
+else
+  grim "$_tmp_file" || {
+    cleanup_tmp
+    fail "Could not capture screen"
+  }
+fi
+
+if [ ! -s "$_tmp_file" ]; then
+  cleanup_tmp
+  fail "Screenshot file was empty"
+fi
+
+wl-copy --type image/png < "$_tmp_file" || notify "Screenshot Captured" "Clipboard copy failed; thumbnail is still available"
+
+_thumb_app="${SCREENSHOT_THUMBNAIL_APP:-$HOME/.local/bin/screenshot-thumbnail}"
+if [ ! -x "$_thumb_app" ]; then
+  notify "Screenshot Captured" "Saved temporarily: $_tmp_file"
+  fail "screenshot-thumbnail is not executable"
+fi
+
+export GDK_BACKEND="${GDK_BACKEND:-wayland}"
+exec "$_thumb_app" "$_tmp_file" \
+  --save-dir "$_save_dir" \
+  --timeout "$_timeout" \
+  --cleanup-after-drag "$_drag_keep"

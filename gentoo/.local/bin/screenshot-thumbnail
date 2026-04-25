@@ -1,0 +1,310 @@
+#!/usr/bin/env python3
+import argparse
+import os
+from pathlib import Path
+import shutil
+import subprocess
+import sys
+import time
+
+os.environ.setdefault("GDK_BACKEND", "wayland")
+
+import gi
+
+gi.require_version("Gtk", "3.0")
+gi.require_version("Gdk", "3.0")
+gi.require_version("GdkPixbuf", "2.0")
+from gi.repository import Gdk, GdkPixbuf, GLib, Gtk
+
+
+APP_CLASS = "screenshot-thumbnail"
+DEFAULT_WIDTH = 300
+DEFAULT_HEIGHT = 210
+
+
+def notify(summary, body=""):
+    dunstify = shutil.which("dunstify")
+    if not dunstify:
+        return
+    subprocess.Popen(
+        [dunstify, "-u", "normal", "-t", "2200", summary, body],
+        stdin=subprocess.DEVNULL,
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.DEVNULL,
+        start_new_session=True,
+    )
+
+
+def unique_destination(save_dir):
+    stamp = time.strftime("%Y%m%d-%H%M%S")
+    candidate = save_dir / f"screenshot-{stamp}.png"
+    index = 1
+    while candidate.exists():
+        candidate = save_dir / f"screenshot-{stamp}-{index}.png"
+        index += 1
+    return candidate
+
+
+def scaled_pixbuf(pixbuf, max_width, max_height):
+    width = pixbuf.get_width()
+    height = pixbuf.get_height()
+    scale = min(max_width / width, max_height / height, 1.0)
+    out_width = max(1, int(width * scale))
+    out_height = max(1, int(height * scale))
+    return pixbuf.scale_simple(out_width, out_height, GdkPixbuf.InterpType.BILINEAR)
+
+
+class ScreenshotThumbnail(Gtk.Window):
+    def __init__(self, path, save_dir, timeout, cleanup_after_drag):
+        super().__init__(title=APP_CLASS)
+        self.path = Path(path).resolve()
+        self.save_dir = Path(save_dir).expanduser().resolve()
+        self.timeout = max(1, int(timeout))
+        self.cleanup_after_drag = max(10, int(cleanup_after_drag))
+        self.completed = False
+        self.drag_started = False
+
+        self.full_pixbuf = GdkPixbuf.Pixbuf.new_from_file(str(self.path))
+        self.thumb_pixbuf = scaled_pixbuf(self.full_pixbuf, 276, 145)
+
+        self._configure_window()
+        self._build_ui()
+        self._connect_events()
+
+        GLib.timeout_add_seconds(self.timeout, self.auto_save)
+
+    def _configure_window(self):
+        self.set_title(APP_CLASS)
+        self.set_default_size(DEFAULT_WIDTH, DEFAULT_HEIGHT)
+        self.set_size_request(DEFAULT_WIDTH, DEFAULT_HEIGHT)
+        self.set_resizable(False)
+        self.set_decorated(False)
+        self.set_keep_above(True)
+        self.set_skip_taskbar_hint(True)
+        self.set_skip_pager_hint(True)
+        self.stick()
+        self.set_type_hint(Gdk.WindowTypeHint.UTILITY)
+
+        screen = Gdk.Screen.get_default()
+        visual = screen.get_rgba_visual() if screen else None
+        if visual:
+            self.set_visual(visual)
+        self.set_app_paintable(True)
+
+    def _build_ui(self):
+        css = b"""
+        window {
+          background-color: transparent;
+        }
+        #root {
+          background-color: rgba(10, 14, 23, 0.90);
+          border: 1px solid rgba(0, 217, 255, 0.72);
+          border-radius: 14px;
+          padding: 8px;
+          box-shadow: 0 10px 28px rgba(0, 0, 0, 0.45);
+        }
+        #hint {
+          color: #cdd6f4;
+          font-size: 11px;
+        }
+        #subhint {
+          color: rgba(205, 214, 244, 0.72);
+          font-size: 10px;
+        }
+        #frame {
+          border-radius: 9px;
+          background-color: rgba(255, 255, 255, 0.05);
+          padding: 2px;
+        }
+        """
+        provider = Gtk.CssProvider()
+        provider.load_from_data(css)
+        screen = Gdk.Screen.get_default()
+        Gtk.StyleContext.add_provider_for_screen(
+            screen,
+            provider,
+            Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION,
+        )
+
+        self.event_box = Gtk.EventBox()
+        self.event_box.set_visible_window(False)
+        self.add(self.event_box)
+
+        root = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=6)
+        root.set_name("root")
+        self.event_box.add(root)
+
+        frame = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
+        frame.set_name("frame")
+        frame.set_halign(Gtk.Align.CENTER)
+        frame.set_valign(Gtk.Align.CENTER)
+        root.pack_start(frame, True, True, 0)
+
+        image = Gtk.Image.new_from_pixbuf(self.thumb_pixbuf)
+        image.set_halign(Gtk.Align.CENTER)
+        image.set_valign(Gtk.Align.CENTER)
+        frame.pack_start(image, True, True, 0)
+
+        hint = Gtk.Label(label="Drag to drop into chat/app")
+        hint.set_name("hint")
+        hint.set_halign(Gtk.Align.CENTER)
+        root.pack_start(hint, False, False, 0)
+
+        subhint = Gtk.Label(label=f"Autosaves in {self.timeout}s | S save | Esc discard")
+        subhint.set_name("subhint")
+        subhint.set_halign(Gtk.Align.CENTER)
+        root.pack_start(subhint, False, False, 0)
+
+    def _connect_events(self):
+        targets = [
+            Gtk.TargetEntry.new("text/uri-list", Gtk.TargetFlags.OTHER_APP, 0),
+            Gtk.TargetEntry.new("image/png", Gtk.TargetFlags.OTHER_APP, 1),
+            Gtk.TargetEntry.new("image/x-png", Gtk.TargetFlags.OTHER_APP, 1),
+            Gtk.TargetEntry.new("text/plain", Gtk.TargetFlags.OTHER_APP, 2),
+        ]
+        self.event_box.drag_source_set(
+            Gdk.ModifierType.BUTTON1_MASK,
+            targets,
+            Gdk.DragAction.COPY,
+        )
+        self.event_box.connect("drag-begin", self.on_drag_begin)
+        self.event_box.connect("drag-data-get", self.on_drag_data_get)
+        self.event_box.connect("drag-end", self.on_drag_end)
+        self.event_box.connect("button-press-event", self.on_button_press)
+        self.connect("key-press-event", self.on_key_press)
+        self.connect("delete-event", self.on_delete)
+
+    def on_drag_begin(self, _widget, context):
+        self.drag_started = True
+        Gtk.drag_set_icon_pixbuf(context, self.thumb_pixbuf, 8, 8)
+
+    def on_drag_data_get(self, _widget, _context, selection_data, target_info, _time):
+        if target_info == 0:
+            selection_data.set_uris([self.path.as_uri()])
+        elif target_info == 1:
+            selection_data.set_pixbuf(self.full_pixbuf)
+        else:
+            selection_data.set_text(str(self.path), -1)
+
+    def on_drag_end(self, _widget, _context):
+        if self.completed:
+            return
+        self.completed = True
+        self.delete_later()
+        GLib.timeout_add(700, self.quit)
+
+    def on_button_press(self, _widget, event):
+        if event.button == 3:
+            self.discard()
+            return True
+        if event.type == Gdk.EventType._2BUTTON_PRESS and event.button == 1:
+            self.save_and_open()
+            return True
+        return False
+
+    def on_key_press(self, _widget, event):
+        key_name = Gdk.keyval_name(event.keyval)
+        if key_name == "Escape":
+            self.discard()
+            return True
+        if key_name in ("s", "S"):
+            self.save_now(show_notification=True)
+            self.quit()
+            return True
+        if key_name in ("Return", "KP_Enter"):
+            self.save_and_open()
+            return True
+        return False
+
+    def on_delete(self, *_args):
+        self.discard()
+        return True
+
+    def auto_save(self):
+        if self.completed:
+            return False
+        self.save_now(show_notification=True)
+        self.quit()
+        return False
+
+    def save_now(self, show_notification):
+        if self.completed and not self.path.exists():
+            return None
+        self.completed = True
+        self.save_dir.mkdir(parents=True, exist_ok=True)
+        destination = unique_destination(self.save_dir)
+        if self.path.exists():
+            shutil.move(str(self.path), str(destination))
+        if show_notification:
+            notify("Screenshot Saved", str(destination))
+        return destination
+
+    def save_and_open(self):
+        destination = self.save_now(show_notification=False)
+        if destination:
+            opener = shutil.which("satty")
+            if opener:
+                subprocess.Popen([opener, "--filename", str(destination)], start_new_session=True)
+            else:
+                opener = shutil.which("swappy")
+                if opener:
+                    subprocess.Popen([opener, "-f", str(destination), "-o", str(destination)], start_new_session=True)
+                else:
+                    subprocess.Popen(["xdg-open", str(destination)], start_new_session=True)
+        self.quit()
+
+    def discard(self):
+        if not self.completed and self.path.exists():
+            self.path.unlink()
+        self.completed = True
+        self.quit()
+
+    def delete_later(self):
+        cleaner = (
+            "import os, sys, time\n"
+            "time.sleep(int(sys.argv[1]))\n"
+            "try:\n"
+            "    os.unlink(sys.argv[2])\n"
+            "except FileNotFoundError:\n"
+            "    pass\n"
+        )
+        subprocess.Popen(
+            [sys.executable, "-c", cleaner, str(self.cleanup_after_drag), str(self.path)],
+            stdin=subprocess.DEVNULL,
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+            start_new_session=True,
+        )
+
+    def quit(self):
+        Gtk.main_quit()
+        return False
+
+
+def parse_args():
+    parser = argparse.ArgumentParser(description="Floating screenshot thumbnail for Hyprland")
+    parser.add_argument("path", help="Temporary screenshot PNG path")
+    parser.add_argument("--save-dir", default="~/Pictures/Screenshots")
+    parser.add_argument("--timeout", type=int, default=5)
+    parser.add_argument("--cleanup-after-drag", type=int, default=120)
+    return parser.parse_args()
+
+
+def main():
+    args = parse_args()
+    path = Path(args.path)
+    if not path.is_file():
+        print(f"screenshot-thumbnail: missing file: {path}", file=sys.stderr)
+        return 1
+
+    GLib.set_prgname(APP_CLASS)
+    Gdk.set_program_class(APP_CLASS)
+
+    win = ScreenshotThumbnail(path, args.save_dir, args.timeout, args.cleanup_after_drag)
+    win.show_all()
+    Gtk.main()
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())
