@@ -1,0 +1,95 @@
+# See dunst(5) for all options.
+
+[global]
+    monitor = 0
+    follow = none
+
+    width = (340, 430)
+    height = (0, 170)
+    origin = top-right
+    offset = (16, 58)
+    scale = 0
+    notification_limit = 5
+
+    progress_bar = true
+    progress_bar_height = 6
+    progress_bar_frame_width = 0
+    progress_bar_min_width = 160
+    progress_bar_max_width = 360
+    progress_bar_corner_radius = 999
+
+    indicate_hidden = yes
+    transparency = 0
+    separator_height = 0
+    padding = 12
+    horizontal_padding = 14
+    text_icon_padding = 12
+    frame_width = 2
+    frame_color = "#00d9ff"
+    gap_size = 8
+    separator_color = frame
+    sort = yes
+
+    font = JetBrainsMono Nerd Font 10
+    line_height = 2
+    markup = full
+    format = "<b>%s</b>\n<span foreground='#bac2de'>%b</span>"
+    alignment = left
+    vertical_alignment = center
+    show_age_threshold = -1
+    ellipsize = end
+    ignore_newline = no
+    stack_duplicates = true
+    hide_duplicate_count = true
+    show_indicators = no
+
+    enable_recursive_icon_lookup = true
+    icon_theme = "Papirus-Dark,Adwaita"
+    icon_position = left
+    min_icon_size = 32
+    max_icon_size = 64
+    icon_corner_radius = 10
+
+    history_length = 20
+    browser = /usr/bin/xdg-open
+    always_run_script = true
+
+    corner_radius = 14
+    corners = all
+    ignore_dbusclose = false
+    layer = overlay
+    force_xwayland = false
+
+    mouse_left_click = close_current
+    mouse_middle_click = do_action, close_current
+    mouse_right_click = close_all
+
+[urgency_low]
+    background = "#101624"
+    foreground = "#cdd6f4"
+    frame_color = "#00d9ff"
+    timeout = 4
+    default_icon = dialog-information
+
+[urgency_normal]
+    background = "#111827"
+    foreground = "#f8f8f2"
+    frame_color = "#bd93f9"
+    timeout = 6
+    override_pause_level = 30
+    default_icon = dialog-information
+
+[urgency_critical]
+    background = "#28111d"
+    foreground = "#ffffff"
+    frame_color = "#ff5555"
+    timeout = 0
+    override_pause_level = 60
+    default_icon = dialog-warning
+
+[floating-screenshot]
+    appname = Floating Screenshot
+    background = "#101624"
+    foreground = "#cdd6f4"
+    frame_color = "#50fa7b"
+    timeout = 2

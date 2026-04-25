@@ -96,7 +96,7 @@ bash ~/.dotfiles/macos/uninstall-brew.sh
 | [hyprlock](https://github.com/hyprwm/hyprlock) | Screen locker |
 | [hyprpaper](https://github.com/hyprwm/hyprpaper) | Wallpaper daemon |
 | [grim](https://sr.ht/~emersion/grim) + [slurp](https://github.com/emersion/slurp) | Screenshots |
-| Floating Screenshot | macOS-style draggable screenshot thumbnail (`Print` / `Shift+Print`) |
+| Floating Screenshot | macOS-style draggable screenshot thumbnail with swipe-to-save (`Print` / `Shift+Print`) |
 | [dunst](https://dunst-project.org) | Notification daemon |
 
 > **Note:** Hyprland-related tools are installed via portage by the user. The dotfiles installer symlinks configs and warns about missing tools.
