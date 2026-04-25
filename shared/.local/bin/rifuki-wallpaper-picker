@@ -1,0 +1,38 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+if ! command -v wofi >/dev/null 2>&1; then
+  printf 'wofi is not installed\n' >&2
+  exit 1
+fi
+
+tmp_file="$(mktemp)"
+trap 'rm -f "$tmp_file"' EXIT
+
+search_dirs=(
+  "$HOME/.wallpapers"
+  "$HOME/Pictures/Wallpapers"
+  "$HOME/Pictures"
+  "/usr/share/backgrounds"
+)
+
+for dir in "${search_dirs[@]}"; do
+  [ -d "$dir" ] || continue
+  find -L "$dir" -maxdepth 2 -type f \
+    \( -iname '*.jpg' -o -iname '*.jpeg' -o -iname '*.png' -o -iname '*.webp' -o -iname '*.bmp' \) \
+    -printf '%f\t%p\n' 2>/dev/null >> "$tmp_file" || true
+done
+
+if [ ! -s "$tmp_file" ]; then
+  if command -v dunstify >/dev/null 2>&1; then
+    dunstify -a "Rifuki Shell" -u normal -t 2500 "No Wallpapers Found" "Put images in ~/.wallpapers or ~/Pictures/Wallpapers"
+  fi
+  exit 0
+fi
+
+selection="$(sort -fu "$tmp_file" | wofi --dmenu --insensitive --prompt 'wallpaper' --width 46% --height 52% || true)"
+[ -n "$selection" ] || exit 0
+
+wallpaper_path="${selection#*$'\t'}"
+[ -f "$wallpaper_path" ] || exit 1
+exec rifuki-wallpaper-set "$wallpaper_path"

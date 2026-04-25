@@ -1,0 +1,7 @@
+#!/bin/bash
+screenshot_path="$(xdg-user-dir PICTURES)/screenshot-$(date +'%Y%m%d-%H%M%S').png"
+if grim "$screenshot_path"; then
+    dunstify -u normal -t 3000 -i "$screenshot_path" "Screenshot Saved" "Saved to Pictures folder"
+else
+    dunstify -u critical -t 3000 "Screenshot Failed" "Could not save screenshot"
+fi

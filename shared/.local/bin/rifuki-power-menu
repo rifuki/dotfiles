@@ -1,0 +1,18 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+choice="$(printf '%s\n' \
+  '  Lock' \
+  '󰤄  Suspend' \
+  '  Reboot' \
+  '⏻  Power off' \
+  '󰗼  Logout Hyprland' \
+  | wofi --dmenu --prompt 'power' --width 22% --height 30% || true)"
+
+case "$choice" in
+  '  Lock') hyprlock ;;
+  '󰤄  Suspend') systemctl suspend ;;
+  '  Reboot') systemctl reboot ;;
+  '⏻  Power off') systemctl poweroff ;;
+  '󰗼  Logout Hyprland') hyprctl dispatch exit ;;
+esac

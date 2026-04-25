@@ -273,6 +273,7 @@ if [ "${#_hypr_missing[@]}" -gt 0 ]; then
   echo ""
   warn_msg "Missing desktop tools: ${_hypr_missing[*]}"
   warn_msg "Install via portage, e.g.: sudo emerge gui-wm/hyprland gui-apps/waybar gui-apps/wofi gui-apps/grim gui-apps/slurp gui-apps/wl-clipboard x11-misc/dunst x11-libs/gtk+ x11-libs/gdk-pixbuf dev-python/pygobject"
+  warn_msg "Optional: install gui-apps/swww for smoother wallpaper transitions. hyprpaper fallback still works."
   warn_msg "Configs will still be symlinked — tools can be installed later."
 fi
 
@@ -530,6 +531,17 @@ for _d in "$PLATFORM_DIR/.config"/*/; do
   ln -sf "$PLATFORM_DIR/.config/$_name" "$HOME/.config/$_name"
   done_msg "~/.config/$_name"
 done
+
+# Symlink shared desktop scripts to ~/.local/bin
+if [ -d "$SHARED_DIR/.local/bin" ]; then
+  for _f in "$SHARED_DIR/.local/bin"/*; do
+    [ -f "$_f" ] || continue
+    _name="$(basename "$_f")"
+    ln -sf "$_f" "$HOME/.local/bin/$_name"
+    chmod +x "$_f"
+    done_msg "~/.local/bin/$_name"
+  done
+fi
 
 # Symlink screenshot scripts to ~/.local/bin
 for _f in "$PLATFORM_DIR/.local/bin"/*; do

@@ -19,6 +19,10 @@
 !debian/
 !debian/**
 
+# Arch platform
+!arch/
+!arch/**
+
 # Gentoo platform
 !gentoo/
 !gentoo/**

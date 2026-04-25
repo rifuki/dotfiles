@@ -28,20 +28,20 @@ confirm() {
   return 1
 }
 
-if [[ "$(uname)" != "Linux" ]] || [[ ! -f /etc/gentoo-release ]]; then
-  echo -e "${RED}❌ This script is for Gentoo Linux only.${NC}"
+if [[ "$(uname)" != "Linux" ]] || [[ ! -f /etc/arch-release ]]; then
+  echo -e "${RED}❌ This script is for Arch Linux only.${NC}"
   exit 1
 fi
 
 echo ""
 echo -e "${BOLD}${MAGENTA}╔══════════════════════════════════════════════════╗${NC}"
-echo -e "${BOLD}${MAGENTA}║            dotfiles uninstaller — Gentoo         ║${NC}"
+echo -e "${BOLD}${MAGENTA}║            dotfiles uninstaller — Arch           ║${NC}"
 echo -e "${BOLD}${MAGENTA}╚══════════════════════════════════════════════════╝${NC}"
 echo ""
 
 DOTFILES_DIR="$HOME/.dotfiles"
 SHARED_DIR="$DOTFILES_DIR/shared"
-PLATFORM_DIR="$DOTFILES_DIR/gentoo"
+PLATFORM_DIR="$DOTFILES_DIR/arch"
 UNINSTALL_BACKUP_DIR="$HOME/.config/backup-uninstall-$(date +%Y%m%d-%H%M%S)"
 _did_backup=0
 
@@ -57,7 +57,7 @@ for _d in "$SHARED_DIR/.config"/*/ "$PLATFORM_DIR/.config"/*/; do
     _did_backup=1
   fi
 done
-for _f in "$HOME/.zshrc"; do
+for _f in "$HOME/.zshrc" "$HOME/.zprofile"; do
   if [ -e "$_f" ]; then
     [ "$_did_backup" = "0" ] && mkdir -p "$UNINSTALL_BACKUP_DIR"
     cp -L "$_f" "$UNINSTALL_BACKUP_DIR/" 2>/dev/null || true
@@ -68,8 +68,9 @@ done
 
 # ========== Remove Symlinks ==========
 step "Removing dotfiles symlinks"
-rm -f "$HOME/.zshrc"
+rm -f "$HOME/.zshrc" "$HOME/.zprofile"
 done_msg "~/.zshrc removed"
+done_msg "~/.zprofile removed"
 for _d in "$SHARED_DIR/.config"/*/; do
   [ -d "$_d" ] || continue
   _name="$(basename "$_d")"

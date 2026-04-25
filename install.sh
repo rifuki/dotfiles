@@ -48,15 +48,20 @@ elif [[ "$_os" == "Linux" ]]; then
     echo -e "  ${DIM}→ Running gentoo/install.sh${NC}"
     echo ""
     exec "$DOTFILES_DIR/gentoo/install.sh" "$@"
+  elif [[ -f /etc/arch-release ]]; then
+    echo -e "  ${GREEN}✔${NC} Detected: ${BOLD}${CYAN}Arch Linux${NC}"
+    echo -e "  ${DIM}→ Running arch/install.sh${NC}"
+    echo ""
+    exec "$DOTFILES_DIR/arch/install.sh" "$@"
   else
-    echo -e "  ${GREEN}✔${NC} Detected: ${BOLD}${CYAN}Linux (Debian/Debian)${NC}"
+    echo -e "  ${GREEN}✔${NC} Detected: ${BOLD}${CYAN}Debian Linux${NC}"
     echo -e "  ${DIM}→ Running debian/install.sh${NC}"
     echo ""
     exec "$DOTFILES_DIR/debian/install.sh" "$@"
   fi
 else
   echo -e "  ${RED}✖${NC} Unsupported OS: ${BOLD}$_os${NC}"
-  echo -e "  ${DIM}Supported: macOS (Darwin), Gentoo Linux, Debian/Debian${NC}"
+  echo -e "  ${DIM}Supported: macOS (Darwin), Arch Linux, Gentoo Linux, Debian Linux${NC}"
   echo ""
   exit 1
 fi

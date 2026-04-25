@@ -1,0 +1,14 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+state_file="${XDG_STATE_HOME:-$HOME/.local/state}/rifuki-shell/current-wallpaper"
+default_wallpaper="$HOME/.wallpapers/muuko.png"
+
+if [ -f "$state_file" ]; then
+  wallpaper_path="$(sed -n '1p' "$state_file")"
+else
+  wallpaper_path="$default_wallpaper"
+fi
+
+[ -f "$wallpaper_path" ] || exit 0
+exec rifuki-wallpaper-set "$wallpaper_path"

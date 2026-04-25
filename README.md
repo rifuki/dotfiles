@@ -1,6 +1,6 @@
 # dotfiles
 
-Personal dotfiles for macOS, Debian, and Gentoo Linux — batteries included.
+Personal dotfiles for macOS, Debian, Arch, and Gentoo Linux — batteries included.
 
 ## Screenshots
 
@@ -24,7 +24,7 @@ Personal dotfiles for macOS, Debian, and Gentoo Linux — batteries included.
 bash <(curl -fsSL https://dotfiles.rifuki.dev)
 ```
 
-Auto-detects OS (macOS, Gentoo Linux, or Debian/Debian). Uses `bash <()` instead of `curl | bash` to preserve interactive TTY for password prompts.
+Auto-detects OS (macOS, Arch Linux, Gentoo Linux, or Debian Linux). Uses `bash <()` instead of `curl | bash` to preserve interactive TTY for password prompts.
 
 > Restart terminal or run `exec zsh` after install.
 
@@ -38,6 +38,11 @@ bash <(curl -fsSL https://dotfiles.rifuki.dev/macos/uninstall.sh)
 **Debian:**
 ```bash
 bash <(curl -fsSL https://dotfiles.rifuki.dev/debian/uninstall.sh)
+```
+
+**Arch:**
+```bash
+bash <(curl -fsSL https://dotfiles.rifuki.dev/arch/uninstall.sh)
 ```
 
 **Gentoo:**
@@ -98,8 +103,20 @@ bash ~/.dotfiles/macos/uninstall-brew.sh
 | [grim](https://sr.ht/~emersion/grim) + [slurp](https://github.com/emersion/slurp) | Screenshots |
 | Floating Screenshot | macOS-style draggable screenshot thumbnail with swipe-to-save (`Print` / `Shift+Print`) |
 | [dunst](https://dunst-project.org) | Notification daemon |
+| Rifuki Shell menus | Waybar quick actions, power menu, and wallpaper picker (`swww` with `hyprpaper` fallback) |
 
 > **Note:** Hyprland-related tools are installed via portage by the user. The dotfiles installer symlinks configs and warns about missing tools.
+
+### Tools (Arch — Fresh Hyprland Desktop)
+| Tool | Description |
+|------|-------------|
+| Hyprland stack | Hyprland, Waybar, Wofi, Ghostty, hyprlock, hyprpaper, swww |
+| System stack | PipeWire/WirePlumber, NetworkManager, Bluetooth, Dunst |
+| Desktop apps | Dolphin, Pavucontrol, CopyQ, Papirus icons, GTK/Qt theming helpers |
+| Fonts | JetBrainsMono Nerd Font, FiraCode Nerd Font, Noto fonts, Terminus TTY font |
+| Rifuki Shell menus | Waybar launcher, quick actions, power menu, wallpaper picker |
+
+> **Note:** Arch install can bootstrap a very fresh TTY system. It installs packages with `pacman`, sets a readable TTY font, symlinks configs, and adds `.zprofile` to auto-start Hyprland on TTY1.
 
 ### Configs
 - `nvim` — NvChad-based config with LSP, Treesitter, and plugins
@@ -108,6 +125,7 @@ bash ~/.dotfiles/macos/uninstall-brew.sh
 - `ghostty` — Terminal emulator config (macOS + Gentoo)
 - `yabai` + `skhd` — Tiling window manager + hotkeys (macOS)
 - `screenshot-floating` — Gentoo/Hyprland screenshot app with temporary draggable thumbnails
+- `rifuki-wallpaper-picker` / `rifuki-actions` — shared Waybar popup scripts for Arch + Gentoo
 - `neofetch` — Miku ASCII art + config (unified)
 - `yazi` — Terminal file manager with cross-platform opener
 - `.zshrc` — Cyan-magenta syntax highlighting, aliases, PATH setup
@@ -117,12 +135,13 @@ bash ~/.dotfiles/macos/uninstall-brew.sh
 ```
 ~/.dotfiles/
 ├── shared/
-│   └── .config/
-│       ├── nvim/          # NvChad config + LSP + plugins
-│       ├── neofetch/      # Custom ASCII art + config (unified)
-│       ├── starship/      # Cyan-magenta prompt (unified)
-│       ├── tmux/          # Catppuccin theme + plugins (unified)
-│       └── yazi/          # File manager (unified, cross-platform opener)
+│   ├── .config/
+│   │   ├── nvim/          # NvChad config + LSP + plugins
+│   │   ├── neofetch/      # Custom ASCII art + config (unified)
+│   │   ├── starship/      # Cyan-magenta prompt (unified)
+│   │   ├── tmux/          # Catppuccin theme + plugins (unified)
+│   │   └── yazi/          # File manager (unified, cross-platform opener)
+│   └── .local/bin/        # Shared desktop scripts (quick actions, wallpaper)
 │
 ├── macos/
 │   ├── .config/
@@ -141,6 +160,20 @@ bash ~/.dotfiles/macos/uninstall-brew.sh
 │   ├── .zshrc             # Debian shell config
 │   ├── install.sh         # Debian installer
 │   └── uninstall.sh       # Debian uninstaller
+│
+├── arch/
+│   ├── .config/
+│   │   ├── dunst/         # Notification daemon
+│   │   ├── ghostty/       # Terminal emulator config
+│   │   ├── hypr/          # Hyprland + hyprlock + hyprpaper
+│   │   ├── waybar/        # Rifuki Shell bar
+│   │   └── wofi/          # App launcher + dmenu popups
+│   ├── .local/
+│   │   └── bin/           # Screenshot scripts
+│   ├── .zprofile          # Auto-start Hyprland on TTY1
+│   ├── .zshrc             # Arch shell config
+│   ├── install.sh         # Arch installer
+│   └── uninstall.sh       # Arch uninstaller
 │
 ├── gentoo/
 │   ├── .config/

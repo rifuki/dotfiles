@@ -1,0 +1,32 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+choice="$(printf '%s\n' \
+  '  Wallpaper picker' \
+  '󰸉  Next wallpaper' \
+  '󰂯  Bluetooth manager' \
+  '󰤨  Network editor' \
+  '  Audio mixer' \
+  '󰃠  Brightness up' \
+  '󰃞  Brightness down' \
+  '󰌾  Lock screen' \
+  '󰤄  Suspend' \
+  '  Reload Hyprland' \
+  '󰈸  Restart Waybar' \
+  '⏻  Power menu' \
+  | wofi --dmenu --prompt 'quick actions' --width 34% --height 48% || true)"
+
+case "$choice" in
+  '  Wallpaper picker') rifuki-wallpaper-picker ;;
+  '󰸉  Next wallpaper') rifuki-wallpaper-next ;;
+  '󰂯  Bluetooth manager') blueman-manager >/dev/null 2>&1 & ;;
+  '󰤨  Network editor') nm-connection-editor >/dev/null 2>&1 & ;;
+  '  Audio mixer') pavucontrol >/dev/null 2>&1 & ;;
+  '󰃠  Brightness up') brightnessctl -e4 -n2 set 5%+ ;;
+  '󰃞  Brightness down') brightnessctl -e4 -n2 set 5%- ;;
+  '󰌾  Lock screen') hyprlock ;;
+  '󰤄  Suspend') systemctl suspend ;;
+  '  Reload Hyprland') hyprctl reload ;;
+  '󰈸  Restart Waybar') pkill -x waybar || true; hyprctl dispatch exec waybar ;;
+  '⏻  Power menu') rifuki-power-menu ;;
+esac

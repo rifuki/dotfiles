@@ -1,0 +1,20 @@
+[Desktop Entry]
+Type=Application
+Name=Floating Screenshot
+GenericName=Screenshot Tool
+Comment=Capture a temporary draggable screenshot thumbnail
+Exec=@HOME@/.local/bin/screenshot-floating --area
+Icon=dev.rifuki.ScreenshotFloating
+Terminal=false
+Categories=Utility;
+Keywords=screenshot;screen;capture;thumbnail;drag;drop;floating;
+StartupNotify=false
+Actions=Area;Fullscreen;
+
+[Desktop Action Area]
+Name=Capture Area
+Exec=@HOME@/.local/bin/screenshot-floating --area
+
+[Desktop Action Fullscreen]
+Name=Capture Fullscreen
+Exec=@HOME@/.local/bin/screenshot-floating --full
