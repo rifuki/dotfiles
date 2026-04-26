@@ -33,4 +33,4 @@ shell-integration = zsh
 ## Behavior
 confirm-close-surface = false
 
-term = xterm-256color
+term = xterm-ghostty

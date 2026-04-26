@@ -68,6 +68,19 @@ function y() {
   rm -f -- "$tmp"
 }
 
+# ── Terminal Recovery ─────────────────
+__reset_terminal_mouse_modes() {
+  [[ -n "$TMUX" ]] && return
+  printf '\033[?1000l\033[?1002l\033[?1003l\033[?1005l\033[?1006l\033[?1015l\033[?1004l' > /dev/tty 2>/dev/null || true
+}
+precmd_functions+=(__reset_terminal_mouse_modes)
+
+fixterm() {
+  printf '\033[?1000l\033[?1002l\033[?1003l\033[?1005l\033[?1006l\033[?1015l\033[?1004l\033[?2004l\033[?25h' > /dev/tty 2>/dev/null || true
+  stty sane 2>/dev/null || true
+  clear
+}
+
 # ── Starship ──────────────────────────
 export STARSHIP_CONFIG="$HOME/.config/starship/starship.toml"
 eval "$(starship init zsh)"
@@ -76,9 +89,12 @@ eval "$(starship init zsh)"
 # [ -f "$HOME/.dotfiles/macos/ai-tools.sh" ] && source "$HOME/.dotfiles/macos/ai-tools.sh"
 
 # ─── Local Secrets ───────────────────────────────────────────────────────────
-[ -f "$HOME/.secrets.sh" ] && source "$HOME/.secrets.sh"
+# [ -f "$HOME/.secrets.sh" ] && source "$HOME/.secrets.sh"
 
 # Added by Antigravity
 export PATH="/Users/rifuki/.antigravity/antigravity/bin:$PATH"
 
 export PATH="$HOME/.browser-use-env/bin:$PATH"
+
+# Added by Windsurf
+export PATH="/Users/rifuki/.codeium/windsurf/bin:$PATH"
