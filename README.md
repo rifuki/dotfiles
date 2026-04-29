@@ -65,7 +65,8 @@ bash ~/.dotfiles/macos/uninstall-brew.sh
 | [Tmux](https://github.com/tmux/tmux) | Terminal multiplexer |
 | [Oh My Zsh](https://ohmyz.sh) | Zsh framework |
 | [Starship](https://starship.rs) | Cross-shell prompt |
-| [NVM](https://github.com/nvm-sh/nvm) | Node version manager (Node 24) |
+| [Node.js](https://nodejs.org) | JavaScript runtime + npm (via Homebrew) |
+| [mise](https://mise.jdx.dev) | Optional polyglot version manager |
 | [Bun](https://bun.sh) | JavaScript runtime & package manager |
 | [Rust](https://rustup.rs) | Rust toolchain (stable) |
 | [Yazi](https://github.com/sxyazi/yazi) | Terminal file manager |

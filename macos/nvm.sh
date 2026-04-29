@@ -7,7 +7,7 @@
 #   Status:        bash ~/.dotfiles/macos/nvm.sh status
 #
 # This script is intentionally kept separate from install.sh and uninstall.sh.
-# The main setup (install.sh) uses Homebrew Node + Mise instead of NVM.
+# The main setup (install.sh) uses Homebrew-managed Node instead of NVM.
 # Use this script only for machines that still need NVM or to migrate away from it.
 
 set -e

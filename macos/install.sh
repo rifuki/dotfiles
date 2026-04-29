@@ -191,9 +191,9 @@ fi
 
 # 6: mise
 LABELS+=("Mise")
-DESCRIPTIONS+=("Polyglot version manager (foundry, node, etc)")
+DESCRIPTIONS+=("Optional polyglot version manager")
 if command -v mise &>/dev/null; then STATUS+=("installed"); SELECTED+=(0); EXTERNAL+=(0)
-else STATUS+=(""); SELECTED+=(1); EXTERNAL+=(0); fi
+else STATUS+=(""); SELECTED+=(0); EXTERNAL+=(0); fi
 
 # 7: Oh My Zsh
 LABELS+=("Oh My Zsh")
@@ -210,32 +210,33 @@ LABELS+=("Rust")
 DESCRIPTIONS+=("Rust toolchain via rustup")
 if [ -f "$HOME/.cargo/bin/rustup" ]; then STATUS+=("installed"); SELECTED+=(0); EXTERNAL+=(0); else STATUS+=(""); SELECTED+=(1); EXTERNAL+=(0); fi
 
-# 8: Bun
+# 9: Bun
 LABELS+=("Bun")
 DESCRIPTIONS+=("JavaScript runtime")
 if [ -d "$HOME/.bun" ]; then STATUS+=("installed"); SELECTED+=(0); EXTERNAL+=(0); else STATUS+=(""); SELECTED+=(1); EXTERNAL+=(0); fi
 
-# 9: Node (Homebrew)
+# 10: Node (Homebrew)
 LABELS+=("Node (Homebrew)")
-DESCRIPTIONS+=("Node.js via Homebrew — system default, managed per-project by mise")
-if brew list node &>/dev/null 2>&1; then STATUS+=("installed"); SELECTED+=(0); EXTERNAL+=(0); else STATUS+=(""); SELECTED+=(1); EXTERNAL+=(0); fi
+DESCRIPTIONS+=("Node.js + npm via Homebrew")
+if brew list node &>/dev/null 2>&1; then STATUS+=("installed"); SELECTED+=(0); EXTERNAL+=(0)
+else STATUS+=(""); SELECTED+=(1); EXTERNAL+=(0); fi
 
-# 10: Solana + AVM
+# 11: Solana + AVM
 LABELS+=("Solana + AVM")
 DESCRIPTIONS+=("Solana CLI + Anchor Version Manager")
 if command -v solana &>/dev/null || [ -f "$HOME/.local/share/solana/install/active_release/bin/solana" ]; then STATUS+=("installed"); SELECTED+=(0); EXTERNAL+=(0); else STATUS+=(""); SELECTED+=(1); EXTERNAL+=(0); fi
 
-# 11: suiup + Sui Testnet
+# 12: suiup + Sui Testnet
 LABELS+=("Suiup + Sui Testnet")
 DESCRIPTIONS+=("Sui version manager + latest testnet binary")
 if [ -f "$HOME/.local/bin/suiup" ]; then STATUS+=("installed"); SELECTED+=(0); EXTERNAL+=(0); else STATUS+=(""); SELECTED+=(1); EXTERNAL+=(0); fi
 
-# 12: sui-move-analyzer
+# 13: sui-move-analyzer
 LABELS+=("sui-move-analyzer")
 DESCRIPTIONS+=("Sui Move language server (~10min)")
 if [ -f "$HOME/.cargo/bin/sui-move-analyzer" ]; then STATUS+=("installed"); SELECTED+=(0); EXTERNAL+=(0); else STATUS+=(""); SELECTED+=(1); EXTERNAL+=(0); fi
 
-# 13: SSH Keys (iCloud)
+# 14: SSH Keys (iCloud)
 LABELS+=("SSH Keys (iCloud)")
 DESCRIPTIONS+=("Symlink ~/.ssh → iCloud/rifuki/.ssh")
 _icloud_base="$HOME/Library/Mobile Documents/com~apple~CloudDocs"
@@ -259,6 +260,36 @@ _md_result=$(bash "$(cd "$(dirname "${BASH_SOURCE[0]:-$0}")" && pwd)/macos-defau
 if [ "$_md_ok" = "1" ]; then STATUS+=("all applied"); SELECTED+=(0); EXTERNAL+=(0)
 elif [ -n "$_md_result" ] && [ "${_md_result%%/*}" -gt 0 ] 2>/dev/null; then STATUS+=("${_md_result} applied"); SELECTED+=(1); EXTERNAL+=(0)
 else STATUS+=(""); SELECTED+=(1); EXTERNAL+=(0); fi
+
+# 16: Neovim Plugins (Lazy)
+LABELS+=("Neovim Plugins (Lazy)")
+DESCRIPTIONS+=("Headless Lazy sync — install/update all plugins")
+_lazy_dir="$HOME/.local/share/nvim/lazy"
+_lazy_count=0
+[ -d "$_lazy_dir" ] && _lazy_count=$(ls -1 "$_lazy_dir" 2>/dev/null | wc -l | tr -d ' ')
+if command -v nvim &>/dev/null; then
+  if [ "$_lazy_count" -gt 0 ]; then STATUS+=("${_lazy_count} plugins installed"); SELECTED+=(0); EXTERNAL+=(0)
+  else STATUS+=(""); SELECTED+=(1); EXTERNAL+=(0); fi
+elif [ "${SELECTED[0]}" = "1" ]; then
+  STATUS+=("after nvim install"); SELECTED+=(1); EXTERNAL+=(0)
+else
+  STATUS+=("nvim not installed"); SELECTED+=(0); EXTERNAL+=(0)
+fi
+
+# 17: Neovim LSPs (Mason)
+LABELS+=("Neovim LSPs (Mason)")
+DESCRIPTIONS+=("Install LSPs + formatters via Mason")
+_mason_dir="$HOME/.local/share/nvim/mason/packages"
+_mason_count=0
+[ -d "$_mason_dir" ] && _mason_count=$(ls -1 "$_mason_dir" 2>/dev/null | wc -l | tr -d ' ')
+if command -v nvim &>/dev/null; then
+  if [ "$_mason_count" -gt 0 ]; then STATUS+=("${_mason_count} packages installed"); SELECTED+=(0); EXTERNAL+=(0)
+  else STATUS+=(""); SELECTED+=(1); EXTERNAL+=(0); fi
+elif [ "${SELECTED[0]}" = "1" ]; then
+  STATUS+=("after nvim install"); SELECTED+=(1); EXTERNAL+=(0)
+else
+  STATUS+=("nvim not installed"); SELECTED+=(0); EXTERNAL+=(0)
+fi
 
 _total=${#LABELS[@]}
 
@@ -329,11 +360,11 @@ while true; do
   fi
   # Dependency: Solana + AVM (11) requires Rust (8)
   [ "${SELECTED[11]}" = "1" ] && SELECTED[8]=1
-  # Dependency: sui-move-analyzer (12) requires Rust (8)
-  [ "${SELECTED[12]}" = "1" ] && SELECTED[8]=1
-  # Deselect Rust (8) → auto-deselect Solana AVM (11) and sui-move-analyzer (12)
+  # Dependency: sui-move-analyzer (13) requires Rust (8)
+  [ "${SELECTED[13]}" = "1" ] && SELECTED[8]=1
+  # Deselect Rust (8) → auto-deselect Solana AVM (11) and sui-move-analyzer (13)
   [ "${SELECTED[8]}" = "0" ] && SELECTED[11]=0
-  [ "${SELECTED[8]}" = "0" ] && SELECTED[12]=0
+  [ "${SELECTED[8]}" = "0" ] && SELECTED[13]=0
 done
 
 # ========== Confirmation ==========
@@ -643,9 +674,9 @@ if [ "${SELECTED[10]}" = "1" ]; then
   if ! brew list node &>/dev/null 2>&1; then
     info_msg "Installing Node.js..."
     brew install node
-    done_msg "Node.js installed: $(node --version 2>/dev/null)"
+    done_msg "Node.js installed: $(node --version 2>/dev/null), npm $(npm --version 2>/dev/null)"
   else
-    done_msg "Node.js already installed: $(node --version 2>/dev/null)"
+    done_msg "Node.js already installed: $(node --version 2>/dev/null), npm $(npm --version 2>/dev/null)"
   fi
 fi
 
@@ -706,8 +737,8 @@ if [ "${SELECTED[12]}" = "1" ]; then
   fi
 fi
 
-# ========== 13: SSH Keys (iCloud) ==========
-if [ "${SELECTED[13]}" = "1" ]; then
+# ========== 14: SSH Keys (iCloud) ==========
+if [ "${SELECTED[14]}" = "1" ]; then
   step "Setting up SSH keys from iCloud"
   _icloud_base="$HOME/Library/Mobile Documents/com~apple~CloudDocs"
   _ssh_target="$_icloud_base/rifuki/.ssh"
@@ -757,8 +788,8 @@ if [ "${SELECTED[13]}" = "1" ]; then
   fi
 fi
 
-# ========== 14: macOS Defaults ==========
-if [ "${SELECTED[14]}" = "1" ]; then
+# ========== 15: macOS Defaults ==========
+if [ "${SELECTED[15]}" = "1" ]; then
   step "Applying macOS defaults"
   bash "$PLATFORM_DIR/macos-defaults.sh"
 fi
@@ -861,8 +892,8 @@ if [ "$SHELL" != "$(which zsh)" ]; then
   chsh -s "$(which zsh)" || warn_msg "chsh failed"
 fi
 
-# ========== 12: sui-move-analyzer ==========
-if [ "${SELECTED[12]}" = "1" ]; then
+# ========== 13: sui-move-analyzer ==========
+if [ "${SELECTED[13]}" = "1" ]; then
   step "Checking sui-move-analyzer"
   if [ ! -f "$HOME/.cargo/bin/sui-move-analyzer" ]; then
     if command -v cargo &>/dev/null; then
@@ -885,20 +916,27 @@ if [ "${SELECTED[12]}" = "1" ]; then
 fi
 
 # ========== Neovim: Lazy + Mason Headless Install ==========
-if command -v nvim &>/dev/null && [ -d "$HOME/.config/nvim" ]; then
-  step "Installing Neovim plugins (Lazy + Mason)"
-  info_msg "Running Lazy sync..."
-  nvim --headless "+Lazy! sync" +qa 2>/dev/null || true
-  done_msg "Lazy plugins synced"
-  
-  info_msg "Installing Mason packages..."
-  # MasonInstall is blocking in headless mode — waits until all packages finish.
-  # The lua -c registers progress listeners before MasonInstall fires events.
-  nvim --headless \
-    -c "lua local r=require('mason-registry');r:on('package:install:start',function(p)vim.api.nvim_out_write('  [mason] installing '..p.name..'...\n')end);r:on('package:install:success',function(p)vim.api.nvim_out_write('  [mason] done '..p.name..'\n')end);r:on('package:install:failed',function(p)vim.api.nvim_out_write('  [mason] FAILED '..p.name..'\n')end)" \
-    -c "MasonInstall lua-language-server taplo typescript-language-server deno intelephense dockerfile-language-server yaml-language-server gh-actions-language-server json-lsp css-lsp html-lsp bash-language-server clangd prettierd stylua prisma-language-server nomicfoundation-solidity-language-server tailwindcss-language-server" \
-    -c "qall" 2>/dev/null || true
-  done_msg "Mason packages installed"
+if [ "${SELECTED[16]}" = "1" ] || [ "${SELECTED[17]}" = "1" ]; then
+  if command -v nvim &>/dev/null && [ -d "$HOME/.config/nvim" ]; then
+    if [ "${SELECTED[16]}" = "1" ]; then
+      step "Syncing Neovim plugins (Lazy)"
+      nvim --headless "+Lazy! sync" +qa 2>/dev/null || true
+      done_msg "Lazy plugins synced"
+    fi
+
+    if [ "${SELECTED[17]}" = "1" ]; then
+      step "Installing Mason packages (LSPs + formatters)"
+      # MasonInstall is blocking in headless mode — waits until all packages finish.
+      # The lua -c registers progress listeners before MasonInstall fires events.
+      nvim --headless \
+        -c "lua local r=require('mason-registry');r:on('package:install:start',function(p)vim.api.nvim_out_write('  [mason] installing '..p.name..'...\n')end);r:on('package:install:success',function(p)vim.api.nvim_out_write('  [mason] done '..p.name..'\n')end);r:on('package:install:failed',function(p)vim.api.nvim_out_write('  [mason] FAILED '..p.name..'\n')end)" \
+        -c "MasonInstall lua-language-server taplo typescript-language-server deno intelephense dockerfile-language-server yaml-language-server gh-actions-language-server json-lsp css-lsp html-lsp bash-language-server clangd prettierd stylua prisma-language-server nomicfoundation-solidity-language-server tailwindcss-language-server" \
+        -c "qall" 2>/dev/null || true
+      done_msg "Mason packages installed"
+    fi
+  else
+    warn_msg "nvim not installed, skipping Neovim headless tasks"
+  fi
 fi
 
 # ========== Done ==========

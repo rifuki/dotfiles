@@ -125,6 +125,26 @@ if [ "$_ai_count" -eq 2 ]; then STATUS+=("installed"); SELECTED+=(0); EXTERNAL+=
 elif [ "$_ai_count" -gt 0 ]; then STATUS+=("partial"); SELECTED+=(1); EXTERNAL+=(0)
 else STATUS+=(""); SELECTED+=(1); EXTERNAL+=(0); fi
 
+# 7: Neovim Plugins (Lazy)
+LABELS+=("Neovim Plugins (Lazy)")
+DESCRIPTIONS+=("Headless Lazy sync — install/update all plugins")
+_lazy_dir="$HOME/.local/share/nvim/lazy"
+_lazy_count=0
+[ -d "$_lazy_dir" ] && _lazy_count=$(ls -1 "$_lazy_dir" 2>/dev/null | wc -l | tr -d ' ')
+if ! command -v nvim &>/dev/null; then STATUS+=("nvim not installed"); SELECTED+=(0); EXTERNAL+=(1)
+elif [ "$_lazy_count" -gt 0 ]; then STATUS+=("${_lazy_count} plugins installed"); SELECTED+=(0); EXTERNAL+=(0)
+else STATUS+=(""); SELECTED+=(1); EXTERNAL+=(0); fi
+
+# 8: Neovim LSPs (Mason)
+LABELS+=("Neovim LSPs (Mason)")
+DESCRIPTIONS+=("Install LSPs + formatters via Mason")
+_mason_dir="$HOME/.local/share/nvim/mason/packages"
+_mason_count=0
+[ -d "$_mason_dir" ] && _mason_count=$(ls -1 "$_mason_dir" 2>/dev/null | wc -l | tr -d ' ')
+if ! command -v nvim &>/dev/null; then STATUS+=("nvim not installed"); SELECTED+=(0); EXTERNAL+=(1)
+elif [ "$_mason_count" -gt 0 ]; then STATUS+=("${_mason_count} packages installed"); SELECTED+=(0); EXTERNAL+=(0)
+else STATUS+=(""); SELECTED+=(1); EXTERNAL+=(0); fi
+
 _total=${#LABELS[@]}
 
 # ========== Draw Menu ==========
@@ -665,20 +685,27 @@ if [ "$SHELL" != "$(which zsh 2>/dev/null)" ]; then
 fi
 
 # ========== Neovim: Lazy + Mason Headless Install ==========
-if command -v nvim &>/dev/null && [ -d "$HOME/.config/nvim" ]; then
-  step "Installing Neovim plugins (Lazy + Mason)"
-  info_msg "Running Lazy sync..."
-  nvim --headless "+Lazy! sync" +qa 2>/dev/null || true
-  done_msg "Lazy plugins synced"
-  
-  info_msg "Installing Mason packages..."
-  # MasonInstall is blocking in headless mode — waits until all packages finish.
-  # The lua -c registers progress listeners before MasonInstall fires events.
-  nvim --headless \
-    -c "lua local r=require('mason-registry');r:on('package:install:start',function(p)vim.api.nvim_out_write('  [mason] installing '..p.name..'...\n')end);r:on('package:install:success',function(p)vim.api.nvim_out_write('  [mason] done '..p.name..'\n')end);r:on('package:install:failed',function(p)vim.api.nvim_out_write('  [mason] FAILED '..p.name..'\n')end)" \
-    -c "MasonInstall lua-language-server taplo typescript-language-server deno intelephense dockerfile-language-server yaml-language-server gh-actions-language-server json-lsp css-lsp html-lsp bash-language-server clangd prettierd stylua prisma-language-server nomicfoundation-solidity-language-server tailwindcss-language-server" \
-    -c "qall" 2>/dev/null || true
-  done_msg "Mason packages installed"
+if [ "${SELECTED[7]}" = "1" ] || [ "${SELECTED[8]}" = "1" ]; then
+  if command -v nvim &>/dev/null && [ -d "$HOME/.config/nvim" ]; then
+    if [ "${SELECTED[7]}" = "1" ]; then
+      step "Syncing Neovim plugins (Lazy)"
+      nvim --headless "+Lazy! sync" +qa 2>/dev/null || true
+      done_msg "Lazy plugins synced"
+    fi
+
+    if [ "${SELECTED[8]}" = "1" ]; then
+      step "Installing Mason packages (LSPs + formatters)"
+      # MasonInstall is blocking in headless mode — waits until all packages finish.
+      # The lua -c registers progress listeners before MasonInstall fires events.
+      nvim --headless \
+        -c "lua local r=require('mason-registry');r:on('package:install:start',function(p)vim.api.nvim_out_write('  [mason] installing '..p.name..'...\n')end);r:on('package:install:success',function(p)vim.api.nvim_out_write('  [mason] done '..p.name..'\n')end);r:on('package:install:failed',function(p)vim.api.nvim_out_write('  [mason] FAILED '..p.name..'\n')end)" \
+        -c "MasonInstall lua-language-server taplo typescript-language-server deno intelephense dockerfile-language-server yaml-language-server gh-actions-language-server json-lsp css-lsp html-lsp bash-language-server clangd prettierd stylua prisma-language-server nomicfoundation-solidity-language-server tailwindcss-language-server" \
+        -c "qall" 2>/dev/null || true
+      done_msg "Mason packages installed"
+    fi
+  else
+    warn_msg "nvim not installed, skipping Neovim headless tasks"
+  fi
 fi
 
 # ========== Done ==========
