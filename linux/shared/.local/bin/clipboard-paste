@@ -3,13 +3,16 @@
 
 PREV_ADDR=$(hyprctl activewindow -j | jq -r '.address')
 
-hyprctl dispatch exec "[float; size 900 500; center] ghostty --class=clipse -e sh -c 'TERM=xterm-kitty $HOME/.local/bin/clipse'"
+CLIPSE_BIN="$HOME/.local/bin/clipse"
+hyprctl dispatch exec "[float; size 900 500; center] ghostty --class=clipse -e env TERM=xterm-kitty $CLIPSE_BIN"
 
-# Wait for clipse window to appear
+# Wait for clipse window to appear (bail if never shows up)
+_appeared=0
 for _ in $(seq 40); do
-    hyprctl clients -j | jq -e '.[] | select(.class == "clipse")' > /dev/null 2>&1 && break
+    hyprctl clients -j | jq -e '.[] | select(.class == "clipse")' > /dev/null 2>&1 && { _appeared=1; break; }
     sleep 0.05
 done
+[ "$_appeared" = "0" ] && exit 0
 
 # Wait for clipse window to close
 while hyprctl clients -j | jq -e '.[] | select(.class == "clipse")' > /dev/null 2>&1; do
