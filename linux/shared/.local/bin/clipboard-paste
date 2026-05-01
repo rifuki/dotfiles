@@ -1,14 +1,22 @@
 #!/usr/bin/env bash
-# cliphist + wofi: select item → wofi closes → paste to previous window
+# clipse TUI in floating terminal → select → paste to previous window
 
 PREV_ADDR=$(hyprctl activewindow -j | jq -r '.address')
 
-cliphist list | wofi --dmenu | cliphist decode | wl-copy
+hyprctl dispatch exec "[float; size 900 500; center] ghostty --class=clipse -e $HOME/.local/bin/clipse"
+
+# Wait for clipse window to appear
+for _ in $(seq 40); do
+    hyprctl clients -j | jq -e '.[] | select(.class == "clipse")' > /dev/null 2>&1 && break
+    sleep 0.05
+done
+
+# Wait for clipse window to close
+while hyprctl clients -j | jq -e '.[] | select(.class == "clipse")' > /dev/null 2>&1; do
+    sleep 0.05
+done
 
 sleep 0.1
-
 hyprctl dispatch focuswindow "address:$PREV_ADDR"
-
 sleep 0.15
-
 wtype -M ctrl -k v -m ctrl
