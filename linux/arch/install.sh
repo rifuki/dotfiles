@@ -418,6 +418,18 @@ for _old in "$HOME/.local/bin/rifuki-"*; do
   [ -L "$_old" ] && rm -f "$_old"
 done
 
+# Remove legacy pre-refactor symlinks (old gentoo/, arch/, debian/ paths before linux/ restructure)
+for _link in "$HOME/.config"/* "$HOME/.local/bin"/* "$HOME/.zshrc" "$HOME/.zprofile"; do
+  [ -L "$_link" ] || continue
+  _target="$(readlink "$_link")"
+  for _old_base in "$DOTFILES_DIR/gentoo" "$DOTFILES_DIR/arch" "$DOTFILES_DIR/debian"; do
+    if [[ "$_target" == "$_old_base"* ]]; then
+      rm -f "$_link"
+      break
+    fi
+  done
+done
+
 # Symlink cross-platform shared configs (nvim, tmux, starship, yazi, neofetch)
 for _d in "$SHARED_DIR/.config"/*/; do
   [ -d "$_d" ] || continue
