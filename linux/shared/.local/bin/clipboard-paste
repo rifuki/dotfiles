@@ -3,7 +3,7 @@
 
 PREV_ADDR=$(hyprctl activewindow -j | jq -r '.address')
 
-hyprctl dispatch exec "[float; size 900 500; center] ghostty --class=clipse -e $HOME/.local/bin/clipse"
+hyprctl dispatch exec "[float; size 900 500; center] ghostty --class=clipse -e sh -c 'TERM=xterm-kitty $HOME/.local/bin/clipse'"
 
 # Wait for clipse window to appear
 for _ in $(seq 40); do
