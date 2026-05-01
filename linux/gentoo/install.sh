@@ -266,7 +266,7 @@ fi
 
 step "Checking Hyprland / desktop tools"
 _hypr_missing=()
-for _tool in hyprctl waybar wofi ghostty hyprlock hyprpaper grim slurp dunstify brightnessctl wl-copy python3 libinput ydotoold; do
+for _tool in hyprctl waybar wofi ghostty hyprlock hyprpaper grim slurp dunstify brightnessctl wl-copy wtype python3 libinput ydotoold; do
   if command -v "$_tool" &>/dev/null; then
     done_msg "$_tool found"
   else
@@ -293,6 +293,7 @@ if [ "${#_hypr_missing[@]}" -gt 0 ]; then
   echo ""
   warn_msg "Missing desktop tools: ${_hypr_missing[*]}"
   warn_msg "Install via portage, e.g.: sudo emerge gui-wm/hyprland gui-apps/waybar gui-apps/wofi gui-apps/grim gui-apps/slurp gui-apps/wl-clipboard x11-misc/dunst x11-misc/ydotool dev-libs/libinput x11-libs/gtk+ x11-libs/gdk-pixbuf dev-python/pygobject"
+  warn_msg "wtype requires unmask: echo 'gui-apps/wtype ~amd64' | sudo tee /etc/portage/package.accept_keywords/wtype && sudo emerge gui-apps/wtype"
   warn_msg "Optional: install gui-apps/swww for smoother wallpaper transitions. hyprpaper fallback still works."
   warn_msg "Three-finger drag also needs libinput device access and an accessible ydotoold socket."
   warn_msg "Gesture daemon logs to ~/.local/state/three-finger-drag.log."
