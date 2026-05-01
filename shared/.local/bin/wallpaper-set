@@ -1,0 +1,61 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+notify() {
+  if command -v dunstify >/dev/null 2>&1; then
+    dunstify -a "Rifuki Shell" -u low -t 1800 "$@" >/dev/null 2>&1 || true
+  fi
+}
+
+fail() {
+  notify "Wallpaper Failed" "$1"
+  printf 'wallpaper-set: %s\n' "$1" >&2
+  exit 1
+}
+
+wallpaper_path="${1:-}"
+[ -n "$wallpaper_path" ] || fail "No wallpaper path provided"
+[ -f "$wallpaper_path" ] || fail "File not found: $wallpaper_path"
+
+wallpaper_path="$(realpath "$wallpaper_path")"
+state_dir="${XDG_STATE_HOME:-$HOME/.local/state}/rifuki-shell"
+mkdir -p "$state_dir"
+printf '%s\n' "$wallpaper_path" > "$state_dir/current-wallpaper"
+
+if command -v swww >/dev/null 2>&1; then
+  if ! pgrep -x swww-daemon >/dev/null 2>&1; then
+    swww-daemon >/dev/null 2>&1 &
+    sleep 0.4
+  fi
+  swww img "$wallpaper_path" \
+    --transition-type grow \
+    --transition-pos 0.85,0.15 \
+    --transition-step 90 \
+    --transition-fps 60 \
+    --transition-duration 0.8 >/dev/null 2>&1 || fail "swww could not set wallpaper"
+  notify "Wallpaper Updated" "$(basename "$wallpaper_path")"
+  exit 0
+fi
+
+if command -v hyprctl >/dev/null 2>&1 && command -v hyprpaper >/dev/null 2>&1; then
+  if ! pgrep -x hyprpaper >/dev/null 2>&1; then
+    hyprpaper >/dev/null 2>&1 &
+    sleep 0.4
+  fi
+  hyprctl hyprpaper preload "$wallpaper_path" >/dev/null 2>&1 || true
+  monitors="$(hyprctl monitors 2>/dev/null | awk '/^Monitor / {print $2}')"
+  if [ -n "$monitors" ]; then
+    while IFS= read -r monitor; do
+      [ -n "$monitor" ] || continue
+      hyprctl hyprpaper wallpaper "$monitor,$wallpaper_path" >/dev/null 2>&1 || true
+    done <<EOF
+$monitors
+EOF
+  else
+    hyprctl hyprpaper wallpaper ",$wallpaper_path" >/dev/null 2>&1 || true
+  fi
+  notify "Wallpaper Updated" "$(basename "$wallpaper_path")"
+  exit 0
+fi
+
+fail "Install swww or hyprpaper first"

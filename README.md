@@ -127,8 +127,8 @@ bash ~/.dotfiles/macos/uninstall-brew.sh
 - `ghostty` — Terminal emulator config (macOS + Gentoo)
 - `yabai` + `skhd` — Tiling window manager + hotkeys (macOS)
 - `screenshot-floating` — Gentoo/Hyprland screenshot app with temporary draggable thumbnails
-- `rifuki-three-finger-drag` — Gentoo/Hyprland touchpad daemon for macOS-style three-finger drag/select
-- `rifuki-wallpaper-picker` / `rifuki-actions` — shared Waybar popup scripts for Arch + Gentoo
+- `three-finger-drag` — Gentoo/Hyprland touchpad daemon for macOS-style three-finger drag/select
+- `wallpaper-picker` / `actions` — shared Waybar popup scripts for Arch + Gentoo
 - `neofetch` — Miku ASCII art + config (unified)
 - `yazi` — Terminal file manager with cross-platform opener
 - `.zshrc` — Cyan-magenta syntax highlighting, aliases, PATH setup
@@ -202,14 +202,14 @@ Shared configs use cross-platform strategies (uname checks, ssh_only, graceful f
 
 ## Post-Installation (Gentoo Three-Finger Drag)
 
-The `rifuki-three-finger-drag` daemon autostarts from Hyprland and maps a 3-finger touchpad swipe into left-click hold + pointer motion for drag/drop and area selection.
+The `three-finger-drag` daemon autostarts from Hyprland and maps a 3-finger touchpad swipe into left-click hold + pointer motion for drag/drop and area selection.
 
 Requirements:
 - `x11-misc/ydotool` and `dev-libs/libinput`
 - `libinput debug-events` access to the touchpad device
 - an accessible `ydotoold` socket for injecting mouse events
 
-If it does not start, check `~/.local/state/rifuki-three-finger-drag.log`. Sensitivity can be tuned with `RIFUKI_THREE_FINGER_DRAG_SCALE`.
+If it does not start, check `~/.local/state/three-finger-drag.log`. Sensitivity can be tuned with `RIFUKI_THREE_FINGER_DRAG_SCALE`.
 
 ## Post-Installation (Yabai & Skhd)
 

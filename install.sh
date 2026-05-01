@@ -45,19 +45,19 @@ if [[ "$_os" == "Darwin" ]]; then
 elif [[ "$_os" == "Linux" ]]; then
   if [[ -f /etc/gentoo-release ]]; then
     echo -e "  ${GREEN}✔${NC} Detected: ${BOLD}${CYAN}Gentoo Linux${NC}"
-    echo -e "  ${DIM}→ Running gentoo/install.sh${NC}"
+    echo -e "  ${DIM}→ Running linux/gentoo/install.sh${NC}"
     echo ""
-    exec "$DOTFILES_DIR/gentoo/install.sh" "$@"
+    exec "$DOTFILES_DIR/linux/gentoo/install.sh" "$@"
   elif [[ -f /etc/arch-release ]]; then
     echo -e "  ${GREEN}✔${NC} Detected: ${BOLD}${CYAN}Arch Linux${NC}"
-    echo -e "  ${DIM}→ Running arch/install.sh${NC}"
+    echo -e "  ${DIM}→ Running linux/arch/install.sh${NC}"
     echo ""
-    exec "$DOTFILES_DIR/arch/install.sh" "$@"
+    exec "$DOTFILES_DIR/linux/arch/install.sh" "$@"
   else
     echo -e "  ${GREEN}✔${NC} Detected: ${BOLD}${CYAN}Debian Linux${NC}"
-    echo -e "  ${DIM}→ Running debian/install.sh${NC}"
+    echo -e "  ${DIM}→ Running linux/debian/install.sh${NC}"
     echo ""
-    exec "$DOTFILES_DIR/debian/install.sh" "$@"
+    exec "$DOTFILES_DIR/linux/debian/install.sh" "$@"
   fi
 else
   echo -e "  ${RED}✖${NC} Unsupported OS: ${BOLD}$_os${NC}"

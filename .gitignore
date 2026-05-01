@@ -15,15 +15,17 @@
 !macos/
 !macos/**
 
-# Debian platform
+# Linux platforms
+!linux/
+!linux/**
+
+# Legacy platform dirs (kept for uninstall reference during transition)
 !debian/
 !debian/**
 
-# Arch platform
 !arch/
 !arch/**
 
-# Gentoo platform
 !gentoo/
 !gentoo/**
 
