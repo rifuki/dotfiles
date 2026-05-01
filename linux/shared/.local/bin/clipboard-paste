@@ -1,24 +1,14 @@
 #!/usr/bin/env bash
-# Open CopyQ, wait for it to close, restore focus to previous window, then paste
+# cliphist + wofi: select item → wofi closes → paste to previous window
 
 PREV_ADDR=$(hyprctl activewindow -j | jq -r '.address')
 
-copyq show
-
-# Wait for CopyQ to appear
-sleep 0.2
-
-# Wait for CopyQ window to disappear (user selected item or dismissed)
-while hyprctl clients -j | jq -e '.[] | select(.class == "com.github.hluk.copyq" and .mapped == true)' > /dev/null 2>&1; do
-    sleep 0.05
-done
+cliphist list | wofi --dmenu | cliphist decode | wl-copy
 
 sleep 0.1
 
-# Restore focus to previous window
 hyprctl dispatch focuswindow "address:$PREV_ADDR"
 
 sleep 0.15
 
-# Paste
 wtype -M ctrl -k v -m ctrl

@@ -247,7 +247,7 @@ if [ "${SELECTED[0]}" = "1" ]; then
     hyprland xdg-desktop-portal-hyprland waybar wofi ghostty hyprpaper hyprlock swww dunst grim slurp wl-clipboard swappy satty
     pipewire pipewire-alsa pipewire-pulse pipewire-jack wireplumber pavucontrol playerctl brightnessctl
     networkmanager bluez bluez-utils blueman dolphin ark qt5-wayland qt6-wayland qt5ct qt6ct papirus-icon-theme adw-gtk-theme
-    python-gobject gtk3 imagemagick polkit-kde-agent copyq github-cli
+    python-gobject gtk3 imagemagick polkit-kde-agent cliphist wtype github-cli
   )
   install_pacman_packages "${_desktop_pkgs[@]}"
 
