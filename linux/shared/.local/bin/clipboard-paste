@@ -1,22 +1,26 @@
 #!/usr/bin/env bash
 # CopyQ clipboard picker: detect clipboard change → hide CopyQ → paste
 
+_clip_hash() { wl-paste 2>/dev/null | sha256sum; }
+
 PREV_ADDR=$(hyprctl activewindow -j | jq -r '.address')
-OLD_CLIP=$(copyq clipboard 2>/dev/null; copyq clipboard TIMESTAMP 2>/dev/null)
+OLD_HASH=$(_clip_hash)
 
 copyq show
 sleep 0.3
 
-# Poll: exit when clipboard changes (user selected item) OR CopyQ window closes
 while true; do
-    # Window closed manually (Escape etc)
+    # Window closed manually (Escape/click outside)
     if ! hyprctl clients -j | jq -e '.[] | select(.class == "com.github.hluk.copyq" and .mapped == true)' > /dev/null 2>&1; then
         break
     fi
-    # Clipboard changed = user pressed Enter on an item
-    NEW_CLIP=$(copyq clipboard 2>/dev/null; copyq clipboard TIMESTAMP 2>/dev/null)
-    if [ "$NEW_CLIP" != "$OLD_CLIP" ]; then
+    # Clipboard changed = user activated an item (Enter/double-click)
+    if [ "$(_clip_hash)" != "$OLD_HASH" ]; then
         copyq hide
+        sleep 0.05
+        # Force close if copyq hide didn't work
+        hyprctl clients -j | jq -e '.[] | select(.class == "com.github.hluk.copyq" and .mapped == true)' > /dev/null 2>&1 && \
+            hyprctl dispatch closewindow "class:^(com.github.hluk.copyq)$"
         break
     fi
     sleep 0.05
