@@ -370,7 +370,7 @@ if [ "${SELECTED[0]}" != "1" ]; then
   # ========== Dotfiles Paths ==========
   DOTFILES_DIR="$HOME/.dotfiles"
   SHARED_DIR="$DOTFILES_DIR/shared"
-  PLATFORM_DIR="$DOTFILES_DIR/debian"
+  PLATFORM_DIR="$DOTFILES_DIR/linux/debian"
 
   # ========== Backup ==========
   step "Checking for existing configs"
@@ -432,7 +432,7 @@ else
   IFS=',' read -ra SELECTED <<< "$_RESUME_SEL"
   DOTFILES_DIR="$HOME/.dotfiles"
   SHARED_DIR="$DOTFILES_DIR/shared"
-  PLATFORM_DIR="$DOTFILES_DIR/debian"
+  PLATFORM_DIR="$DOTFILES_DIR/linux/debian"
   echo ""
   echo -e "  ${BOLD}${CYAN}Resuming installation as $(whoami)...${NC}"
   echo ""
@@ -835,6 +835,19 @@ if [ "${SELECTED[0]}" != "1" ]; then
     rm -f "$HOME/.config/$(basename "$_d")"
   done
   rm -f "$HOME/.zshrc"
+
+  # Remove legacy pre-refactor symlinks (old gentoo/, arch/, debian/ paths before linux/ restructure)
+  for _link in "$HOME/.config"/* "$HOME/.local/bin"/* "$HOME/.local/share/applications"/* "$HOME/.local/share/icons/hicolor/scalable/apps"/* "$HOME/.zshrc" "$HOME/.zprofile"; do
+    [ -L "$_link" ] || continue
+    _target="$(readlink "$_link")"
+    for _old_base in "$DOTFILES_DIR/gentoo" "$DOTFILES_DIR/arch" "$DOTFILES_DIR/debian"; do
+      if [[ "$_target" == "$_old_base"* ]]; then
+        rm -f "$_link"
+        break
+      fi
+    done
+  done
+
   mkdir -p "$HOME/.config"
 
   # Symlink shared configs

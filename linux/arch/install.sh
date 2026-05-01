@@ -419,7 +419,7 @@ for _old in "$HOME/.local/bin/rifuki-"*; do
 done
 
 # Remove legacy pre-refactor symlinks (old gentoo/, arch/, debian/ paths before linux/ restructure)
-for _link in "$HOME/.config"/* "$HOME/.local/bin"/* "$HOME/.zshrc" "$HOME/.zprofile"; do
+for _link in "$HOME/.config"/* "$HOME/.local/bin"/* "$HOME/.local/share/applications"/* "$HOME/.local/share/icons/hicolor/scalable/apps"/* "$HOME/.zshrc" "$HOME/.zprofile"; do
   [ -L "$_link" ] || continue
   _target="$(readlink "$_link")"
   for _old_base in "$DOTFILES_DIR/gentoo" "$DOTFILES_DIR/arch" "$DOTFILES_DIR/debian"; do

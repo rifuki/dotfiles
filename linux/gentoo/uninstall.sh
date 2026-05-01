@@ -41,7 +41,8 @@ echo ""
 
 DOTFILES_DIR="$HOME/.dotfiles"
 SHARED_DIR="$DOTFILES_DIR/shared"
-PLATFORM_DIR="$DOTFILES_DIR/gentoo"
+LINUX_SHARED_DIR="$DOTFILES_DIR/linux/shared"
+PLATFORM_DIR="$DOTFILES_DIR/linux/gentoo"
 UNINSTALL_BACKUP_DIR="$HOME/.config/backup-uninstall-$(date +%Y%m%d-%H%M%S)"
 _did_backup=0
 
@@ -79,6 +80,15 @@ for _d in "$SHARED_DIR/.config"/*/; do
     done_msg "~/.config/$_name removed"
   fi
 done
+for _d in "$LINUX_SHARED_DIR/.config"/*/; do
+  [ -d "$_d" ] || continue
+  _name="$(basename "$_d")"
+  _link="$HOME/.config/$_name"
+  if [ -L "$_link" ]; then
+    rm -f "$_link"
+    done_msg "~/.config/$_name removed"
+  fi
+done
 for _d in "$PLATFORM_DIR/.config"/*/; do
   [ -d "$_d" ] || continue
   _name="$(basename "$_d")"
@@ -88,6 +98,33 @@ for _d in "$PLATFORM_DIR/.config"/*/; do
     done_msg "~/.config/$_name removed"
   fi
 done
+if [ -d "$LINUX_SHARED_DIR/.local/bin" ]; then
+  for _f in "$LINUX_SHARED_DIR/.local/bin"/*; do
+    [ -f "$_f" ] || continue
+    _name="$(basename "$_f")"
+    _link="$HOME/.local/bin/$_name"
+    if [ -L "$_link" ]; then
+      rm -f "$_link"
+      done_msg "~/.local/bin/$_name removed"
+    fi
+  done
+fi
+if [ -d "$LINUX_SHARED_DIR/.local/share" ]; then
+  while IFS= read -r _f; do
+    _rel="${_f#"$LINUX_SHARED_DIR/.local/share/"}"
+    _target="$HOME/.local/share/$_rel"
+    if [[ "$_rel" == *.desktop.in ]]; then
+      _target="${_target%.in}"
+      if [ -f "$_target" ]; then
+        rm -f "$_target"
+        done_msg "~/.local/share/${_rel%.in} removed"
+      fi
+    elif [ -L "$_target" ]; then
+      rm -f "$_target"
+      done_msg "~/.local/share/$_rel removed"
+    fi
+  done < <(find "$LINUX_SHARED_DIR/.local/share" -type f | sort)
+fi
 for _f in "$PLATFORM_DIR/.local/bin"/*; do
   [ -f "$_f" ] || continue
   _name="$(basename "$_f")"
