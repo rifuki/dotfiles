@@ -257,7 +257,7 @@ done
 if [ "${#_missing_tools[@]}" -gt 0 ]; then
   echo ""
   warn_msg "Missing tools: ${_missing_tools[*]}"
-  warn_msg "Install them via: sudo emerge ${_missing_tools[*]}"
+  warn_msg "Install them via: sudo emerge dev-vcs/git net-misc/curl net-misc/wget app-arch/unzip app-shells/zsh app-misc/tmux app-editors/neovim app-misc/trash-cli dev-lua/luarocks"
   if ! confirm "Continue anyway?"; then
     echo -e "\n  ${YELLOW}⏭️  Aborted. Install missing tools first.${NC}"
     exit 1
