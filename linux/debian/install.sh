@@ -583,7 +583,7 @@ if [ "${SELECTED[1]}" = "1" ]; then
     _nvim_url="https://github.com/neovim/neovim/releases/latest/download/nvim-linux-x86_64.tar.gz"
     curl -fsSL "$_nvim_url" -o /tmp/nvim.tar.gz
     sudo tar -xzf /tmp/nvim.tar.gz -C /opt/
-    sudo ln -sf /opt/nvim-linux-x86_64/bin/nvim /usr/local/bin/nvim
+    sudo ln -snf /opt/nvim-linux-x86_64/bin/nvim /usr/local/bin/nvim
     rm -f /tmp/nvim.tar.gz
     done_msg "Neovim installed"
   else
@@ -854,12 +854,12 @@ if [ "${SELECTED[0]}" != "1" ]; then
   for _d in "$SHARED_DIR/.config"/*/; do
     [ -d "$_d" ] || continue
     _name="$(basename "$_d")"
-    ln -sf "$SHARED_DIR/.config/$_name" "$HOME/.config/$_name"
+    ln -snf "$SHARED_DIR/.config/$_name" "$HOME/.config/$_name"
     done_msg "~/.config/$_name"
   done
 
   # Root dotfiles
-  ln -sf "$PLATFORM_DIR/.zshrc" "$HOME/.zshrc"
+  ln -snf "$PLATFORM_DIR/.zshrc" "$HOME/.zshrc"
   done_msg "~/.zshrc"
 
   # ========== Hush Login ==========

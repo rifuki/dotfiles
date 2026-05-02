@@ -28,4 +28,5 @@ shell-integration = zsh
 confirm-close-surface = false
 
 term = xterm-256color
+image-storage-limit = 320000000
 keybind = shift+enter=text:\x1b\r

@@ -377,7 +377,7 @@ if [ "${SELECTED[7]}" = "1" ]; then
   fi
   mkdir -p "$HOME/.claude"
   if [ -f "$SHARED_DIR/.claude/statusline-command.sh" ]; then
-    ln -sf "$SHARED_DIR/.claude/statusline-command.sh" "$HOME/.claude/statusline-command.sh"
+    ln -snf "$SHARED_DIR/.claude/statusline-command.sh" "$HOME/.claude/statusline-command.sh"
     done_msg "~/.claude/statusline-command.sh"
   fi
 fi
@@ -434,7 +434,7 @@ done
 for _d in "$SHARED_DIR/.config"/*/; do
   [ -d "$_d" ] || continue
   _name="$(basename "$_d")"
-  ln -sf "$SHARED_DIR/.config/$_name" "$HOME/.config/$_name"
+  ln -snf "$SHARED_DIR/.config/$_name" "$HOME/.config/$_name"
   done_msg "~/.config/$_name"
 done
 
@@ -443,13 +443,13 @@ if [ "$_is_vps" = "0" ]; then
   for _d in "$LINUX_SHARED_DIR/.config"/*/; do
     [ -d "$_d" ] || continue
     _name="$(basename "$_d")"
-    ln -sf "$LINUX_SHARED_DIR/.config/$_name" "$HOME/.config/$_name"
+    ln -snf "$LINUX_SHARED_DIR/.config/$_name" "$HOME/.config/$_name"
     done_msg "~/.config/$_name (linux/shared)"
   done
   for _d in "$PLATFORM_DIR/.config"/*/; do
     [ -d "$_d" ] || continue
     _name="$(basename "$_d")"
-    ln -sf "$PLATFORM_DIR/.config/$_name" "$HOME/.config/$_name"
+    ln -snf "$PLATFORM_DIR/.config/$_name" "$HOME/.config/$_name"
     done_msg "~/.config/$_name (arch)"
   done
 else
@@ -461,7 +461,7 @@ if [ -d "$SHARED_DIR/.local/bin" ]; then
   for _f in "$SHARED_DIR/.local/bin"/*; do
     [ -f "$_f" ] || continue
     _name="$(basename "$_f")"
-    ln -sf "$_f" "$HOME/.local/bin/$_name"
+    ln -snf "$_f" "$HOME/.local/bin/$_name"
     chmod +x "$_f"
     done_msg "~/.local/bin/$_name"
   done
@@ -473,7 +473,7 @@ if [ "$_is_vps" = "0" ]; then
     for _f in "$LINUX_SHARED_DIR/.local/bin"/*; do
       [ -f "$_f" ] || continue
       _name="$(basename "$_f")"
-      ln -sf "$_f" "$HOME/.local/bin/$_name"
+      ln -snf "$_f" "$HOME/.local/bin/$_name"
       chmod +x "$_f"
       done_msg "~/.local/bin/$_name (linux/shared)"
     done
@@ -482,7 +482,7 @@ if [ "$_is_vps" = "0" ]; then
     for _f in "$PLATFORM_DIR/.local/bin"/*; do
       [ -f "$_f" ] || continue
       _name="$(basename "$_f")"
-      ln -sf "$_f" "$HOME/.local/bin/$_name"
+      ln -snf "$_f" "$HOME/.local/bin/$_name"
       chmod +x "$_f"
       done_msg "~/.local/bin/$_name (arch)"
     done
@@ -505,16 +505,16 @@ if [ -d "$LINUX_SHARED_DIR/.local/share" ]; then
       continue
     fi
     mkdir -p "$(dirname "$_target")"
-    ln -sf "$_f" "$_target"
+    ln -snf "$_f" "$_target"
     done_msg "~/.local/share/$_rel"
   done < <(find "$LINUX_SHARED_DIR/.local/share" -type f | sort)
   command -v update-desktop-database &>/dev/null && update-desktop-database "$HOME/.local/share/applications" >/dev/null 2>&1 || true
 fi
 
-ln -sf "$PLATFORM_DIR/.zshrc" "$HOME/.zshrc"
+ln -snf "$PLATFORM_DIR/.zshrc" "$HOME/.zshrc"
 done_msg "~/.zshrc"
 if [ -f "$PLATFORM_DIR/.zprofile" ]; then
-  ln -sf "$PLATFORM_DIR/.zprofile" "$HOME/.zprofile"
+  ln -snf "$PLATFORM_DIR/.zprofile" "$HOME/.zprofile"
   done_msg "~/.zprofile"
 fi
 
