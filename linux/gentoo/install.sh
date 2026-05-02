@@ -115,17 +115,7 @@ DESCRIPTIONS+=("Container engine + add user to docker group")
 if command -v docker &>/dev/null; then STATUS+=("installed"); SELECTED+=(0); EXTERNAL+=(0)
 else STATUS+=(""); SELECTED+=(1); EXTERNAL+=(0); fi
 
-# 6: AI CLI Tools
-LABELS+=("AI CLI Tools")
-DESCRIPTIONS+=("Kimi CLI + OpenCode")
-_ai_count=0
-command -v kimi &>/dev/null && ((_ai_count++)) || true
-command -v opencode &>/dev/null && ((_ai_count++)) || true
-if [ "$_ai_count" -eq 2 ]; then STATUS+=("installed"); SELECTED+=(0); EXTERNAL+=(0)
-elif [ "$_ai_count" -gt 0 ]; then STATUS+=("partial"); SELECTED+=(1); EXTERNAL+=(0)
-else STATUS+=(""); SELECTED+=(1); EXTERNAL+=(0); fi
-
-# 7: Neovim Plugins (Lazy)
+# 6: Neovim Plugins (Lazy)
 LABELS+=("Neovim Plugins (Lazy)")
 DESCRIPTIONS+=("Headless Lazy sync — install/update all plugins")
 _lazy_dir="$HOME/.local/share/nvim/lazy"
@@ -491,35 +481,6 @@ if [ "${SELECTED[5]}" = "1" ]; then
   fi
 fi
 
-# ========== 6: AI CLI Tools ==========
-if [ "${SELECTED[6]}" = "1" ]; then
-  step "Installing AI CLI Tools"
-  # Kimi CLI (official install script via uv)
-  if ! command -v kimi &>/dev/null; then
-    info_msg "Installing Kimi CLI..."
-    mkdir -p "$HOME/.local/bin"
-    export PATH="$HOME/.local/bin:$PATH"
-    curl -fsSL https://code.kimi.com/install.sh | bash
-    done_msg "Kimi CLI installed"
-  else
-    done_msg "Kimi CLI already installed"
-  fi
-  # OpenCode
-  if ! command -v opencode &>/dev/null; then
-    info_msg "Installing OpenCode..."
-    curl -fsSL https://opencode.ai/install | bash
-    done_msg "OpenCode installed"
-  else
-    done_msg "OpenCode already installed"
-  fi
-  # Claude statusline
-  mkdir -p "$HOME/.claude"
-  if [ -f "$SHARED_DIR/.claude/statusline-command.sh" ]; then
-    ln -sf "$SHARED_DIR/.claude/statusline-command.sh" "$HOME/.claude/statusline-command.sh"
-    done_msg "~/.claude/statusline-command.sh"
-  fi
-fi
-
 # ══════════════════════════════════════════════════
 #  ALWAYS: Finalize
 # ══════════════════════════════════════════════════
@@ -725,15 +686,15 @@ if [ "$SHELL" != "$(which zsh 2>/dev/null)" ]; then
 fi
 
 # ========== Neovim: Lazy + Mason Headless Install ==========
-if [ "${SELECTED[7]}" = "1" ] || [ "${SELECTED[8]}" = "1" ]; then
+if [ "${SELECTED[6]}" = "1" ] || [ "${SELECTED[7]}" = "1" ]; then
   if command -v nvim &>/dev/null && [ -d "$HOME/.config/nvim" ]; then
-    if [ "${SELECTED[7]}" = "1" ]; then
+    if [ "${SELECTED[6]}" = "1" ]; then
       step "Syncing Neovim plugins (Lazy)"
       nvim --headless "+Lazy! sync" +qa 2>/dev/null || true
       done_msg "Lazy plugins synced"
     fi
 
-    if [ "${SELECTED[8]}" = "1" ]; then
+    if [ "${SELECTED[7]}" = "1" ]; then
       step "Installing Mason packages (LSPs + formatters)"
       # MasonInstall is blocking in headless mode — waits until all packages finish.
       # The lua -c registers progress listeners before MasonInstall fires events.

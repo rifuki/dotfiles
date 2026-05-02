@@ -131,15 +131,6 @@ if [ -z "$_RESUME_SEL" ]; then
   if command -v docker &>/dev/null; then STATUS+=("installed"); SELECTED+=(0); EXTERNAL+=(0)
   else STATUS+=(""); SELECTED+=(1); EXTERNAL+=(0); fi
 
-  LABELS+=("AI CLI Tools")
-  DESCRIPTIONS+=("Kimi CLI + OpenCode")
-  _ai_count=0
-  command -v kimi &>/dev/null && ((_ai_count++)) || true
-  command -v opencode &>/dev/null && ((_ai_count++)) || true
-  if [ "$_ai_count" -eq 2 ]; then STATUS+=("installed"); SELECTED+=(0); EXTERNAL+=(0)
-  elif [ "$_ai_count" -gt 0 ]; then STATUS+=("partial"); SELECTED+=(1); EXTERNAL+=(0)
-  else STATUS+=(""); SELECTED+=(1); EXTERNAL+=(0); fi
-
   LABELS+=("Neovim Plugins")
   DESCRIPTIONS+=("Headless Lazy sync")
   _lazy_count=0
@@ -358,30 +349,6 @@ if [ "${SELECTED[6]}" = "1" ]; then
   fi
 fi
 
-# ========== 7: AI CLI Tools ==========
-if [ "${SELECTED[7]}" = "1" ]; then
-  step "Installing AI CLI Tools"
-  mkdir -p "$HOME/.local/bin"
-  export PATH="$HOME/.local/bin:$PATH"
-  if ! command -v kimi &>/dev/null; then
-    curl -fsSL https://code.kimi.com/install.sh | bash
-    done_msg "Kimi CLI installed"
-  else
-    done_msg "Kimi CLI already installed"
-  fi
-  if ! command -v opencode &>/dev/null; then
-    curl -fsSL https://opencode.ai/install | bash
-    done_msg "OpenCode installed"
-  else
-    done_msg "OpenCode already installed"
-  fi
-  mkdir -p "$HOME/.claude"
-  if [ -f "$SHARED_DIR/.claude/statusline-command.sh" ]; then
-    ln -snf "$SHARED_DIR/.claude/statusline-command.sh" "$HOME/.claude/statusline-command.sh"
-    done_msg "~/.claude/statusline-command.sh"
-  fi
-fi
-
 # ========== Always: Symlinks ==========
 step "Setting up dotfiles symlinks"
 mkdir -p "$HOME/.config" "$HOME/.local/bin" "$HOME/.local/share"
@@ -575,12 +542,12 @@ if [ "$SHELL" != "$(which zsh 2>/dev/null)" ]; then
 fi
 
 if command -v nvim &>/dev/null && [ -d "$HOME/.config/nvim" ]; then
-  if [ "${SELECTED[8]}" = "1" ]; then
+  if [ "${SELECTED[7]}" = "1" ]; then
     step "Syncing Neovim plugins"
     nvim --headless "+Lazy! sync" +qa 2>/dev/null || true
     done_msg "Lazy plugins synced"
   fi
-  if [ "${SELECTED[9]}" = "1" ]; then
+  if [ "${SELECTED[8]}" = "1" ]; then
     step "Installing Mason packages"
     nvim --headless \
       -c "lua local r=require('mason-registry');r:on('package:install:start',function(p)vim.api.nvim_out_write('  [mason] installing '..p.name..'...\n')end);r:on('package:install:success',function(p)vim.api.nvim_out_write('  [mason] done '..p.name..'\n')end);r:on('package:install:failed',function(p)vim.api.nvim_out_write('  [mason] FAILED '..p.name..'\n')end)" \
