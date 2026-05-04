@@ -1,0 +1,134 @@
+#!/usr/bin/env python3
+"""
+Rebuild theme_miku-cursor as animated hyprcursor from miku-cursor-linux xcursor theme.
+Run this after installing miku-cursor-linux, or after updating miku-cursor-linux.
+"""
+
+import os, struct, zipfile, shutil, io, sys
+from pathlib import Path
+from collections import defaultdict
+from PIL import Image
+
+XCURSOR_IMAGE_TYPE = 0xfffd0002
+XCURSOR_MAGIC = b"Xcur"
+
+def parse_xcursor(path):
+    with open(path, 'rb') as f:
+        if f.read(4) != XCURSOR_MAGIC:
+            return []
+        header_size, version, ntoc = struct.unpack('<III', f.read(12))
+        toc = []
+        for _ in range(ntoc):
+            chunk_type, chunk_subtype, position = struct.unpack('<III', f.read(12))
+            toc.append((chunk_type, chunk_subtype, position))
+        images = []
+        for chunk_type, chunk_subtype, position in toc:
+            if chunk_type != XCURSOR_IMAGE_TYPE:
+                continue
+            f.seek(position)
+            # hsize, type, subtype(nominal_size), version, width, height, xhot, yhot, delay
+            hsize, ctype, csubtype, cversion, width, height, xhot, yhot, delay = \
+                struct.unpack('<IIIIIIIII', f.read(36))
+            pixels = f.read(width * height * 4)
+            images.append({
+                'size': csubtype, 'width': width, 'height': height,
+                'xhot': xhot, 'yhot': yhot,
+                'delay': delay if delay > 0 else 50,
+                'pixels': pixels,
+            })
+        return images
+
+def make_png(pixels, width, height):
+    # xcursor stores ARGB little-endian → bytes are B,G,R,A → PIL raw mode 'BGRA'
+    img = Image.frombytes('RGBA', (width, height), pixels, 'raw', 'BGRA')
+    buf = io.BytesIO()
+    img.save(buf, 'PNG')
+    return buf.getvalue()
+
+def create_hlc(name, images, out_path):
+    if not images:
+        return False
+    by_size = defaultdict(list)
+    for img in images:
+        by_size[img['size']].append(img)
+
+    first = images[0]
+    xhot_rel = first['xhot'] / first['width']
+    yhot_rel = first['yhot'] / first['height']
+
+    meta = [
+        "resize_algorithm = bilinear",
+        f"hotspot_x = {xhot_rel:.4f}",
+        f"hotspot_y = {yhot_rel:.4f}",
+        "",
+    ]
+    file_data = {}
+
+    for size in sorted(by_size):
+        frames = by_size[size]
+        for i, frame in enumerate(frames):
+            fname = (f"{name}_{size}.png" if len(frames) == 1
+                     else f"{name}_{size}_{i:03d}.png")
+            file_data[fname] = make_png(frame['pixels'], frame['width'], frame['height'])
+            meta.append(f"define_size = {size}, {fname}, {frame['delay']}")
+
+    with zipfile.ZipFile(out_path, 'w', zipfile.ZIP_DEFLATED) as zf:
+        zf.writestr("meta.hl", "\n".join(meta) + "\n")
+        for fname, data in file_data.items():
+            zf.writestr(fname, data)
+    return True
+
+XCURSOR_DIR = Path.home() / ".local/share/icons/miku-cursor-linux/cursors"
+THEME_DIR   = Path.home() / ".local/share/icons/theme_miku-cursor"
+HYPR_DIR    = THEME_DIR / "hyprcursors"
+INVALID     = {"ibeam_(old)", "text_(old)"}
+
+if not XCURSOR_DIR.exists():
+    print(f"Error: {XCURSOR_DIR} not found — install miku-cursor-linux first", file=sys.stderr)
+    sys.exit(1)
+
+print("Rebuilding theme_miku-cursor (animated hyprcursor)...")
+shutil.rmtree(HYPR_DIR, ignore_errors=True)
+HYPR_DIR.mkdir(parents=True)
+
+converted = 0
+aliased   = 0
+errors    = []
+
+for cur in sorted(XCURSOR_DIR.iterdir()):
+    if cur.is_symlink() or cur.name in INVALID:
+        continue
+    try:
+        images = parse_xcursor(cur)
+    except Exception as e:
+        errors.append(f"{cur.name}: {e}")
+        continue
+    if not images:
+        errors.append(f"{cur.name}: empty/unreadable")
+        continue
+    if create_hlc(cur.name, images, HYPR_DIR / f"{cur.name}.hlc"):
+        converted += 1
+
+for cur in sorted(XCURSOR_DIR.iterdir()):
+    if not cur.is_symlink():
+        continue
+    target = Path(os.readlink(cur)).name
+    if target in INVALID:
+        continue
+    src = HYPR_DIR / f"{target}.hlc"
+    dst = HYPR_DIR / f"{cur.name}.hlc"
+    if src.exists() and not dst.exists():
+        dst.symlink_to(f"{target}.hlc")
+        aliased += 1
+
+(THEME_DIR / "manifest.hl").write_text(
+    "name = Miku Cursor\n"
+    "description = Miku cursor (animated, converted from miku-cursor-linux)\n"
+    "version = 0.1\n"
+    "cursors_directory = hyprcursors\n"
+)
+
+print(f"Done: {converted} cursors, {aliased} aliases")
+if errors:
+    print("Errors:", errors, file=sys.stderr)
+    sys.exit(1)

@@ -648,6 +648,21 @@ for a in assets:
     done_msg "miku-cursor-linux already installed"
   fi
 
+  # Build/rebuild animated hyprcursor theme from the xcursor source
+  if [ -d "$HOME/.local/share/icons/miku-cursor-linux" ]; then
+    if command -v python3 &>/dev/null; then
+      info_msg "Building animated hyprcursor theme..."
+      if python3 "$HOME/.local/bin/build-miku-hyprcursor" 2>/dev/null; then
+        done_msg "theme_miku-cursor (animated hyprcursor) built"
+      else
+        warn_msg "build-miku-hyprcursor failed — Pillow (python-imaging) may be missing"
+        warn_msg "Install via: sudo emerge dev-python/pillow then re-run install.sh"
+      fi
+    else
+      warn_msg "python3 not found — skipping hyprcursor build"
+    fi
+  fi
+
   # Apply cursor via GSettings (GTK apps prefer dconf over settings.ini)
   if command -v gsettings &>/dev/null; then
     gsettings set org.gnome.desktop.interface cursor-theme 'miku-cursor-linux' 2>/dev/null || true
