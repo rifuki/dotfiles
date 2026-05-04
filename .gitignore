@@ -19,6 +19,10 @@
 !linux/
 !linux/**
 
+# Documentation
+!docs/
+!docs/**
+
 # Legacy platform dirs (kept for uninstall reference during transition)
 !debian/
 !debian/**

@@ -601,6 +601,61 @@ fi
 ln -snf "$PLATFORM_DIR/.zshrc" "$HOME/.zshrc"
 done_msg "~/.zshrc"
 
+# ========== Cursor Themes ==========
+if [ "$_is_vps" = "0" ]; then
+  step "Setting up cursor themes"
+
+  # theme_miku-cursor (hyprcursor) — already linked file-by-file via linux/shared above
+  if [ -f "$HOME/.local/share/icons/theme_miku-cursor/manifest.hl" ]; then
+    done_msg "theme_miku-cursor (hyprcursor) linked"
+  fi
+
+  # miku-cursor-linux (xcursor) — download from GitHub if not installed
+  if [ ! -d "$HOME/.local/share/icons/miku-cursor-linux" ]; then
+    info_msg "Downloading miku-cursor-linux from GitHub..."
+    _cursor_tmp="$(mktemp -d)"
+    _cursor_url="$(curl -s https://api.github.com/repos/supermariofps/hatsune-miku-windows-linux-cursors/releases/latest \
+      | python3 -c "
+import sys, json
+data = json.load(sys.stdin)
+assets = data.get('assets', [])
+for a in assets:
+    n = a['name'].lower()
+    if 'linux' in n and (n.endswith('.tar.gz') or n.endswith('.tar.xz') or n.endswith('.zip')):
+        print(a['browser_download_url']); break
+" 2>/dev/null)"
+    if [ -n "$_cursor_url" ]; then
+      _cursor_file="$_cursor_tmp/cursor-pkg"
+      curl -L --progress-bar "$_cursor_url" -o "$_cursor_file"
+      mkdir -p "$HOME/.local/share/icons"
+      if file "$_cursor_file" | grep -q "Zip"; then
+        unzip -q "$_cursor_file" -d "$HOME/.local/share/icons/"
+      else
+        tar -xf "$_cursor_file" -C "$HOME/.local/share/icons/"
+      fi
+      rm -rf "$_cursor_tmp"
+      if [ -d "$HOME/.local/share/icons/miku-cursor-linux" ]; then
+        done_msg "miku-cursor-linux installed"
+      else
+        warn_msg "Extraction succeeded but miku-cursor-linux dir not found — check archive structure"
+      fi
+    else
+      warn_msg "Could not find Linux cursor asset — install manually from:"
+      warn_msg "https://github.com/supermariofps/hatsune-miku-windows-linux-cursors/releases"
+      rm -rf "$_cursor_tmp"
+    fi
+  else
+    done_msg "miku-cursor-linux already installed"
+  fi
+
+  # Apply cursor via GSettings (GTK apps prefer dconf over settings.ini)
+  if command -v gsettings &>/dev/null; then
+    gsettings set org.gnome.desktop.interface cursor-theme 'miku-cursor-linux' 2>/dev/null || true
+    gsettings set org.gnome.desktop.interface cursor-size 24 2>/dev/null || true
+    done_msg "GSettings cursor applied"
+  fi
+fi
+
 # ========== Hush Login ==========
 [ ! -f "$HOME/.hushlogin" ] && touch "$HOME/.hushlogin" && done_msg ".hushlogin created"
 
