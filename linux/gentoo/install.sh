@@ -656,6 +656,67 @@ for a in assets:
   fi
 fi
 
+# ========== Hyprgrass Plugin (touchscreen multi-finger gestures) ==========
+if [ "$_is_vps" = "0" ]; then
+  step "Setting up hyprgrass (touchscreen gestures)"
+
+  _hyprgrass_so="$HOME/.local/share/hypr/plugins/libhyprgrass.so"
+  _hyprgrass_stamp="$HOME/.local/share/hypr/plugins/.built-for-hyprland"
+  _hl_commit=""
+  command -v hyprctl &>/dev/null && \
+    _hl_commit=$(hyprctl version 2>/dev/null | grep -oP 'at commit \K[a-f0-9]+' || true)
+
+  _grass_already=0
+  if [ -f "$_hyprgrass_so" ] && [ -f "$_hyprgrass_stamp" ] && [ -n "$_hl_commit" ]; then
+    [ "$(cat "$_hyprgrass_stamp" 2>/dev/null)" = "$_hl_commit" ] && _grass_already=1
+  fi
+
+  if [ "$_grass_already" = "1" ]; then
+    done_msg "hyprgrass already built for this Hyprland (${_hl_commit:0:12}...)"
+  elif ! command -v meson &>/dev/null || ! command -v ninja &>/dev/null; then
+    warn_msg "meson/ninja not found — skipping hyprgrass"
+    warn_msg "Install via: sudo emerge dev-build/meson dev-build/ninja then re-run install.sh"
+  elif ! pkg-config --exists hyprland 2>/dev/null; then
+    warn_msg "hyprland dev headers not found — skipping hyprgrass"
+  else
+    _grass_tmp="$(mktemp -d)"
+
+    info_msg "Cloning hyprgrass..."
+    git clone --depth=1 https://github.com/horriblename/hyprgrass "$_grass_tmp" 2>&1 | grep -v "^$" || true
+
+    # Look up the pinned hyprgrass commit for the installed Hyprland commit
+    _grass_commit=""
+    if [ -n "$_hl_commit" ] && [ -f "$_grass_tmp/hyprpm.toml" ]; then
+      _grass_commit=$(grep "\"$_hl_commit\"" "$_grass_tmp/hyprpm.toml" | \
+        grep -oP '",\s*"\K[a-f0-9]{40}' | head -1 || true)
+    fi
+
+    if [ -n "$_grass_commit" ]; then
+      info_msg "Pinned commit for Hyprland ${_hl_commit:0:12}: ${_grass_commit:0:12}..."
+      git -C "$_grass_tmp" fetch --unshallow 2>&1 | tail -1 || true
+      git -C "$_grass_tmp" checkout "$_grass_commit" >/dev/null 2>&1 || true
+    else
+      warn_msg "No pin found for Hyprland ${_hl_commit:0:12} — using latest hyprgrass"
+    fi
+
+    info_msg "Building hyprgrass (this may take a minute)..."
+    if meson setup "$_grass_tmp/build" "$_grass_tmp" \
+          -Dhyprgrass=true -Dhyprgrass-pulse=false -Dhyprgrass-backlight=false \
+          -Dtests=disabled >/dev/null 2>&1 \
+        && ninja -C "$_grass_tmp/build" >/dev/null 2>&1; then
+      mkdir -p "$HOME/.local/share/hypr/plugins"
+      cp "$_grass_tmp/build/src/libhyprgrass.so" "$_hyprgrass_so"
+      [ -n "$_hl_commit" ] && echo "$_hl_commit" > "$_hyprgrass_stamp"
+      done_msg "hyprgrass built → ~/.local/share/hypr/plugins/libhyprgrass.so"
+    else
+      fail_msg "hyprgrass build failed — touchscreen multi-finger gestures unavailable"
+      fail_msg "Build logs in: $_grass_tmp/build/meson-logs/meson-log.txt"
+    fi
+
+    rm -rf "$_grass_tmp"
+  fi
+fi
+
 # ========== Hush Login ==========
 [ ! -f "$HOME/.hushlogin" ] && touch "$HOME/.hushlogin" && done_msg ".hushlogin created"
 
