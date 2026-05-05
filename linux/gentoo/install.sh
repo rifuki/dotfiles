@@ -732,6 +732,16 @@ if [ "$_is_vps" = "0" ]; then
   fi
 fi
 
+# ========== Chrome Wayland flags ==========
+if [ "$IS_VPS" = "0" ]; then
+  mkdir -p "$HOME/.config/google-chrome"
+  cat > "$HOME/.config/google-chrome/chrome-flags.conf" << 'EOF'
+--ozone-platform=wayland
+--enable-features=WebUIDarkMode
+EOF
+  done_msg "Chrome flags: Wayland + WebUIDarkMode"
+fi
+
 # ========== Hush Login ==========
 [ ! -f "$HOME/.hushlogin" ] && touch "$HOME/.hushlogin" && done_msg ".hushlogin created"
 
