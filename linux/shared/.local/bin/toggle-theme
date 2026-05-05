@@ -1,0 +1,13 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+STATE="$HOME/.cache/theme-mode"
+current=$(cat "$STATE" 2>/dev/null || echo "dark")
+
+if [[ "$current" == "dark" ]]; then
+    gsettings set org.gnome.desktop.interface color-scheme 'prefer-light'
+    echo "light" > "$STATE"
+else
+    gsettings set org.gnome.desktop.interface color-scheme 'prefer-dark'
+    echo "dark" > "$STATE"
+fi
