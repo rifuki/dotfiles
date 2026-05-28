@@ -121,7 +121,7 @@ DESCRIPTIONS+=("Headless Lazy sync — install/update all plugins")
 _lazy_dir="$HOME/.local/share/nvim/lazy"
 _lazy_count=0
 [ -d "$_lazy_dir" ] && _lazy_count=$(ls -1 "$_lazy_dir" 2>/dev/null | wc -l | tr -d ' ')
-if ! command -v nvim &>/dev/null; then STATUS+=("nvim not installed"); SELECTED+=(0); EXTERNAL+=(1)
+if ! command -v nvim &>/dev/null; then STATUS+=("emerge app-editors/neovim first"); SELECTED+=(0); EXTERNAL+=(1)
 elif [ "$_lazy_count" -gt 0 ]; then STATUS+=("${_lazy_count} plugins installed"); SELECTED+=(0); EXTERNAL+=(0)
 else STATUS+=(""); SELECTED+=(1); EXTERNAL+=(0); fi
 
@@ -131,7 +131,7 @@ DESCRIPTIONS+=("Install LSPs + formatters via Mason")
 _mason_dir="$HOME/.local/share/nvim/mason/packages"
 _mason_count=0
 [ -d "$_mason_dir" ] && _mason_count=$(ls -1 "$_mason_dir" 2>/dev/null | wc -l | tr -d ' ')
-if ! command -v nvim &>/dev/null; then STATUS+=("nvim not installed"); SELECTED+=(0); EXTERNAL+=(1)
+if ! command -v nvim &>/dev/null; then STATUS+=("emerge app-editors/neovim first"); SELECTED+=(0); EXTERNAL+=(1)
 elif [ "$_mason_count" -gt 0 ]; then STATUS+=("${_mason_count} packages installed"); SELECTED+=(0); EXTERNAL+=(0)
 else STATUS+=(""); SELECTED+=(1); EXTERNAL+=(0); fi
 

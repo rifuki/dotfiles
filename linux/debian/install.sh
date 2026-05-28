@@ -147,8 +147,8 @@ if [ -f /usr/local/bin/neofetch ]; then ((_fi++)) || true; [ -z "$_fi_installed"
 elif command -v neofetch &>/dev/null; then ((_fi++)) || true; _fi_ext=1; [ -z "$_fi_installed" ] && _fi_installed="neofetch" || _fi_installed="$_fi_installed, neofetch"; fi
 # Nerd Font
 if ls "$HOME/.local/share/fonts/JetBrainsMono"*"NerdFont"* &>/dev/null 2>&1; then ((_fi++)) || true; [ -z "$_fi_installed" ] && _fi_installed="font" || _fi_installed="$_fi_installed, font"; fi
-if [ "$_fi" -gt 0 ] && [ "$_fi_ext" = "1" ]; then STATUS+=("${_fi}/13 installed (external): ${_fi_installed}"); SELECTED+=(0); EXTERNAL+=(1)
-elif [ "$_fi" -eq 13 ]; then STATUS+=("all installed"); SELECTED+=(0); EXTERNAL+=(0)
+if [ "$_fi" -eq 13 ]; then STATUS+=("all installed"); SELECTED+=(0); EXTERNAL+=(0)
+elif [ "$_fi" -gt 0 ] && [ "$_fi_ext" = "1" ]; then STATUS+=("${_fi}/13 installed (some external): ${_fi_installed}"); SELECTED+=(1); EXTERNAL+=(0)
 elif [ "$_fi" -gt 0 ]; then STATUS+=("${_fi}/13 installed: ${_fi_installed}"); SELECTED+=(1); EXTERNAL+=(0)
 else STATUS+=(""); SELECTED+=(1); EXTERNAL+=(0); fi
 
@@ -213,8 +213,8 @@ DESCRIPTIONS+=("Headless Lazy sync — install/update all plugins")
 _lazy_dir="$HOME/.local/share/nvim/lazy"
 _lazy_count=0
 [ -d "$_lazy_dir" ] && _lazy_count=$(ls -1 "$_lazy_dir" 2>/dev/null | wc -l | tr -d ' ')
-if ! command -v nvim &>/dev/null; then STATUS+=("nvim not installed"); SELECTED+=(0); EXTERNAL+=(1)
-elif [ "$_lazy_count" -gt 0 ]; then STATUS+=("${_lazy_count} plugins installed"); SELECTED+=(0); EXTERNAL+=(0)
+if [ "$_lazy_count" -gt 0 ]; then STATUS+=("${_lazy_count} plugins installed"); SELECTED+=(0); EXTERNAL+=(0)
+elif ! command -v nvim &>/dev/null; then STATUS+=("needs APT (item 2)"); SELECTED+=(0); EXTERNAL+=(0)
 else STATUS+=(""); SELECTED+=(1); EXTERNAL+=(0); fi
 
 # 12: Neovim LSPs (Mason)
@@ -223,8 +223,8 @@ DESCRIPTIONS+=("Install LSPs + formatters via Mason")
 _mason_dir="$HOME/.local/share/nvim/mason/packages"
 _mason_count=0
 [ -d "$_mason_dir" ] && _mason_count=$(ls -1 "$_mason_dir" 2>/dev/null | wc -l | tr -d ' ')
-if ! command -v nvim &>/dev/null; then STATUS+=("nvim not installed"); SELECTED+=(0); EXTERNAL+=(1)
-elif [ "$_mason_count" -gt 0 ]; then STATUS+=("${_mason_count} packages installed"); SELECTED+=(0); EXTERNAL+=(0)
+if [ "$_mason_count" -gt 0 ]; then STATUS+=("${_mason_count} packages installed"); SELECTED+=(0); EXTERNAL+=(0)
+elif ! command -v nvim &>/dev/null; then STATUS+=("needs APT (item 2)"); SELECTED+=(0); EXTERNAL+=(0)
 else STATUS+=(""); SELECTED+=(1); EXTERNAL+=(0); fi
 
 _total=${#LABELS[@]}
@@ -319,6 +319,10 @@ while true; do
   # Dependency: dotfiles .zshrc requires Oh My Zsh (3) — must install with APT (1)
   [ "${SELECTED[1]}" = "1" ] && SELECTED[3]=1
   [ "${SELECTED[3]}" = "0" ] && SELECTED[1]=0
+  # Dependency: Lazy/Mason (11/12) need nvim — auto-select APT (1) if nvim missing
+  if ! command -v nvim &>/dev/null; then
+    { [ "${SELECTED[11]}" = "1" ] || [ "${SELECTED[12]}" = "1" ]; } && SELECTED[1]=1 && SELECTED[3]=1
+  fi
   # No cross-dependencies for AI tools
 done
 

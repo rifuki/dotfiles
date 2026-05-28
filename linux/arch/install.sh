@@ -135,16 +135,16 @@ if [ -z "$_RESUME_SEL" ]; then
   DESCRIPTIONS+=("Headless Lazy sync")
   _lazy_count=0
   [ -d "$HOME/.local/share/nvim/lazy" ] && _lazy_count=$(ls -1 "$HOME/.local/share/nvim/lazy" 2>/dev/null | wc -l | tr -d ' ')
-  if ! command -v nvim &>/dev/null; then STATUS+=("nvim missing"); SELECTED+=(0); EXTERNAL+=(1)
-  elif [ "$_lazy_count" -gt 0 ]; then STATUS+=("${_lazy_count} plugins"); SELECTED+=(0); EXTERNAL+=(0)
+  if [ "$_lazy_count" -gt 0 ]; then STATUS+=("${_lazy_count} plugins"); SELECTED+=(0); EXTERNAL+=(0)
+  elif ! command -v nvim &>/dev/null; then STATUS+=("needs Desktop (item 1)"); SELECTED+=(0); EXTERNAL+=(0)
   else STATUS+=(""); SELECTED+=(1); EXTERNAL+=(0); fi
 
   LABELS+=("Neovim LSPs")
   DESCRIPTIONS+=("Install LSPs + formatters via Mason")
   _mason_count=0
   [ -d "$HOME/.local/share/nvim/mason/packages" ] && _mason_count=$(ls -1 "$HOME/.local/share/nvim/mason/packages" 2>/dev/null | wc -l | tr -d ' ')
-  if ! command -v nvim &>/dev/null; then STATUS+=("nvim missing"); SELECTED+=(0); EXTERNAL+=(1)
-  elif [ "$_mason_count" -gt 0 ]; then STATUS+=("${_mason_count} packages"); SELECTED+=(0); EXTERNAL+=(0)
+  if [ "$_mason_count" -gt 0 ]; then STATUS+=("${_mason_count} packages"); SELECTED+=(0); EXTERNAL+=(0)
+  elif ! command -v nvim &>/dev/null; then STATUS+=("needs Desktop (item 1)"); SELECTED+=(0); EXTERNAL+=(0)
   else STATUS+=(""); SELECTED+=(1); EXTERNAL+=(0); fi
 
   _total=${#LABELS[@]}
@@ -200,6 +200,10 @@ if [ -z "$_RESUME_SEL" ]; then
     elif [[ "$_input" = [qQ] ]]; then
       echo -e "\n  ${YELLOW}Installation cancelled.${NC}"
       exit 0
+    fi
+    # Dependency: Lazy/Mason (7/8) need nvim — auto-select Desktop (0) if nvim missing
+    if ! command -v nvim &>/dev/null; then
+      { [ "${SELECTED[7]}" = "1" ] || [ "${SELECTED[8]}" = "1" ]; } && SELECTED[0]=1
     fi
   done
 
