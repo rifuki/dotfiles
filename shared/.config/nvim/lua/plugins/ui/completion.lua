@@ -1,4 +1,8 @@
 return {
+    -- Disable NvChad's cmp-async-path (Codeberg blocks Tencent Cloud IPs;
+    -- cmp-path below covers the same use case)
+    { "https://codeberg.org/FelipeLema/cmp-async-path.git", enabled = false },
+
     -- nvim-cmp completion engine
     {
         "hrsh7th/nvim-cmp",
