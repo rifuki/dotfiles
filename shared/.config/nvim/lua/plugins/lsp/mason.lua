@@ -31,7 +31,7 @@ return {
         if not is_minimal then
             vim.list_extend(lsps, {
                 "prismals",              -- Prisma ORM
-                "solidity_ls_nomicfoundation",
+                "solidity_ls_nomicfoundation@0.8.21",
                 "tailwindcss",           -- Tailwind CSS intellisense
             })
         end
@@ -40,7 +40,11 @@ return {
             ensure_installed = lsps,
             automatic_installation = true,
             automatic_enable = {
-                exclude = { "taplo", "move_analyzer" }, -- taplo: manual config, move_analyzer: use sui-move-analyzer from cargo instead
+                exclude = {
+                    "taplo", -- manual config
+                    "move_analyzer", -- use sui-move-analyzer from cargo instead
+                    "solidity_ls_nomicfoundation", -- Solidity LSP is toggled manually in configs/lsp/solidity.lua
+                },
             },
         })
     end,

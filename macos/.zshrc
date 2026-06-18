@@ -5,7 +5,6 @@ export PATH="$HOME/.local/bin:$PATH"
 export PATH="$HOME/.bun/bin:$PATH"
 export PATH="$HOME/.cargo/bin:$PATH"
 export PATH="$HOME/.local/share/solana/install/active_release/bin:$PATH"
-export PATH="$HOME/.antigravity/antigravity/bin:$PATH"
 
 export EDITOR=nvim
 export CPATH="/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include:$CPATH"
@@ -91,10 +90,18 @@ eval "$(starship init zsh)"
 # ─── Local Secrets ───────────────────────────────────────────────────────────
 # [ -f "$HOME/.secrets.sh" ] && source "$HOME/.secrets.sh"
 
-# Added by Antigravity
-export PATH="/Users/rifuki/.antigravity/antigravity/bin:$PATH"
-
 export PATH="$HOME/.browser-use-env/bin:$PATH"
 
 # Added by Windsurf
 export PATH="/Users/rifuki/.codeium/windsurf/bin:$PATH"
+
+
+
+# Added by Antigravity CLI installer
+export PATH="/Users/rifuki/.local/bin:$PATH"
+export PATH="$HOME/.local/share/solana/install/active_release/bin:$PATH"
+
+export NVM_DIR="$HOME/.nvm"
+[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"  # This loads nvm
+[ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"  # This loads nvm bash_completion
+export PATH="$HOME/.local/share/solana/install/active_release/bin:$PATH"
