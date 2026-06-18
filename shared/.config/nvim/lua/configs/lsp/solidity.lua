@@ -24,7 +24,7 @@ vim.lsp.config("solidity_ls_nomicfoundation", {
 
 -- Solidity LSP (asyncswap/solidity-language-server — Rust-based high performance)
 vim.lsp.config("solidity_ls", {
-    cmd = { "/Users/rifuki/.cargo/bin/solidity-language-server", "--stdio" },
+    cmd = { "solidity-language-server", "--stdio" },
     filetypes = { "solidity" },
     root_markers = {
         "foundry.toml",
