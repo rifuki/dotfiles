@@ -110,22 +110,22 @@ EXTERNAL=()   # 1 = found but not installed by this script — cannot manage
 
 # 0: Homebrew Formulae + Nerd Font
 LABELS+=("Homebrew Formulae + Nerd Font")
-DESCRIPTIONS+=("neovim, tmux, trash, htop, ripgrep, starship, neofetch, yazi, fzf, gh, imagemagick, luarocks, wakatime-cli, JetBrainsMono")
+DESCRIPTIONS+=("neovim, tmux, trash, htop, ripgrep, starship, neofetch, yazi, fzf, gh, imagemagick, luarocks, wakatime-cli, cliclick, JetBrainsMono")
 _fi=0
-for _cmd in nvim tmux trash htop rg starship neofetch yazi fzf gh magick luarocks wakatime-cli; do
+for _cmd in nvim tmux trash htop rg starship neofetch yazi fzf gh magick luarocks wakatime-cli cliclick; do
   command -v "$_cmd" &>/dev/null && ((_fi++)) || true
 done
 if brew list --cask font-jetbrains-mono-nerd-font &>/dev/null || ls "$HOME/Library/Fonts/JetBrainsMono"*"NerdFont"* &>/dev/null 2>&1; then
   ((_fi++))
 fi
-if [ "$_fi" -eq 14 ]; then STATUS+=("all installed"); SELECTED+=(0)
-elif [ "$_fi" -gt 0 ]; then STATUS+=("${_fi}/14 installed"); SELECTED+=(1)
+if [ "$_fi" -eq 15 ]; then STATUS+=("all installed"); SELECTED+=(0)
+elif [ "$_fi" -gt 0 ]; then STATUS+=("${_fi}/15 installed"); SELECTED+=(1)
 else STATUS+=(""); SELECTED+=(1); fi
 EXTERNAL+=(0)
 
 # 1: Yabai + Skhd — install.sh installs via brew
 LABELS+=("Yabai + Skhd")
-DESCRIPTIONS+=("Tiling WM + hotkey daemon + cliclick (cursor warp)")
+DESCRIPTIONS+=("Tiling WM + hotkey daemon")
 if brew list yabai &>/dev/null 2>&1 || brew list skhd &>/dev/null 2>&1; then
   STATUS+=("installed"); SELECTED+=(0); EXTERNAL+=(0)
 elif command -v yabai &>/dev/null || command -v skhd &>/dev/null; then
@@ -493,6 +493,7 @@ if [ "${SELECTED[0]}" = "1" ]; then
     "imagemagick:magick"
     "luarocks:luarocks"
     "wakatime-cli:wakatime-cli"
+    "cliclick:cliclick"
   )
   for _entry in "${_formulae[@]}"; do
     IFS=':' read -r _pkg _cmd <<< "$_entry"
@@ -530,14 +531,6 @@ if [ "${SELECTED[1]}" = "1" ]; then
     done_msg "Skhd installed"
   else
     done_msg "Skhd already installed"
-  fi
-  # cliclick: dipakai ~/.config/yabai/warp_display.sh buat loncatin kursor antar monitor
-  if ! command -v cliclick &>/dev/null; then
-    info_msg "Installing cliclick..."
-    brew install cliclick
-    done_msg "cliclick installed"
-  else
-    done_msg "cliclick already installed"
   fi
 fi
 
