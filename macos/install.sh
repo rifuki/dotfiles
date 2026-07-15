@@ -125,7 +125,7 @@ EXTERNAL+=(0)
 
 # 1: Yabai + Skhd — install.sh installs via brew
 LABELS+=("Yabai + Skhd")
-DESCRIPTIONS+=("Tiling WM + hotkey daemon")
+DESCRIPTIONS+=("Tiling WM + hotkey daemon + cliclick (cursor warp)")
 if brew list yabai &>/dev/null 2>&1 || brew list skhd &>/dev/null 2>&1; then
   STATUS+=("installed"); SELECTED+=(0); EXTERNAL+=(0)
 elif command -v yabai &>/dev/null || command -v skhd &>/dev/null; then
@@ -530,6 +530,14 @@ if [ "${SELECTED[1]}" = "1" ]; then
     done_msg "Skhd installed"
   else
     done_msg "Skhd already installed"
+  fi
+  # cliclick: dipakai ~/.config/yabai/warp_display.sh buat loncatin kursor antar monitor
+  if ! command -v cliclick &>/dev/null; then
+    info_msg "Installing cliclick..."
+    brew install cliclick
+    done_msg "cliclick installed"
+  else
+    done_msg "cliclick already installed"
   fi
 fi
 
