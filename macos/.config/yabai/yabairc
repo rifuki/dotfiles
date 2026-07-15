@@ -2,6 +2,14 @@
 yabai -m signal --add event=dock_did_restart action="sudo yabai --load-sa"  # Reload SA after restart
 sudo yabai --load-sa  # Load scripting addition
 
+## Signals
+# Window Ghostty baru muncul di monitor tempat kursor aktif (bukan main display).
+# Matiin animasi sesaat -> teleport instan (tanpa slide) -> balikin ke 0.2.
+# (Batasan: 1 frame kedip di display utama gak bisa dihindari, macOS render duluan.)
+yabai -m signal --add event=window_created app="^Ghostty$" \
+  action='yabai -m config window_animation_duration 0.0; yabai -m window $YABAI_WINDOW_ID --display mouse --focus; yabai -m config window_animation_duration 0.2' \
+  label=ghostty_follow_mouse
+
 ## Layout & Placement
 yabai -m config layout bsp  # Use BSP layout
 yabai -m config window_placement second_child   # New windows as second child
