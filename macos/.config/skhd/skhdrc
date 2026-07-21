@@ -24,14 +24,14 @@ alt + ctrl + shift - l : yabai -m window --resize right:-20:0
 
 ## Display Navigation (Focus between monitors)
 # skhd tidak menerima ',' '.' mentah -> pakai keycode (0x2B = ',' , 0x2F = '.')
-# pakai west/east (posisi FISIK) bukan prev/next (index) biar sesuai kiri/kanan layar
-# warp_display.sh loncatin kursor ke monitor tujuan (tanpa mouse_follows_focus global)
-alt - 0x2B : yabai -m display --focus west && ~/.config/yabai/warp_display.sh   # monitor kiri
-alt - 0x2F : yabai -m display --focus east && ~/.config/yabai/warp_display.sh   # monitor kanan
+# focus_display.sh: cyclic sesuai posisi FISIK, robust horizontal MAUPUN vertical
+# (script juga warp kursor ke monitor tujuan)
+alt - 0x2B : ~/.config/yabai/focus_display.sh focus prev   # monitor sebelah (kiri/atas)
+alt - 0x2F : ~/.config/yabai/focus_display.sh focus next   # monitor sebelah (kanan/bawah)
 
 ## Move Window to Display
-alt + shift - 0x2B : yabai -m window --display west --focus && ~/.config/yabai/warp_display.sh
-alt + shift - 0x2F : yabai -m window --display east --focus && ~/.config/yabai/warp_display.sh
+alt + shift - 0x2B : ~/.config/yabai/focus_display.sh move prev
+alt + shift - 0x2F : ~/.config/yabai/focus_display.sh move next
 
 ## Window & Space Layouts
 # Toggle between floating and grid layout
