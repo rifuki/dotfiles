@@ -138,12 +138,35 @@ artwork looks ragged, and no amount of resampling fixes it.
 | **32** | **64** | **2x** | **every source pixel is a clean 2×2 block** |
 | 16 | 32 | 1x | pixel-exact too, but a small cursor |
 
-`build-miku-cape` therefore builds every representation from the 32 px master with
-`Image.NEAREST` at integer scales only. Any smoothing filter turns hard-edged pixel art
-to mush, and `LANCZOS` in particular looks worse than the problem it tries to solve.
+`build-miku-cape` therefore builds every representation from the 32 px master at integer
+scales only. Changing `POINTS` to a non-multiple of `MASTER_SIZE` brings the raggedness
+straight back — use 16 or 32, or change the size with `mousecloak scale` instead.
 
-Changing `POINTS` to a non-multiple of `MASTER_SIZE` brings the raggedness straight
-back. Use 16 or 32, or change the size with `mousecloak scale` instead.
+### Upscaling: `--upscale`
+
+Integer scaling fixes the ragged edges but leaves visible staircases, because a 2x block
+of a 32 px sprite is still a 2x block. Three modes trade sharpness against smoothness:
+
+| `--upscale` | what it does | colours | cape size |
+|---|---|---|---|
+| `nearest` | raw pixel doubling | 33 | ~550 KB |
+| `scale2x` **(default)** | AdvMAME2x — rounds off staircases | 33 | ~850 KB |
+| `smooth` | Scale2x, then supersample down | ~1700 | ~3.8 MB |
+
+`scale2x` is the default because it is a strict improvement with no cost to fidelity.
+Every output pixel is copied from the source pixel or one of its four neighbours, so no
+colour is invented and alpha stays binary — diagonals get rounded, nothing gets blurred.
+
+`smooth` runs Scale2x one doubling past the target and averages back down. Correcting
+the shape *before* filtering is what makes this work; a direct `LANCZOS` upscale of the
+master produces 2320 colours of mush and looks worse than doing nothing. The cost is a
+4.5x larger cape, since antialiased edges compress badly.
+
+```bash
+python3 ~/.dotfiles/macos/.local/bin/build-miku-cape -u smooth -o /tmp/smooth.cape
+cp /tmp/smooth.cape ~/Library/Application\ Support/Mousecape/capes/miku-cursor.cape
+launchctl kickstart -k gui/$(id -u)/com.rifuki.mousecape-miku
+```
 
 ### Cursor Identifier Mapping
 
