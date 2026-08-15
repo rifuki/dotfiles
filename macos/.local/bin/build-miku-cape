@@ -163,21 +163,70 @@ def to_image(frame):
     )
 
 
-def build_strip(frames, target_px):
+def scale2x(im):
+    """AdvMAME2x / Scale2x — doubles size while rounding off staircase edges.
+
+    Every output pixel is copied from the source or one of its four neighbours, so no
+    colour is ever invented and alpha stays binary. That is what keeps the result crisp
+    where a resampling filter would blur it.
+
+          A            E0 E1
+        C P B   ->     E2 E3
+          D
+    """
+    w, h = im.size
+    src = im.load()
+    out = Image.new("RGBA", (w * 2, h * 2))
+    dst = out.load()
+
+    def at(x, y):
+        return src[min(max(x, 0), w - 1), min(max(y, 0), h - 1)]
+
+    for y in range(h):
+        for x in range(w):
+            p = src[x, y]
+            a, b, c, d = at(x, y - 1), at(x + 1, y), at(x - 1, y), at(x, y + 1)
+            dst[x * 2, y * 2] = a if (c == a and c != d and a != b) else p
+            dst[x * 2 + 1, y * 2] = b if (a == b and a != c and b != d) else p
+            dst[x * 2, y * 2 + 1] = c if (d == c and d != b and c != a) else p
+            dst[x * 2 + 1, y * 2 + 1] = d if (b == d and b != a and d != c) else p
+    return out
+
+
+def upscale(im, target, mode):
+    """Bring a master frame up to target px under the chosen upscaling mode."""
+    if mode == "nearest":
+        return im if im.width == target else im.resize((target, target), Image.NEAREST)
+
+    doubled = im
+    while doubled.width < target:
+        doubled = scale2x(doubled)
+
+    if mode == "smooth":
+        # Supersample: go one doubling past the target with Scale2x, then average back
+        # down. The shape correction happens before the filter, so edges come out
+        # antialiased instead of the mush a direct LANCZOS upscale produces.
+        if doubled.width == target:
+            doubled = scale2x(doubled)
+        return doubled.resize((target, target), Image.LANCZOS)
+
+    if doubled.width != target:
+        doubled = doubled.resize((target, target), Image.NEAREST)
+    return doubled
+
+
+def build_strip(frames, target_px, mode):
     """Stack frames into one vertical strip at target_px per frame, as a PNG blob."""
     strip = Image.new("RGBA", (target_px, target_px * len(frames)), (0, 0, 0, 0))
     for i, frame in enumerate(frames):
-        img = to_image(frame)
-        if img.size != (target_px, target_px):
-            # NEAREST only. Any smoothing filter turns hard-edged pixel art to mush.
-            img = img.resize((target_px, target_px), Image.NEAREST)
+        img = upscale(to_image(frame), target_px, mode)
         strip.paste(img, (0, i * target_px))
     buf = io.BytesIO()
     strip.save(buf, "PNG")
     return buf.getvalue()
 
 
-def build_cursor(images):
+def build_cursor(images, mode):
     """Turn one xcursor's images into a cape cursor dict, or None if unusable."""
     by_size = defaultdict(list)
     for img in images:
@@ -201,7 +250,7 @@ def build_cursor(images):
         first["yhot"] / first["height"] * POINTS,
     )
 
-    reps = [build_strip(frames, POINTS * scale) for scale in REP_SCALES]
+    reps = [build_strip(frames, POINTS * scale, mode) for scale in REP_SCALES]
     frame_count = len(frames)
 
     return {
@@ -224,6 +273,11 @@ def main():
     ap.add_argument("-o", "--out", default="miku-cursor.cape", help="output .cape path")
     ap.add_argument("-n", "--name", default="Miku Cursor", help="cape display name")
     ap.add_argument("-a", "--author", default="rifuki", help="cape author")
+    ap.add_argument("-u", "--upscale", default="scale2x",
+                    choices=["nearest", "scale2x", "smooth"],
+                    help="scale2x: rounds off staircase edges, stays crisp (default). "
+                         "smooth: Scale2x then supersample, antialiased edges. "
+                         "nearest: raw pixel doubling.")
     args = ap.parse_args()
 
     tmp = None
@@ -253,7 +307,7 @@ def main():
         if not images:
             missing.append(f"{ident} <- {name} (unreadable)")
             continue
-        cursor = build_cursor(images)
+        cursor = build_cursor(images, args.upscale)
         if cursor is None:
             missing.append(f"{ident} <- {name} (no usable sizes)")
             continue
@@ -278,7 +332,7 @@ def main():
     animated = sum(1 for c in cursors.values() if c["FrameCount"] > 1)
     print(f"wrote {out} ({out.stat().st_size / 1024:.0f} KB)")
     print(f"  {len(cursors)} cursors, {animated} animated, {POINTS}pt from {MASTER_SIZE}px master @ "
-          f"{'/'.join(str(s) + 'x' for s in REP_SCALES)}")
+          f"{'/'.join(str(s) + 'x' for s in REP_SCALES)}, upscale={args.upscale}")
     for line in missing:
         print(f"  skipped: {line}")
 
