@@ -105,7 +105,11 @@ echo 0.4 > ~/.claude/sounds/volume     # 0.0 - 2.0
 - **Keep secrets out of the repo.** MCP credentials belong in `~/.zshrc.local` as
   exports, referenced from `.mcp.json` as `${VAR}`. Hook scripts that embed
   infrastructure names or resource IDs should stay in `~/.claude/hooks/`, which this
-  repo does not track.
+  repo does not track. Those files then have no backup anywhere, so
+  `backup-private.sh` copies them somewhere private (iCloud Drive by default) and
+  `--restore` puts them back after a reinstall. It copies rather than symlinks: iCloud
+  evicts cold files, and a hook or shell function that vanishes at startup fails
+  silently.
 - **Attribution.** `includeCoAuthoredBy: false` and empty `attribution` in
   `settings.json` stop `Co-authored-by:` trailers. Removing an entry that already
   reached GitHub's contributor list is a separate problem: the trailer may be gone from
