@@ -32,7 +32,9 @@ collect() {                       # prints: <label> <absolute source path>
   [ -f "$HOME/.zshrc.local" ]   && echo "zshrc.local $HOME/.zshrc.local"
   for d in "$HOME"/.claude "$HOME"/.claude-*/; do
     d="${d%/}"
-    [ -f "$d/settings.local.json" ] && echo "$(basename "$d").settings.local.json $d/settings.local.json"
+    # Strip the leading dot: a backup that ls hides by default reads as empty, and
+    # that is exactly the kind of thing you discover at the worst moment.
+    [ -f "$d/settings.local.json" ] && echo "$(basename "$d" | sed 's/^\.//').settings.local.json $d/settings.local.json"
   done
 }
 
@@ -43,7 +45,7 @@ if [ "$restore" = 1 ]; then
   [ -f "$DEST/zshrc.local" ] && { cp "$DEST/zshrc.local" "$HOME/.zshrc.local"; echo "  ~/.zshrc.local"; }
   for f in "$DEST"/*.settings.local.json; do
     [ -e "$f" ] || continue
-    prof="$(basename "$f" .settings.local.json)"
+    prof=".$(basename "$f" .settings.local.json)"      # dot stripped on backup, restored here
     [ -d "$HOME/$prof" ] && { cp "$f" "$HOME/$prof/settings.local.json"; echo "  ~/$prof/settings.local.json"; }
   done
   echo "done — check ~/.zshrc.local before trusting its exports"
