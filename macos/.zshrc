@@ -97,11 +97,14 @@ export PATH="/Users/rifuki/.codeium/windsurf/bin:$PATH"
 
 
 
-# Added by Antigravity CLI installer
 export PATH="/Users/rifuki/.local/bin:$PATH"
 export PATH="$HOME/.local/share/solana/install/active_release/bin:$PATH"
 
-export NVM_DIR="$HOME/.nvm"
-[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"  # This loads nvm
-[ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"  # This loads nvm bash_completion
 export PATH="$HOME/.local/share/solana/install/active_release/bin:$PATH"
+
+export PATH="/opt/homebrew/opt/libpq/bin:$PATH"
+export PATH="/opt/homebrew/opt/openjdk/bin:$PATH"
+
+# Machine-local overrides: accounts, private paths, per-host tweaks.
+# Never committed — create ~/.zshrc.local on each machine as needed.
+[ -f "$HOME/.zshrc.local" ] && source "$HOME/.zshrc.local"
