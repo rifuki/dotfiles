@@ -463,6 +463,10 @@ else
 fi
 
 # Symlink application launchers/icons (from linux/shared)
+# Symlinks are included as well as regular files: theme_miku-cursor ships 65
+# legacy-name alias symlinks (e.g. 00008160....hlc -> bottom_side.hlc), and
+# dropping them leaves those cursor shapes unresolved when the hyprcursor
+# rebuild does not run (no Pillow, or a platform without the build step).
 if [ -d "$LINUX_SHARED_DIR/.local/share" ]; then
   while IFS= read -r _f; do
     _rel="${_f#"$LINUX_SHARED_DIR/.local/share/"}"
@@ -478,7 +482,7 @@ if [ -d "$LINUX_SHARED_DIR/.local/share" ]; then
     mkdir -p "$(dirname "$_target")"
     ln -snf "$_f" "$_target"
     done_msg "~/.local/share/$_rel"
-  done < <(find "$LINUX_SHARED_DIR/.local/share" -type f | sort)
+  done < <(find "$LINUX_SHARED_DIR/.local/share" \( -type f -o -type l \) | sort)
   command -v update-desktop-database &>/dev/null && update-desktop-database "$HOME/.local/share/applications" >/dev/null 2>&1 || true
 fi
 
@@ -531,6 +535,23 @@ if [ "$_is_vps" = "0" ]; then
     fi
   else
     done_msg "miku-cursor-linux already installed"
+  fi
+
+  # Build/rebuild animated hyprcursor theme from the xcursor source.
+  # Without this the committed theme is still used, just without the aliases
+  # the generator recreates.
+  if [ -d "$HOME/.local/share/icons/miku-cursor-linux" ]; then
+    if command -v python3 &>/dev/null; then
+      info_msg "Building animated hyprcursor theme..."
+      if python3 "$HOME/.local/bin/build-miku-hyprcursor" 2>/dev/null; then
+        done_msg "theme_miku-cursor (animated hyprcursor) built"
+      else
+        warn_msg "build-miku-hyprcursor failed — Pillow may be missing"
+        warn_msg "Install via: sudo pacman -S python-pillow then re-run install.sh"
+      fi
+    else
+      warn_msg "python3 not found — skipping hyprcursor build"
+    fi
   fi
 
   # Apply cursor via GSettings (GTK apps prefer dconf over settings.ini)

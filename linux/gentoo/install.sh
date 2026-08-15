@@ -576,6 +576,10 @@ else
 fi
 
 # Symlink application launchers/icons (from linux/shared)
+# Symlinks are included as well as regular files: theme_miku-cursor ships 65
+# legacy-name alias symlinks (e.g. 00008160....hlc -> bottom_side.hlc), and
+# dropping them leaves those cursor shapes unresolved when the hyprcursor
+# rebuild does not run (no Pillow, or a platform without the build step).
 if [ -d "$LINUX_SHARED_DIR/.local/share" ]; then
   while IFS= read -r _f; do
     _rel="${_f#"$LINUX_SHARED_DIR/.local/share/"}"
@@ -591,7 +595,7 @@ if [ -d "$LINUX_SHARED_DIR/.local/share" ]; then
     mkdir -p "$(dirname "$_target")"
     ln -snf "$_f" "$_target"
     done_msg "~/.local/share/$_rel"
-  done < <(find "$LINUX_SHARED_DIR/.local/share" -type f | sort)
+  done < <(find "$LINUX_SHARED_DIR/.local/share" \( -type f -o -type l \) | sort)
   if command -v update-desktop-database &>/dev/null; then
     update-desktop-database "$HOME/.local/share/applications" >/dev/null 2>&1 || true
   fi
