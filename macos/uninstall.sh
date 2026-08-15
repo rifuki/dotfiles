@@ -337,6 +337,12 @@ rm -f "$HOME/.hyper.js"
 for _d in "$HOME/.config"/*; do
   [ -L "$_d" ] && rm -f "$_d"
 done
+# Claude Code: only the symlinks this repo created, in ~/.claude and in any
+# ~/.claude-<name>/ profile. Transcripts, memory, credentials and any file you
+# edited yourself are left untouched.
+if [ -x "$SHARED_DIR/.claude/link-profiles.sh" ]; then
+  "$SHARED_DIR/.claude/link-profiles.sh" --unlink | sed 's/^/  /'
+fi
 done_msg "Symlinks removed"
 
 # ========== Homebrew Formulae + Nerd Font (index 0) ==========

@@ -12,6 +12,7 @@
 #   ./link-profiles.sh            # link everything (merges first, never clobbers)
 #   ./link-profiles.sh --check    # report only, change nothing
 #   ./link-profiles.sh --dry-run  # show what would happen
+#   ./link-profiles.sh --unlink   # remove the links again (uninstall)
 #
 # Safe to re-run. Anything it replaces is moved to a timestamped backup dir.
 
@@ -68,6 +69,7 @@ mode=link
 case "${1-}" in
   --check)   mode=check ;;
   --dry-run) mode=dry ;;
+  --unlink)  mode=unlink ;;
   --help|-h) sed -n '2,20p' "$0" | sed 's/^# \{0,1\}//'; exit 0 ;;
   "")        ;;
   *)         echo "unknown option: $1 (try --help)" >&2; exit 2 ;;
@@ -96,16 +98,37 @@ if [ "$mode" = check ]; then
       if [ -L "$p" ] && [ -e "$p" ]; then
         :
       elif [ -L "$p" ]; then
-        echo "BROKEN  ${p/#$HOME/\~} -> $(readlink "$p")"; rc=1
+        echo "BROKEN  ~${p#$HOME} -> $(readlink "$p")"; rc=1
       elif [ -e "$p" ]; then
-        echo "UNSHARED ${p/#$HOME/\~} (real file, not linked)"; rc=1
+        echo "UNSHARED ~${p#$HOME} (real file, not linked)"; rc=1
       else
-        echo "MISSING ${p/#$HOME/\~}"; rc=1
+        echo "MISSING ~${p#$HOME}"; rc=1
       fi
     done
   done
   [ $rc -eq 0 ] && echo "OK — ${#profiles[@]} profile(s), all ${#SHARED[@]} items linked to ~/.claude"
   exit $rc
+fi
+
+if [ "$mode" = unlink ]; then
+  # Remove only the links this script created — anything pointing into the repo or
+  # into ~/.claude. Real files are never touched, so your own config survives an
+  # uninstall and only the plumbing goes away.
+  n=0
+  for item in "${ASSETS[@]}"; do
+    p="$CANON/$item"
+    [ -L "$p" ] && case "$(readlink "$p")" in "$REPO_ASSETS"/*)
+      rm -f "$p"; echo "  unlinked ~/.claude/$item"; n=$((n+1)) ;; esac
+  done
+  for d in "${profiles[@]}"; do
+    for item in "${SHARED[@]}"; do
+      p="$d/$item"
+      [ -L "$p" ] && case "$(readlink "$p")" in "$CANON"/*)
+        rm -f "$p"; echo "  unlinked ~${p#$HOME}"; n=$((n+1)) ;; esac
+    done
+  done
+  echo "  $n link(s) removed; ~/.claude itself left intact"
+  exit 0
 fi
 
 backup="$HOME/.claude-profile-backup-$(date +%Y%m%d-%H%M%S)"
@@ -152,7 +175,7 @@ done
 if [ "$mode" = link ]; then
   rmdir "$backup" 2>/dev/null && backup="(nothing needed backing up)"
   echo
-  echo "Backup: ${backup/#$HOME/\~}"
+  echo "Backup: ~${backup#$HOME}"
   echo "Kept per-profile on purpose: ${NEVER[*]}"
   echo "Verify any time with: $0 --check"
 fi

@@ -146,8 +146,12 @@ if [ -d "$SHARED_DIR/.local/bin" ]; then
   done
 fi
 
-# ========== Remove Claude statusline ==========
-if [ -L "$HOME/.claude/statusline-command.sh" ]; then
+# ========== Remove Claude Code links ==========
+# Removes only symlinks this repo created, in ~/.claude and in any ~/.claude-<name>/
+# profile. Real files, transcripts, memory and credentials are left untouched.
+if [ -x "$SHARED_DIR/.claude/link-profiles.sh" ]; then
+  "$SHARED_DIR/.claude/link-profiles.sh" --unlink | sed 's/^/  /'
+elif [ -L "$HOME/.claude/statusline-command.sh" ]; then
   rm -f "$HOME/.claude/statusline-command.sh"
   done_msg "~/.claude/statusline-command.sh removed"
 fi

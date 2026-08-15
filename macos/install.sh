@@ -843,6 +843,18 @@ done_msg "~/.zshrc"
 ln -sf "$PLATFORM_DIR/.hyper.js" "$HOME/.hyper.js"
 done_msg "~/.hyper.js"
 
+# ========== Claude Code ==========
+# Links CLAUDE.md, settings.json, statusline and sounds into ~/.claude, then shares
+# ~/.claude across any extra ~/.claude-<name>/ profiles. Only links what is safe to
+# link: missing, already linked, or byte-identical. Anything you have edited locally
+# is reported and left alone, so re-running never overwrites your config.
+if [ -x "$SHARED_DIR/.claude/link-profiles.sh" ]; then
+  step "Setting up Claude Code"
+  mkdir -p "$HOME/.claude"
+  "$SHARED_DIR/.claude/link-profiles.sh" | sed 's/^/  /'
+  done_msg "Claude Code assets linked"
+fi
+
 # ========== Hush Login ==========
 [ ! -f "$HOME/.hushlogin" ] && touch "$HOME/.hushlogin" && done_msg ".hushlogin created"
 
