@@ -36,6 +36,34 @@ SHARED=(sessions projects skills plugins settings.json CLAUDE.md)
 # append-only from several processes at once, so interleaved writes are possible.
 readonly NEVER=(.claude.json .credentials.json settings.local.json history.jsonl)
 
+# Assets this repo ships for ~/.claude. Linked in only when it is safe: missing,
+# already linked, or byte-identical. Anything that has diverged is reported and left
+# alone — settings.json in particular drifts as you change things through the UI, and
+# the copy in the repo is usually the older one.
+ASSETS=(CLAUDE.md sounds statusline-command.sh settings.json)
+REPO_ASSETS="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
+install_assets() {
+  local item src dst
+  echo "== repo assets -> ~/.claude"
+  for item in "${ASSETS[@]}"; do
+    src="$REPO_ASSETS/$item" dst="$CANON/$item"
+    [ -e "$src" ] || continue
+    if [ -L "$dst" ]; then
+      echo "   $item already linked"
+    elif [ ! -e "$dst" ]; then
+      [ "$1" = dry ] || ln -s "$src" "$dst"
+      echo "   $item linked"
+    elif diff -rq "$src" "$dst" >/dev/null 2>&1; then
+      if [ "$1" != dry ]; then mv "$dst" "$backup/canon-$item"; ln -s "$src" "$dst"; fi
+      echo "   $item identical -> linked"
+    else
+      echo "   $item DIVERGED — left alone (yours is authoritative; copy it into the repo yourself if you want it tracked)"
+    fi
+  done
+  echo
+}
+
 mode=link
 case "${1-}" in
   --check)   mode=check ;;
@@ -82,6 +110,8 @@ fi
 
 backup="$HOME/.claude-profile-backup-$(date +%Y%m%d-%H%M%S)"
 [ "$mode" = link ] && mkdir -p "$backup"
+
+install_assets "$mode"
 
 for d in "${profiles[@]}"; do
   name="$(basename "$d")"
