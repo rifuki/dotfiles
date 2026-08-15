@@ -45,13 +45,22 @@ VENDORED_ARCHIVE = (
 XCURSOR_MAGIC = b"Xcur"
 XCURSOR_IMAGE_TYPE = 0xFFFD0002
 
-# Cursor size in points. Matches XCURSOR_SIZE/HYPRCURSOR_SIZE=24 used on Hyprland,
-# and lands close to Apple's own arrow (15x22pt of ink) once Miku's art is scaled.
-POINTS = 24
+# The theme is 32x32 pixel art. Its 48/64/96 "sizes" are nearest-neighbour upscales
+# of the same 32x32 master, with only two alpha levels — there is no antialiasing and
+# no higher-resolution artwork to recover.
+#
+# So the master is the only real source, and everything else must be an *integer*
+# multiple of it. At 24pt a 2x display needs 48 device pixels, i.e. 1.5x the master:
+# source pixels land on 1 or 2 screen pixels at random and the art looks ragged.
+# 32pt gives exactly 64 device pixels on 2x — every source pixel becomes a clean 2x2
+# block. Drop to 16 for a smaller cursor that is still pixel-exact (1:1 at 2x); never
+# pick a value that is not 16, 32, 48... or the raggedness comes straight back.
+MASTER_SIZE = 32
+POINTS = 32
 
-# Nominal xcursor sizes used per representation. 48 and 96 are native in the theme,
-# so 2x and 4x need no resampling; 1x is downscaled from 48.
-REP_SIZES = [(1, 48), (2, 48), (4, 96)]
+# Representation scales. Each is an exact integer multiple of the master, so nothing
+# is ever resampled at a fractional ratio.
+REP_SCALES = [1, 2, 4]
 
 # Mousecape hard limit — miku tops out at 8 frames, so nothing is dropped.
 MAX_FRAMES = 24
@@ -160,7 +169,8 @@ def build_strip(frames, target_px):
     for i, frame in enumerate(frames):
         img = to_image(frame)
         if img.size != (target_px, target_px):
-            img = img.resize((target_px, target_px), Image.LANCZOS)
+            # NEAREST only. Any smoothing filter turns hard-edged pixel art to mush.
+            img = img.resize((target_px, target_px), Image.NEAREST)
         strip.paste(img, (0, i * target_px))
     buf = io.BytesIO()
     strip.save(buf, "PNG")
@@ -175,31 +185,24 @@ def build_cursor(images):
     if not by_size:
         return None
 
-    reps = []
-    frame_count = None
-    delay_ms = None
-    hotspot = None
+    master = MASTER_SIZE if MASTER_SIZE in by_size else min(by_size)
+    frames = by_size[master]
 
-    for scale, nominal in REP_SIZES:
-        source = nominal if nominal in by_size else max(by_size)
-        frames = by_size[source]
-        if len(frames) > MAX_FRAMES:
-            step = len(frames) / MAX_FRAMES
-            frames = [frames[int(i * step)] for i in range(MAX_FRAMES)]
-            delay_ms = frames[0]["delay"] * (len(by_size[source]) / MAX_FRAMES)
-        if frame_count is None:
-            frame_count = len(frames)
-            delay_ms = delay_ms or frames[0]["delay"]
-            # Hotspot is expressed in points, so normalise out of the source size.
-            first = frames[0]
-            hotspot = (
-                first["xhot"] / first["width"] * POINTS,
-                first["yhot"] / first["height"] * POINTS,
-            )
-        elif len(frames) != frame_count:
-            # Sizes disagree on frame count; keep the strips consistent.
-            frames = frames[:frame_count]
-        reps.append(build_strip(frames, POINTS * scale))
+    delay_ms = frames[0]["delay"]
+    if len(frames) > MAX_FRAMES:
+        step = len(frames) / MAX_FRAMES
+        delay_ms = delay_ms * (len(frames) / MAX_FRAMES)
+        frames = [frames[int(i * step)] for i in range(MAX_FRAMES)]
+
+    # Hotspot is expressed in points, so normalise out of the source size.
+    first = frames[0]
+    hotspot = (
+        first["xhot"] / first["width"] * POINTS,
+        first["yhot"] / first["height"] * POINTS,
+    )
+
+    reps = [build_strip(frames, POINTS * scale) for scale in REP_SCALES]
+    frame_count = len(frames)
 
     return {
         "FrameCount": frame_count,
@@ -274,7 +277,8 @@ def main():
 
     animated = sum(1 for c in cursors.values() if c["FrameCount"] > 1)
     print(f"wrote {out} ({out.stat().st_size / 1024:.0f} KB)")
-    print(f"  {len(cursors)} cursors, {animated} animated, {POINTS}pt @ 1x/2x/4x")
+    print(f"  {len(cursors)} cursors, {animated} animated, {POINTS}pt from {MASTER_SIZE}px master @ "
+          f"{'/'.join(str(s) + 'x' for s in REP_SCALES)}")
     for line in missing:
         print(f"  skipped: {line}")
 

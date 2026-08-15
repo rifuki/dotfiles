@@ -111,14 +111,39 @@ Animated cursors are **one vertical strip per representation**, not a list of im
 image height == PointsHigh × FrameCount × scale
 ```
 
-This repo emits `PointsWide = PointsHigh = 24` — matching `XCURSOR_SIZE`/
-`HYPRCURSOR_SIZE=24` on Hyprland — with representations at 24 px, 48 px and 96 px. The
-theme ships nominal sizes 32/48/64/96, so 2x and 4x are native and need no resampling on
-a Retina display.
-
 Pixel order is the same trap as on the Linux side: xcursor stores 32-bit ARGB
 little-endian, so the bytes on disk are **B,G,R,A**. Reading them as RGBA swaps red and
 blue and turns the teal cursor purple. `Image.frombytes(..., 'raw', 'BGRA')` handles it.
+
+### Sizing: Why 32pt, and Why It Must Stay a Multiple of 32
+
+The theme is **32×32 pixel art**. Its 48/64/96 "sizes" are not separate artwork — each
+is a nearest-neighbour upscale of the same 32×32 master, and every frame has only two
+alpha levels, so there is no antialiasing and no higher-resolution original to recover:
+
+```
+32 → 64  exact 2x    ✓
+32 → 96  exact 3x    ✓
+32 → 48  NOT exact   ✗   (1.5x — the source of the problem)
+```
+
+That makes the on-screen size a correctness question, not a taste one. A 2x display
+renders a `POINTS`-sized cursor at `POINTS × 2` device pixels, and if that is not an
+integer multiple of 32 the source pixels land on 1 or 2 screen pixels at random. The
+artwork looks ragged, and no amount of resampling fixes it.
+
+| `POINTS` | device px at 2x | ratio to master | result |
+|---|---|---|---|
+| 24 | 48 | 1.5x | ragged — the first version of this cape did this |
+| **32** | **64** | **2x** | **every source pixel is a clean 2×2 block** |
+| 16 | 32 | 1x | pixel-exact too, but a small cursor |
+
+`build-miku-cape` therefore builds every representation from the 32 px master with
+`Image.NEAREST` at integer scales only. Any smoothing filter turns hard-edged pixel art
+to mush, and `LANCZOS` in particular looks worse than the problem it tries to solve.
+
+Changing `POINTS` to a non-multiple of `MASTER_SIZE` brings the raggedness straight
+back. Use 16 or 32, or change the size with `mousecloak scale` instead.
 
 ### Cursor Identifier Mapping
 
@@ -160,7 +185,13 @@ detects this.
 **Cursor gone after reboot.**
 Check the LaunchAgent is loaded (see above). Registration is per-session by design.
 
+**Cursor looks ragged or grainy.**
+Read the sizing section above — this is fractional scaling of pixel art, not a
+resolution problem. Check `POINTS` is still a multiple of `MASTER_SIZE`.
+
 **Wrong size.**
+Prefer this over editing `POINTS`; the scale multiplier does not disturb the pixel grid
+the way a non-integer `POINTS` does.
 
 ```bash
 mousecloak scale 1.2    # no argument prints the current scale
