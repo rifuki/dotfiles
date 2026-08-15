@@ -1,0 +1,283 @@
+#!/usr/bin/env python3
+"""
+Build a Mousecape .cape from the miku-cursor-linux xcursor theme.
+
+macOS counterpart of build-miku-hyprcursor: same xcursor parser, different target.
+Instead of hyprcursor .hlc archives it emits a single .cape plist for Mousecape
+(https://github.com/sdmj76/Mousecape-swiftUI).
+
+Cape layout, verified against a `mousecloak dump` of macOS 26.5.2:
+
+    Cursors -> { <macOS cursor id>: {
+        FrameCount, FrameDuration, HotSpotX, HotSpotY,
+        PointsWide, PointsHigh, Representations: [PNG@1x, PNG@2x, PNG@4x] } }
+
+Animated cursors are a single vertical strip per representation:
+image height == PointsHigh * FrameCount * scale.
+
+The generated cape is committed at macos/assets/miku-cursor.cape so install.sh can
+drop it in without needing Python or Pillow on a fresh machine. Re-run this only
+after the pinned miku-cursor-linux archive changes.
+
+Usage:
+    python3 build-miku-cape                       # from the vendored archive
+    python3 build-miku-cape XCURSOR_DIR -o OUT.cape
+"""
+
+import argparse
+import io
+import plistlib
+import struct
+import sys
+import tarfile
+import tempfile
+from collections import defaultdict
+from pathlib import Path
+
+from PIL import Image
+
+# Same pinned xcursor source the Linux side builds its hyprcursor theme from.
+# Vendored once under linux/ and shared by both platforms rather than duplicated.
+VENDORED_ARCHIVE = (
+    Path(__file__).resolve().parents[3] / "linux/shared/assets/miku-cursor-linux-1.2.6.tar.xz"
+)
+
+XCURSOR_MAGIC = b"Xcur"
+XCURSOR_IMAGE_TYPE = 0xFFFD0002
+
+# Cursor size in points. Matches XCURSOR_SIZE/HYPRCURSOR_SIZE=24 used on Hyprland,
+# and lands close to Apple's own arrow (15x22pt of ink) once Miku's art is scaled.
+POINTS = 24
+
+# Nominal xcursor sizes used per representation. 48 and 96 are native in the theme,
+# so 2x and 4x need no resampling; 1x is downscaled from 48.
+REP_SIZES = [(1, 48), (2, 48), (4, 96)]
+
+# Mousecape hard limit — miku tops out at 8 frames, so nothing is dropped.
+MAX_FRAMES = 24
+
+# macOS cursor id -> xcursor name.
+#
+# Identified by rendering `mousecloak dump` output of macOS 26.5.2 and reading the
+# artwork, not by guessing at the numbering. Ids intentionally left out:
+#   com.apple.coregraphics.Empty  - invisible by definition
+#   com.apple.cursor.9, .10       - screenshot camera, no xcursor equivalent
+CURSOR_MAP = {
+    # --- named CoreGraphics cursors ---
+    "com.apple.coregraphics.Arrow": "default",
+    "com.apple.coregraphics.ArrowCtx": "context-menu",
+    "com.apple.coregraphics.ArrowS": "default",
+    "com.apple.coregraphics.Alias": "alias",
+    "com.apple.coregraphics.Copy": "dnd-copy",
+    "com.apple.coregraphics.Move": "dnd-move",
+    "com.apple.coregraphics.IBeam": "text",
+    "com.apple.coregraphics.IBeamS": "text",
+    "com.apple.coregraphics.IBeamXOR": "text",
+    "com.apple.coregraphics.Wait": "wait",
+    # --- numbered cursors ---
+    "com.apple.cursor.2": "alias",           # link drag
+    "com.apple.cursor.3": "not-allowed",     # arrow + no-entry
+    "com.apple.cursor.4": "progress",        # arrow + spinner
+    "com.apple.cursor.5": "dnd-copy",        # arrow + green plus
+    "com.apple.cursor.7": "crosshair",       # circled crosshair
+    "com.apple.cursor.8": "crosshair",
+    "com.apple.cursor.11": "grabbing",       # closed hand
+    "com.apple.cursor.12": "grab",           # open hand
+    "com.apple.cursor.13": "pointer",        # pointing hand
+    "com.apple.cursor.14": "grabbing",       # animated closed hand
+    "com.apple.cursor.15": "grab",           # animated open hand
+    "com.apple.cursor.16": "grabbing",
+    "com.apple.cursor.17": "w-resize",       # window edge, left
+    "com.apple.cursor.18": "e-resize",       # window edge, right
+    "com.apple.cursor.19": "ew-resize",      # column divider
+    "com.apple.cursor.20": "crosshair",
+    "com.apple.cursor.21": "n-resize",       # window edge, top
+    "com.apple.cursor.22": "s-resize",       # window edge, bottom
+    "com.apple.cursor.23": "ns-resize",      # row divider
+    "com.apple.cursor.24": "context-menu",
+    "com.apple.cursor.25": "crossed_circle",  # poof / remove
+    "com.apple.cursor.26": "ew-resize",
+    "com.apple.cursor.27": "ew-resize",
+    "com.apple.cursor.28": "ew-resize",
+    "com.apple.cursor.29": "nesw-resize",
+    "com.apple.cursor.30": "nesw-resize",
+    "com.apple.cursor.31": "n-resize",
+    "com.apple.cursor.32": "ns-resize",
+    "com.apple.cursor.33": "nwse-resize",
+    "com.apple.cursor.34": "nwse-resize",
+    "com.apple.cursor.35": "nesw-resize",
+    "com.apple.cursor.36": "s-resize",
+    "com.apple.cursor.37": "nwse-resize",
+    "com.apple.cursor.38": "ew-resize",
+    "com.apple.cursor.39": "all-scroll",     # four-way move
+    "com.apple.cursor.40": "help",
+    "com.apple.cursor.41": "crosshair",
+    "com.apple.cursor.42": "zoom_in",
+    "com.apple.cursor.43": "zoom_out",
+}
+
+
+def parse_xcursor(path):
+    """Return every image chunk in an xcursor file, grouped later by nominal size."""
+    with open(path, "rb") as f:
+        if f.read(4) != XCURSOR_MAGIC:
+            return []
+        _header_size, _version, ntoc = struct.unpack("<III", f.read(12))
+        toc = [struct.unpack("<III", f.read(12)) for _ in range(ntoc)]
+        images = []
+        for chunk_type, _chunk_subtype, position in toc:
+            if chunk_type != XCURSOR_IMAGE_TYPE:
+                continue
+            f.seek(position)
+            # hsize, type, subtype(nominal size), version, width, height, xhot, yhot, delay
+            _, _, size, _, width, height, xhot, yhot, delay = struct.unpack(
+                "<IIIIIIIII", f.read(36)
+            )
+            images.append(
+                {
+                    "size": size,
+                    "width": width,
+                    "height": height,
+                    "xhot": xhot,
+                    "yhot": yhot,
+                    "delay": delay if delay > 0 else 50,
+                    "pixels": f.read(width * height * 4),
+                }
+            )
+        return images
+
+
+def to_image(frame):
+    """xcursor stores ARGB little-endian, so the byte order on disk is B,G,R,A."""
+    return Image.frombytes(
+        "RGBA", (frame["width"], frame["height"]), frame["pixels"], "raw", "BGRA"
+    )
+
+
+def build_strip(frames, target_px):
+    """Stack frames into one vertical strip at target_px per frame, as a PNG blob."""
+    strip = Image.new("RGBA", (target_px, target_px * len(frames)), (0, 0, 0, 0))
+    for i, frame in enumerate(frames):
+        img = to_image(frame)
+        if img.size != (target_px, target_px):
+            img = img.resize((target_px, target_px), Image.LANCZOS)
+        strip.paste(img, (0, i * target_px))
+    buf = io.BytesIO()
+    strip.save(buf, "PNG")
+    return buf.getvalue()
+
+
+def build_cursor(images):
+    """Turn one xcursor's images into a cape cursor dict, or None if unusable."""
+    by_size = defaultdict(list)
+    for img in images:
+        by_size[img["size"]].append(img)
+    if not by_size:
+        return None
+
+    reps = []
+    frame_count = None
+    delay_ms = None
+    hotspot = None
+
+    for scale, nominal in REP_SIZES:
+        source = nominal if nominal in by_size else max(by_size)
+        frames = by_size[source]
+        if len(frames) > MAX_FRAMES:
+            step = len(frames) / MAX_FRAMES
+            frames = [frames[int(i * step)] for i in range(MAX_FRAMES)]
+            delay_ms = frames[0]["delay"] * (len(by_size[source]) / MAX_FRAMES)
+        if frame_count is None:
+            frame_count = len(frames)
+            delay_ms = delay_ms or frames[0]["delay"]
+            # Hotspot is expressed in points, so normalise out of the source size.
+            first = frames[0]
+            hotspot = (
+                first["xhot"] / first["width"] * POINTS,
+                first["yhot"] / first["height"] * POINTS,
+            )
+        elif len(frames) != frame_count:
+            # Sizes disagree on frame count; keep the strips consistent.
+            frames = frames[:frame_count]
+        reps.append(build_strip(frames, POINTS * scale))
+
+    return {
+        "FrameCount": frame_count,
+        "FrameDuration": round(delay_ms / 1000.0, 6),
+        "HotSpotX": round(hotspot[0], 4),
+        "HotSpotY": round(hotspot[1], 4),
+        "PointsWide": float(POINTS),
+        "PointsHigh": float(POINTS),
+        "Representations": reps,
+    }
+
+
+def main():
+    ap = argparse.ArgumentParser(description=__doc__,
+                                 formatter_class=argparse.RawDescriptionHelpFormatter)
+    ap.add_argument("cursor_dir", nargs="?",
+                    help="xcursor theme 'cursors' directory "
+                         "(default: extract the vendored miku-cursor-linux archive)")
+    ap.add_argument("-o", "--out", default="miku-cursor.cape", help="output .cape path")
+    ap.add_argument("-n", "--name", default="Miku Cursor", help="cape display name")
+    ap.add_argument("-a", "--author", default="rifuki", help="cape author")
+    args = ap.parse_args()
+
+    tmp = None
+    if args.cursor_dir:
+        cursor_dir = Path(args.cursor_dir)
+    else:
+        if not VENDORED_ARCHIVE.exists():
+            sys.exit(f"error: {VENDORED_ARCHIVE} not found — pass a cursors directory instead")
+        tmp = tempfile.TemporaryDirectory()
+        # The `filter` argument only exists on newer Pythons; macOS ships 3.9 with the CLT.
+        extract_kwargs = {"filter": "data"} if hasattr(tarfile, "data_filter") else {}
+        with tarfile.open(VENDORED_ARCHIVE) as tar:
+            tar.extractall(tmp.name, **extract_kwargs)
+        cursor_dir = Path(tmp.name) / "miku-cursor-linux/cursors"
+
+    if not cursor_dir.is_dir():
+        sys.exit(f"error: {cursor_dir} not found")
+
+    cursors = {}
+    missing = []
+    for ident, name in CURSOR_MAP.items():
+        source = cursor_dir / name
+        if not source.exists():
+            missing.append(f"{ident} <- {name} (no such file)")
+            continue
+        images = parse_xcursor(source)
+        if not images:
+            missing.append(f"{ident} <- {name} (unreadable)")
+            continue
+        cursor = build_cursor(images)
+        if cursor is None:
+            missing.append(f"{ident} <- {name} (no usable sizes)")
+            continue
+        cursors[ident] = cursor
+
+    cape = {
+        "Author": args.author,
+        "CapeName": args.name,
+        "CapeVersion": 1.0,
+        "Cloud": False,
+        "Cursors": cursors,
+        "HiDPI": True,
+        "Identifier": f"local.{args.author}.{args.name.replace(' ', '')}",
+        "MinimumVersion": 2.0,
+        "Version": 1.0,
+    }
+
+    out = Path(args.out)
+    with open(out, "wb") as f:
+        plistlib.dump(cape, f)
+
+    animated = sum(1 for c in cursors.values() if c["FrameCount"] > 1)
+    print(f"wrote {out} ({out.stat().st_size / 1024:.0f} KB)")
+    print(f"  {len(cursors)} cursors, {animated} animated, {POINTS}pt @ 1x/2x/4x")
+    for line in missing:
+        print(f"  skipped: {line}")
+
+
+if __name__ == "__main__":
+    main()

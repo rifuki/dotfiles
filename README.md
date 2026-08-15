@@ -83,6 +83,7 @@ bash ~/.dotfiles/macos/uninstall-brew.sh
 | [Hot](https://formulae.brew.sh/cask/hot) | Menu bar thermal monitor |
 | [Google Chrome](https://www.google.com/chrome) | Browser |
 | [JetBrainsMono Nerd Font](https://www.nerdfonts.com) | Patched developer font |
+| [Mousecape](https://github.com/sdmj76/Mousecape-swiftUI) | Miku system cursor — same theme as Hyprland ([docs](docs/cursor-macos.md)) |
 
 ### Blockchain Tools (optional, macOS)
 | Tool | Description |
@@ -151,6 +152,9 @@ bash ~/.dotfiles/macos/uninstall-brew.sh
 │   │   ├── ghostty/       # Terminal config
 │   │   ├── skhd/          # Hotkey daemon
 │   │   └── yabai/         # Window manager
+│   ├── .local/
+│   │   └── bin/           # build-miku-cape (xcursor → Mousecape .cape)
+│   ├── assets/            # Prebuilt miku cursor cape + its LaunchAgent
 │   ├── .hyper.js          # Hyper terminal config
 │   ├── .zshrc             # macOS shell config
 │   ├── install.sh         # macOS installer

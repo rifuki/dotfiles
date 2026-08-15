@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>Label</key>
+	<string>com.rifuki.mousecape-miku</string>
+
+	<!-- Cursor registration is per-session and does not survive a reboot, so apply
+	     the cape at login. `listen` then stays resident and re-applies it on fast
+	     user switch, which otherwise reverts to the stock macOS cursors.
+
+	     $HOME is expanded by /bin/sh at run time, not by launchd, so this plist is
+	     portable and needs no path substitution at install. -->
+	<key>ProgramArguments</key>
+	<array>
+		<string>/bin/sh</string>
+		<string>-c</string>
+		<string>/Applications/Mousecape.app/Contents/MacOS/mousecloak apply "$HOME/Library/Application Support/Mousecape/capes/miku-cursor.cape" --suppress-copyright; exec /Applications/Mousecape.app/Contents/MacOS/mousecloak listen --suppress-copyright</string>
+	</array>
+
+	<key>RunAtLoad</key>
+	<true/>
+	<key>KeepAlive</key>
+	<true/>
+
+	<key>StandardOutPath</key>
+	<string>/tmp/mousecape-miku.log</string>
+	<key>StandardErrorPath</key>
+	<string>/tmp/mousecape-miku.log</string>
+</dict>
+</plist>

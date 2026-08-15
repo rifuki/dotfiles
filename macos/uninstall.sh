@@ -178,6 +178,15 @@ LABELS+=("SSH Keys (iCloud)")
 DESCRIPTIONS+=("~/.ssh symlink only")
 if [ -L "$HOME/.ssh" ]; then DETECTED+=(1); SELECTED+=(1); EXTERNAL+=(0); else DETECTED+=(0); SELECTED+=(0); EXTERNAL+=(0); fi
 
+# 15: Miku Cursor (Mousecape)
+LABELS+=("Miku Cursor")
+DESCRIPTIONS+=("Mousecape.app, cape, LaunchAgent — restores stock cursors")
+if [ -d "/Applications/Mousecape.app" ] || [ -f "$HOME/Library/LaunchAgents/com.rifuki.mousecape-miku.plist" ]; then
+  DETECTED+=(1); SELECTED+=(1); EXTERNAL+=(0)
+else
+  DETECTED+=(0); SELECTED+=(0); EXTERNAL+=(0)
+fi
+
 # 16: Deep Clean
 LABELS+=("Deep Clean")
 DESCRIPTIONS+=(".cache, .local, .npm, .wakatime, .gitconfig")
@@ -493,8 +502,32 @@ rm -f "$HOME/.node_repl_history"
 rm -rf "$HOME/.config/github-copilot" 2>/dev/null || true
 done_msg "Cache files removed"
 
-# ========== Deep Clean (index 15) ==========
+# ========== Miku Cursor (index 15) ==========
 if [ "${SELECTED[15]}" = "1" ]; then
+  step "Removing Miku cursor"
+
+  _mc_agent="$HOME/Library/LaunchAgents/com.rifuki.mousecape-miku.plist"
+  if [ -f "$_mc_agent" ]; then
+    launchctl bootout "gui/$(id -u)/com.rifuki.mousecape-miku" 2>/dev/null || true
+    rm -f "$_mc_agent"
+    done_msg "LaunchAgent removed"
+  fi
+
+  # Reset before deleting the app — mousecloak is what restores the stock cursors.
+  if [ -x "/Applications/Mousecape.app/Contents/MacOS/mousecloak" ]; then
+    "/Applications/Mousecape.app/Contents/MacOS/mousecloak" reset --suppress-copyright >/dev/null 2>&1 || true
+    done_msg "Stock cursors restored"
+  fi
+
+  rm -rf "/Applications/Mousecape.app"
+  rm -rf "$HOME/Library/Application Support/Mousecape"
+  rm -f "$HOME/.local/bin/build-miku-cape"
+  defaults delete com.sdmj76.Mousecape 2>/dev/null || true
+  done_msg "Mousecape removed"
+fi
+
+# ========== Deep Clean (index 16) ==========
+if [ "${SELECTED[16]}" = "1" ]; then
   step "Deep cleaning residue files"
 
   # Kill running processes that might recreate files
