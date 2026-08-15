@@ -126,6 +126,18 @@ CURSOR_MAP = {
 }
 
 
+# Under --mirror every cursor is flipped horizontally, which reverses the meaning of
+# any cursor that points sideways. Swapping the source names for those pairs keeps the
+# meaning right: the mirrored west-resize artwork is what east-resize should now show.
+# Vertical-only and symmetric cursors (ns, ew, crosshair, text, all-scroll) need nothing.
+MIRROR_SWAP = {
+    "w-resize": "e-resize",
+    "e-resize": "w-resize",
+    "nesw-resize": "nwse-resize",
+    "nwse-resize": "nesw-resize",
+}
+
+
 def parse_xcursor(path):
     """Return every image chunk in an xcursor file, grouped later by nominal size."""
     with open(path, "rb") as f:
@@ -215,18 +227,21 @@ def upscale(im, target, mode):
     return doubled
 
 
-def build_strip(frames, target_px, mode):
+def build_strip(frames, target_px, mode, mirror):
     """Stack frames into one vertical strip at target_px per frame, as a PNG blob."""
     strip = Image.new("RGBA", (target_px, target_px * len(frames)), (0, 0, 0, 0))
     for i, frame in enumerate(frames):
-        img = upscale(to_image(frame), target_px, mode)
+        img = to_image(frame)
+        if mirror:
+            img = img.transpose(Image.FLIP_LEFT_RIGHT)
+        img = upscale(img, target_px, mode)
         strip.paste(img, (0, i * target_px))
     buf = io.BytesIO()
     strip.save(buf, "PNG")
     return buf.getvalue()
 
 
-def build_cursor(images, mode):
+def build_cursor(images, mode, mirror):
     """Turn one xcursor's images into a cape cursor dict, or None if unusable."""
     by_size = defaultdict(list)
     for img in images:
@@ -245,12 +260,13 @@ def build_cursor(images, mode):
 
     # Hotspot is expressed in points, so normalise out of the source size.
     first = frames[0]
+    xhot = first["width"] - 1 - first["xhot"] if mirror else first["xhot"]
     hotspot = (
-        first["xhot"] / first["width"] * POINTS,
+        xhot / first["width"] * POINTS,
         first["yhot"] / first["height"] * POINTS,
     )
 
-    reps = [build_strip(frames, POINTS * scale, mode) for scale in REP_SCALES]
+    reps = [build_strip(frames, POINTS * scale, mode, mirror) for scale in REP_SCALES]
     frame_count = len(frames)
 
     return {
@@ -278,6 +294,9 @@ def main():
                     help="scale2x: rounds off staircase edges, stays crisp (default). "
                          "smooth: Scale2x then supersample, antialiased edges. "
                          "nearest: raw pixel doubling.")
+    ap.add_argument("-m", "--mirror", action="store_true",
+                    help="left-handed cursor: flip horizontally and move the hotspot to "
+                         "the top-right, so the body hides against the left screen edge")
     args = ap.parse_args()
 
     tmp = None
@@ -299,6 +318,8 @@ def main():
     cursors = {}
     missing = []
     for ident, name in CURSOR_MAP.items():
+        if args.mirror:
+            name = MIRROR_SWAP.get(name, name)
         source = cursor_dir / name
         if not source.exists():
             missing.append(f"{ident} <- {name} (no such file)")
@@ -307,7 +328,7 @@ def main():
         if not images:
             missing.append(f"{ident} <- {name} (unreadable)")
             continue
-        cursor = build_cursor(images, args.upscale)
+        cursor = build_cursor(images, args.upscale, args.mirror)
         if cursor is None:
             missing.append(f"{ident} <- {name} (no usable sizes)")
             continue
@@ -332,7 +353,8 @@ def main():
     animated = sum(1 for c in cursors.values() if c["FrameCount"] > 1)
     print(f"wrote {out} ({out.stat().st_size / 1024:.0f} KB)")
     print(f"  {len(cursors)} cursors, {animated} animated, {POINTS}pt from {MASTER_SIZE}px master @ "
-          f"{'/'.join(str(s) + 'x' for s in REP_SCALES)}, upscale={args.upscale}")
+          f"{'/'.join(str(s) + 'x' for s in REP_SCALES)}, upscale={args.upscale}"
+          f"{', mirrored' if args.mirror else ''}")
     for line in missing:
         print(f"  skipped: {line}")
 

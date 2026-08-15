@@ -168,6 +168,29 @@ cp /tmp/smooth.cape ~/Library/Application\ Support/Mousecape/capes/miku-cursor.c
 launchctl kickstart -k gui/$(id -u)/com.rifuki.mousecape-miku
 ```
 
+### Left-handed: `--mirror`
+
+The committed cape is built with `--mirror`, and this is deliberate rather than
+cosmetic. A stock cursor puts its hotspot at the top-left and draws the body down and to
+the right, so the body can slide off the right and bottom screen edges but never off the
+left or top — against those two edges the artwork always stays fully on screen and in
+the way. Mirroring moves the hotspot to the top-right (`31,0` of a 32 pt cursor) so the
+body hides against the left edge instead.
+
+Flipping reverses the meaning of anything that points sideways, so `MIRROR_SWAP` swaps
+the source artwork for those pairs: the mirrored west-resize art is what east-resize
+should now show. Verified after each rebuild by rendering `com.apple.cursor.30` (NESW)
+and `.34` (NWSE) from both variants — they must look identical, because the flip and the
+swap cancel out. Vertical and symmetric cursors need no swap.
+
+Build the right-handed variant by dropping the flag:
+
+```bash
+python3 ~/.dotfiles/macos/.local/bin/build-miku-cape -o /tmp/right.cape
+cp /tmp/right.cape ~/Library/Application\ Support/Mousecape/capes/miku-cursor.cape
+launchctl kickstart -k gui/$(id -u)/com.rifuki.mousecape-miku
+```
+
 ### Cursor Identifier Mapping
 
 macOS names cursors `com.apple.coregraphics.Arrow`, `com.apple.cursor.13`, and so on.
