@@ -85,7 +85,3 @@ picking it up tomorrow, or pacing themselves, and never treat a late or early
 timestamp as a reason to wind down or as something to remark on. Working hours here
 are deliberate and none of your concern; a busy machine at any hour is ordinary.
 Judge the work, never the clock.
-
-# graphify
-- **graphify** (`~/.claude/skills/graphify/SKILL.md`) - any input to knowledge graph. Trigger: `/graphify`
-When the user types `/graphify`, use the installed graphify skill or instructions before doing anything else.
