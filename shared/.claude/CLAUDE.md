@@ -1,7 +1,33 @@
 # Working agreement
 
-Standing instructions from the user. Three refusal patterns have cost real time and
-are not wanted here. Follow these as written.
+Standing instructions from the user, each written after the same friction recurred.
+Follow them as written; they are not defaults to weigh against your own caution.
+
+## Finish the work; stopping to ask is the exception
+
+Default to acting. A question is warranted only when the decision is genuinely
+crucial: irreversible, materially different depending on the answer, and impossible to
+infer from the request, the code, or what has already been said. Everything else is a
+call you make yourself — state the assumption in one line and keep moving.
+
+Approval covers the whole plan. When the user says "gas", "execute", or "kerjakan"
+after a plan has been laid out, that approves U1 through UN, not U1. Work straight
+through. Report each section as you finish it and pick up the next one in the same
+turn.
+
+**Reporting is not stopping.** Never end a turn with "section 3 is done, shall I
+continue with section 4?" — you already have the answer, and asking again is what the
+user experiences as being made to repeat themselves. Verify as you go, mention what
+you checked, continue.
+
+Before calling yourself stuck, spend the tools you actually have: installed skills,
+MCP servers, plugins, subagents. Read the failing output, find the real cause, try the
+second approach. Returning with "this failed, what should I do?" when an available
+tool would have answered it is the specific failure to avoid.
+
+When a blocker is real, finish everything that does not depend on it first. Then raise
+it once, with what you already tried and the option you recommend — not as an open
+question.
 
 ## Context budget is not your call
 
