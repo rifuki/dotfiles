@@ -291,6 +291,17 @@ else
   STATUS+=("nvim not installed"); SELECTED+=(0); EXTERNAL+=(0)
 fi
 
+# 18: Miku Cursor (Mousecape)
+LABELS+=("Miku Cursor")
+DESCRIPTIONS+=("Miku system cursor via Mousecape — same theme as Hyprland")
+if [ -d "/Applications/Mousecape.app" ] && [ -f "$HOME/Library/LaunchAgents/com.rifuki.mousecape-miku.plist" ]; then
+  STATUS+=("installed"); SELECTED+=(0); EXTERNAL+=(0)
+elif [ -d "/Applications/Mousecape.app" ]; then
+  STATUS+=("Mousecape found, cape not applied"); SELECTED+=(1); EXTERNAL+=(0)
+else
+  STATUS+=(""); SELECTED+=(1); EXTERNAL+=(0)
+fi
+
 _total=${#LABELS[@]}
 
 # ========== Draw Menu ==========
@@ -913,6 +924,78 @@ if [ "${SELECTED[13]}" = "1" ]; then
     fi
   else
     done_msg "sui-move-analyzer already installed"
+  fi
+fi
+
+# ========== 18: Miku Cursor (Mousecape) ==========
+if [ "${SELECTED[18]}" = "1" ]; then
+  step "Setting up Miku cursor"
+
+  # macOS has no cursor theme system. Mousecape registers cursors through a private
+  # CoreGraphics API, so no SIP change is needed, but registration is per-session —
+  # hence the LaunchAgent further down.
+  _mc_version="Swift_v1.1.4"
+  _mc_sha256="44d83f770c35cf0665afd464a19bf09e4cc58f3057b69df3d1af74e2c83d98da"
+  _mc_url="https://github.com/sdmj76/Mousecape-swiftUI/releases/download/${_mc_version}/Mousecape_swiftUI_v1.1.4.zip"
+
+  if [ ! -d "/Applications/Mousecape.app" ]; then
+    info_msg "Downloading Mousecape ${_mc_version}..."
+    _mc_tmp="$(mktemp -d)"
+    if curl -fsSL -o "$_mc_tmp/mousecape.zip" "$_mc_url"; then
+      # Pinned by hash: this build is adhoc-signed with no Team ID, so the checksum
+      # is the only thing vouching for it.
+      _mc_got="$(shasum -a 256 "$_mc_tmp/mousecape.zip" | cut -d' ' -f1)"
+      if [ "$_mc_got" = "$_mc_sha256" ]; then
+        unzip -oq "$_mc_tmp/mousecape.zip" -d "$_mc_tmp/x"
+        if [ -d "$_mc_tmp/x/Mousecape.app" ]; then
+          cp -R "$_mc_tmp/x/Mousecape.app" /Applications/
+          xattr -dr com.apple.quarantine /Applications/Mousecape.app 2>/dev/null || true
+          done_msg "Mousecape installed"
+        else
+          fail_msg "Mousecape.app not found in archive"
+        fi
+      else
+        fail_msg "Mousecape checksum mismatch — skipping"
+        info_msg "expected $_mc_sha256"
+        info_msg "got      $_mc_got"
+      fi
+    else
+      fail_msg "Could not download Mousecape"
+    fi
+    rm -rf "$_mc_tmp"
+  else
+    done_msg "Mousecape already installed"
+  fi
+
+  if [ -x "/Applications/Mousecape.app/Contents/MacOS/mousecloak" ]; then
+    # The cape is committed pre-built so this needs no Python or Pillow. Regenerate
+    # with build-miku-cape only when the pinned xcursor archive changes.
+    _cape_dir="$HOME/Library/Application Support/Mousecape/capes"
+    mkdir -p "$_cape_dir"
+    cp "$PLATFORM_DIR/assets/miku-cursor.cape" "$_cape_dir/miku-cursor.cape"
+
+    mkdir -p "$HOME/.local/bin"
+    ln -sf "$PLATFORM_DIR/.local/bin/build-miku-cape" "$HOME/.local/bin/build-miku-cape"
+
+    # A non-default pointer colour makes macOS ignore custom cursors outside the Dock.
+    if defaults read com.apple.universalaccess cursorOutlineColor &>/dev/null || \
+       defaults read com.apple.universalaccess cursorFillColor &>/dev/null; then
+      warn_msg "Custom pointer colour detected — cursors will only apply near the Dock"
+      info_msg "Fix: System Settings > Accessibility > Display > Pointer > Reset Color"
+    fi
+
+    _mc_agent="$HOME/Library/LaunchAgents/com.rifuki.mousecape-miku.plist"
+    mkdir -p "$HOME/Library/LaunchAgents"
+    launchctl bootout "gui/$(id -u)/com.rifuki.mousecape-miku" 2>/dev/null || true
+    cp "$PLATFORM_DIR/assets/com.rifuki.mousecape-miku.plist" "$_mc_agent"
+    if launchctl bootstrap "gui/$(id -u)" "$_mc_agent" 2>/dev/null; then
+      done_msg "Miku cursor applied (49 cursors) and set to persist at login"
+    else
+      warn_msg "LaunchAgent failed to load — applying cape for this session only"
+      "/Applications/Mousecape.app/Contents/MacOS/mousecloak" apply \
+        "$_cape_dir/miku-cursor.cape" --suppress-copyright >/dev/null 2>&1 || true
+    fi
+    info_msg "Apps with their own cursors (Terminal, Excel) keep their own"
   fi
 fi
 
