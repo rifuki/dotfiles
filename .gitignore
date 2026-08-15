@@ -46,3 +46,7 @@
 shared/.claude/*.json
 shared/.claude/*.local.json
 !shared/.claude/settings.json
+
+# Editor and tool backups — never publish
+**/*.bak
+**/*.bak.*
