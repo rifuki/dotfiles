@@ -498,39 +498,36 @@ if [ "$_is_vps" = "0" ]; then
     done_msg "theme_miku-cursor (hyprcursor) linked"
   fi
 
-  # miku-cursor-linux (xcursor) — download from GitHub if not installed
+  # miku-cursor-linux (xcursor) — vendored in-repo and version-pinned.
+  # 1.2.6 is the exact source the checked-in theme_miku-cursor was built from.
+  # Upstream "latest" is deliberately NOT followed: a newer release could ship
+  # different cursor art and silently change the cursor on a reinstall.
+  _cursor_ver="1.2.6"
+  _cursor_vendored="$LINUX_SHARED_DIR/assets/miku-cursor-linux-${_cursor_ver}.tar.xz"
   if [ ! -d "$HOME/.local/share/icons/miku-cursor-linux" ]; then
-    info_msg "Downloading miku-cursor-linux from GitHub..."
-    _cursor_tmp="$(mktemp -d)"
-    _cursor_url="$(curl -s https://api.github.com/repos/supermariofps/hatsune-miku-windows-linux-cursors/releases/latest \
-      | python3 -c "
-import sys, json
-data = json.load(sys.stdin)
-assets = data.get('assets', [])
-for a in assets:
-    n = a['name'].lower()
-    if 'linux' in n and (n.endswith('.tar.gz') or n.endswith('.tar.xz') or n.endswith('.zip')):
-        print(a['browser_download_url']); break
-" 2>/dev/null)"
-    if [ -n "$_cursor_url" ]; then
-      _cursor_file="$_cursor_tmp/cursor-pkg"
-      curl -L --progress-bar "$_cursor_url" -o "$_cursor_file"
-      mkdir -p "$HOME/.local/share/icons"
-      if file "$_cursor_file" | grep -q "Zip"; then
-        unzip -q "$_cursor_file" -d "$HOME/.local/share/icons/"
-      else
-        tar -xf "$_cursor_file" -C "$HOME/.local/share/icons/"
-      fi
-      rm -rf "$_cursor_tmp"
-      if [ -d "$HOME/.local/share/icons/miku-cursor-linux" ]; then
-        done_msg "miku-cursor-linux installed"
-      else
-        warn_msg "Extraction succeeded but miku-cursor-linux dir not found — check archive structure"
-      fi
+    mkdir -p "$HOME/.local/share/icons"
+    if [ -f "$_cursor_vendored" ]; then
+      info_msg "Installing miku-cursor-linux $_cursor_ver (vendored, no network)..."
+      tar -xf "$_cursor_vendored" -C "$HOME/.local/share/icons/" \
+        || warn_msg "Vendored archive failed to extract"
     else
-      warn_msg "Could not find Linux cursor asset — install manually from:"
-      warn_msg "https://github.com/supermariofps/hatsune-miku-windows-linux-cursors/releases"
+      info_msg "Vendored archive missing — downloading $_cursor_ver from GitHub..."
+      _cursor_tmp="$(mktemp -d)"
+      if curl -fL --progress-bar \
+        "https://github.com/supermariofps/hatsune-miku-windows-linux-cursors/releases/download/${_cursor_ver}/miku-cursor-linux.tar.xz" \
+        -o "$_cursor_tmp/cursor.tar.xz"; then
+        tar -xf "$_cursor_tmp/cursor.tar.xz" -C "$HOME/.local/share/icons/" \
+          || warn_msg "Downloaded archive failed to extract"
+      else
+        warn_msg "Download failed — install manually from:"
+        warn_msg "https://github.com/supermariofps/hatsune-miku-windows-linux-cursors/releases"
+      fi
       rm -rf "$_cursor_tmp"
+    fi
+    if [ -d "$HOME/.local/share/icons/miku-cursor-linux" ]; then
+      done_msg "miku-cursor-linux $_cursor_ver installed"
+    else
+      warn_msg "miku-cursor-linux missing — animated hyprcursor build will be skipped"
     fi
   else
     done_msg "miku-cursor-linux already installed"

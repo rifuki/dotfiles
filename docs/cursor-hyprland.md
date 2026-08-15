@@ -38,9 +38,66 @@ gsettings set org.gnome.desktop.interface cursor-size 24
 
 ---
 
+## Backup and Restore
+
+Both halves of the setup are committed, so the cursor survives a wiped machine even if
+upstream disappears:
+
+| What | Where in repo | Size |
+|---|---|---|
+| `theme_miku-cursor` (animated hyprcursor, 66 cursors + 65 aliases) | `linux/shared/.local/share/icons/theme_miku-cursor/` | 1.6 MB |
+| `miku-cursor-linux` (xcursor source, pinned **1.2.6**) | `linux/shared/assets/miku-cursor-linux-1.2.6.tar.xz` | 53 KB |
+| Generator | `linux/shared/.local/bin/build-miku-hyprcursor` | — |
+
+The archive is 53 KB because xcursor stores **uncompressed raw ARGB** bitmaps — 18 MB extracted
+compresses ~340×.
+
+`install.sh` extracts the vendored archive first and only falls back to a download. The version is
+**pinned to 1.2.6, not `latest`**: a future upstream release could ship different cursor art and
+silently change the cursor on a reinstall.
+
+`sha256` of the vendored archive:
+
+```
+6a13eec3928937575bc35435410f276410c899245d0ca98c7f9e1cc23f1f2689
+```
+
+### Restoring by hand
+
+```bash
+tar -xf ~/.dotfiles/linux/shared/assets/miku-cursor-linux-1.2.6.tar.xz \
+  -C ~/.local/share/icons/
+python3 ~/.local/bin/build-miku-hyprcursor    # rebuilds theme_miku-cursor, needs Pillow
+hyprctl setcursor theme_miku-cursor 24
+```
+
+`build-miku-hyprcursor` wipes and regenerates `~/.local/share/icons/theme_miku-cursor/hyprcursors/`.
+When `install.sh` has symlinked the repo copies in there, the wipe removes only those symlinks —
+the files in the repo are never touched.
+
+### Re-syncing the backup after a rebuild
+
+```bash
+rsync -a --delete ~/.local/share/icons/theme_miku-cursor/ \
+  ~/.dotfiles/linux/shared/.local/share/icons/theme_miku-cursor/
+```
+
+`.hlc` files are zip archives and `zipfile` stamps the build time into each entry, so rebuilt
+files are never byte-identical to the committed ones even when the cursors are the same. Compare
+the *contents* (`meta.hl` + PNGs), not the raw bytes, before assuming something drifted.
+
+---
+
 ## How `theme_miku-cursor` Was Created
 
 The hyprcursor theme was generated from `miku-cursor-linux` using a Python script that parses xcursor binary files directly. This was necessary because `xcur2png` (the standard tool) swaps the R and B channels, producing blue cursors instead of teal/cyan.
+
+> **The live theme is animated.** The generator that actually produces it is tracked at
+> `linux/shared/.local/bin/build-miku-hyprcursor` (installed to `~/.local/bin/`). It keeps every
+> animation frame — 32 frames per cursor at 116 ms (`default`, `wait`) and 83 ms (`progress`) —
+> and recreates the 65 legacy-name alias symlinks. The standalone script further down this page
+> is the simpler *static* variant, kept as a reference for converting other themes.
+> Run the real one with `python3 ~/.local/bin/build-miku-hyprcursor` (needs Pillow).
 
 ### The xcur2png Channel Swap Bug
 
@@ -103,7 +160,7 @@ define_size = 48, arrow_48.png, 0
 define_size = 64, arrow_64.png, 0
 ```
 
-The third field in `define_size` is the frame delay in milliseconds. `0` means static (one frame). **Use 0 unless you need animation** — see the animated cursor crash below.
+The third field in `define_size` is the frame delay in milliseconds. `0` means static (one frame); a non-zero delay with multiple `define_size` lines for the same size makes the cursor animated. The Miku theme uses animation (see the v0.49.0 crash note below — it does not apply to current Hyprland).
 
 `resize_algorithm` **must be** `bilinear`. See crash section below.
 
@@ -263,10 +320,13 @@ Cairo cannot create a surface for fractional-scaled sizes with no resize.
 
 **Fix (hyprcursor theme):** Set `resize_algorithm = bilinear` in every `meta.hl`.
 
-**Fix (animated cursors):** If the crash persists with animated cursors, make the theme
-static by setting `delay = 0` and using only one frame per size. Hyprland v0.49.0
-has a secondary bug in `tickAnimatedCursor` that crashes even with valid surfaces
-when any cursor has multiple frames.
+**Fix (animated cursors) — historical, v0.49.0 only:** Back then the crash persisted with
+animated cursors, so the theme was flattened to static (`delay = 0`, one frame per size)
+to work around a secondary bug in `tickAnimatedCursor`.
+
+**No longer needed.** Verified on **Hyprland 0.54.3** with fractional scale **1.33**: the fully
+animated theme (32 frames per cursor) runs without crashing. Do not flatten the theme to static
+on current Hyprland — you would lose the animation for nothing. Keep `resize_algorithm = bilinear`.
 
 ### xcur2png produces wrong colors (blue instead of teal)
 

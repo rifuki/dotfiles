@@ -1,4 +1,4 @@
 name = Miku Cursor
-description = Miku cursor (static, direct extract)
+description = Miku cursor (animated, converted from miku-cursor-linux)
 version = 0.1
 cursors_directory = hyprcursors
