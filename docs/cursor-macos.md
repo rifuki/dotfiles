@@ -45,18 +45,39 @@ build from the same 53 KB vendored tarball; only the output format differs.
 
 ### The LaunchAgent
 
+One shot at login, then it exits:
+
 ```
-mousecloak apply <cape>   # once at login
-exec mousecloak listen    # stays resident, re-applies on fast user switch
+mousecloak apply <cape>
 ```
 
 `$HOME` is expanded by `/bin/sh` at run time rather than by launchd, so the plist is
 portable and needs no path substitution at install time.
 
-Check it:
+**Do not add `mousecloak listen`.** It stays resident to re-apply the cape on fast user
+switch, but it runs an AppKit loop, so LaunchServices gives it a Dock tile — an icon
+that opens nothing, and that `KeepAlive` immediately restarts every time you quit it.
+Copying the binary out of the app bundle does not help; it still registers, just under
+the name `mousecloak` instead of `Mousecape`:
+
+```
+$ lsappinfo list | grep -i mousec
+75) "mousecloak" ASN:0x0-0x308308:
+    executable path="/Users/rifuki/.local/libexec/mousecloak"
+```
+
+Only wrapping it in an `LSUIElement` bundle would hide it, which is not worth carrying
+for fast user switching alone. If the cursor ever does revert, re-apply by hand:
 
 ```bash
-launchctl print gui/$(id -u)/com.rifuki.mousecape-miku | grep -E 'state|pid'
+launchctl kickstart gui/$(id -u)/com.rifuki.mousecape-miku
+```
+
+Check it — `state = not running` with `last exit code = 0` is the healthy result, not a
+failure:
+
+```bash
+launchctl print gui/$(id -u)/com.rifuki.mousecape-miku | grep -E 'state|last exit'
 tail /tmp/mousecape-miku.log
 ```
 

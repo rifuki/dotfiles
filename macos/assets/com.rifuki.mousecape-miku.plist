@@ -5,9 +5,18 @@
 	<key>Label</key>
 	<string>com.rifuki.mousecape-miku</string>
 
-	<!-- Cursor registration is per-session and does not survive a reboot, so apply
-	     the cape at login. `listen` then stays resident and re-applies it on fast
-	     user switch, which otherwise reverts to the stock macOS cursors.
+	<!-- Cursor registration is per-session and does not survive a reboot, so apply the
+	     cape once at login. The job exits immediately afterwards.
+
+	     Deliberately NOT `mousecloak listen`. That subcommand stays resident to
+	     re-apply the cape on fast user switch, but it runs an AppKit loop, so
+	     LaunchServices gives it a Dock tile — with no window to open and KeepAlive
+	     restarting it on every quit. Moving the binary out of the app bundle does not
+	     help; it still registers, just under the name "mousecloak". Only an
+	     LSUIElement bundle would hide it, which is not worth carrying for fast user
+	     switching alone. If the cursor ever does revert:
+
+	         launchctl kickstart gui/$(id -u)/com.rifuki.mousecape-miku
 
 	     $HOME is expanded by /bin/sh at run time, not by launchd, so this plist is
 	     portable and needs no path substitution at install. -->
@@ -15,12 +24,11 @@
 	<array>
 		<string>/bin/sh</string>
 		<string>-c</string>
-		<string>/Applications/Mousecape.app/Contents/MacOS/mousecloak apply "$HOME/Library/Application Support/Mousecape/capes/miku-cursor.cape" --suppress-copyright; exec /Applications/Mousecape.app/Contents/MacOS/mousecloak listen --suppress-copyright</string>
+		<string>/Applications/Mousecape.app/Contents/MacOS/mousecloak apply "$HOME/Library/Application Support/Mousecape/capes/miku-cursor.cape" --suppress-copyright</string>
 	</array>
 
+	<!-- No KeepAlive: this is a one-shot job, and KeepAlive would respawn it forever. -->
 	<key>RunAtLoad</key>
-	<true/>
-	<key>KeepAlive</key>
 	<true/>
 
 	<key>StandardOutPath</key>
