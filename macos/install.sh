@@ -294,10 +294,12 @@ fi
 # 18: Miku Cursor (Mousecape)
 LABELS+=("Miku Cursor")
 DESCRIPTIONS+=("Miku system cursor via Mousecape — same theme as Hyprland")
-if [ -d "/Applications/Mousecape.app" ] && [ -f "$HOME/Library/LaunchAgents/com.rifuki.mousecape-miku.plist" ]; then
+if [ -d "/Applications/Mousecape.app" ]; then
+  STATUS+=("old Mousecape.app found — will slim to CLI"); SELECTED+=(1); EXTERNAL+=(0)
+elif [ -x "$HOME/.local/libexec/mousecloak" ] && [ -f "$HOME/Library/LaunchAgents/com.rifuki.mousecape-miku.plist" ]; then
   STATUS+=("installed"); SELECTED+=(0); EXTERNAL+=(0)
-elif [ -d "/Applications/Mousecape.app" ]; then
-  STATUS+=("Mousecape found, cape not applied"); SELECTED+=(1); EXTERNAL+=(0)
+elif [ -x "$HOME/.local/libexec/mousecloak" ]; then
+  STATUS+=("mousecloak found, cape not applied"); SELECTED+=(1); EXTERNAL+=(0)
 else
   STATUS+=(""); SELECTED+=(1); EXTERNAL+=(0)
 fi
@@ -946,11 +948,16 @@ if [ "${SELECTED[18]}" = "1" ]; then
   # macOS has no cursor theme system. Mousecape registers cursors through a private
   # CoreGraphics API, so no SIP change is needed, but registration is per-session —
   # hence the LaunchAgent further down.
+  #
+  # Only the mousecloak CLI is kept, not the .app around it. mousecloak links nothing
+  # outside the system libraries and its adhoc signature survives the copy, so the
+  # bundle buys nothing here but a Launchpad icon for a GUI this setup never opens.
   _mc_version="Swift_v1.1.4"
   _mc_sha256="44d83f770c35cf0665afd464a19bf09e4cc58f3057b69df3d1af74e2c83d98da"
   _mc_url="https://github.com/sdmj76/Mousecape-swiftUI/releases/download/${_mc_version}/Mousecape_swiftUI_v1.1.4.zip"
+  _mc_bin="$HOME/.local/libexec/mousecloak"
 
-  if [ ! -d "/Applications/Mousecape.app" ]; then
+  if [ ! -x "$_mc_bin" ]; then
     info_msg "Downloading Mousecape ${_mc_version}..."
     _mc_tmp="$(mktemp -d)"
     if curl -fsSL -o "$_mc_tmp/mousecape.zip" "$_mc_url"; then
@@ -959,12 +966,14 @@ if [ "${SELECTED[18]}" = "1" ]; then
       _mc_got="$(shasum -a 256 "$_mc_tmp/mousecape.zip" | cut -d' ' -f1)"
       if [ "$_mc_got" = "$_mc_sha256" ]; then
         unzip -oq "$_mc_tmp/mousecape.zip" -d "$_mc_tmp/x"
-        if [ -d "$_mc_tmp/x/Mousecape.app" ]; then
-          cp -R "$_mc_tmp/x/Mousecape.app" /Applications/
-          xattr -dr com.apple.quarantine /Applications/Mousecape.app 2>/dev/null || true
-          done_msg "Mousecape installed"
+        if [ -x "$_mc_tmp/x/Mousecape.app/Contents/MacOS/mousecloak" ]; then
+          mkdir -p "$(dirname "$_mc_bin")"
+          cp "$_mc_tmp/x/Mousecape.app/Contents/MacOS/mousecloak" "$_mc_bin"
+          chmod +x "$_mc_bin"
+          xattr -dr com.apple.quarantine "$_mc_bin" 2>/dev/null || true
+          done_msg "mousecloak installed ($(du -h "$_mc_bin" | cut -f1))"
         else
-          fail_msg "Mousecape.app not found in archive"
+          fail_msg "mousecloak not found in archive"
         fi
       else
         fail_msg "Mousecape checksum mismatch — skipping"
@@ -976,10 +985,16 @@ if [ "${SELECTED[18]}" = "1" ]; then
     fi
     rm -rf "$_mc_tmp"
   else
-    done_msg "Mousecape already installed"
+    done_msg "mousecloak already installed"
   fi
 
-  if [ -x "/Applications/Mousecape.app/Contents/MacOS/mousecloak" ]; then
+  # Earlier revisions of this script installed the full app; drop it if it is around.
+  if [ -d "/Applications/Mousecape.app" ]; then
+    rm -rf "/Applications/Mousecape.app"
+    done_msg "Removed the old Mousecape.app (only the CLI is needed)"
+  fi
+
+  if [ -x "$_mc_bin" ]; then
     # The cape is committed pre-built so this needs no Python or Pillow. Regenerate
     # with build-miku-cape only when the pinned xcursor archive changes.
     _cape_dir="$HOME/Library/Application Support/Mousecape/capes"
@@ -1004,8 +1019,8 @@ if [ "${SELECTED[18]}" = "1" ]; then
       done_msg "Miku cursor applied (49 cursors) and set to persist at login"
     else
       warn_msg "LaunchAgent failed to load — applying cape for this session only"
-      "/Applications/Mousecape.app/Contents/MacOS/mousecloak" apply \
-        "$_cape_dir/miku-cursor.cape" --suppress-copyright >/dev/null 2>&1 || true
+      "$_mc_bin" apply "$_cape_dir/miku-cursor.cape" --suppress-copyright \
+        >/dev/null 2>&1 || true
     fi
     info_msg "Apps with their own cursors (Terminal, Excel) keep their own"
   fi
