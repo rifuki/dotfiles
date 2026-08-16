@@ -894,7 +894,11 @@ if [ -x "$SHARED_DIR/.claude/link-profiles.sh" ]; then
   # would dangle on any machine that does not have the tool.
   if ! command -v uv &>/dev/null && [ ! -x "$HOME/.local/bin/uv" ]; then
     info_msg "Installing uv (ships the obsidian-wiki / graphify skills)..."
-    curl -LsSf https://astral.sh/uv/install.sh | sh >/dev/null 2>&1 || warn_msg "uv install failed"
+    # UV_NO_MODIFY_PATH: the installer otherwise appends a line to ~/.zshrc, which
+    # is a tracked file — it would come back as an uncommitted diff on every machine.
+    # ~/.local/bin is already on PATH from the tracked .zshrc anyway.
+    curl -LsSf https://astral.sh/uv/install.sh \
+      | env UV_NO_MODIFY_PATH=1 sh >/dev/null 2>&1 || warn_msg "uv install failed"
   fi
   export PATH="$HOME/.local/bin:$PATH"
 
@@ -926,6 +930,12 @@ if [ -x "$SHARED_DIR/.claude/link-profiles.sh" ]; then
   # there), so a symlinked directory would put those writes inside the repo and
   # leave the working tree permanently dirty — the same trap settings.json was in.
   if [ -d "$SHARED_DIR/.claude/hooks" ]; then
+    # If an earlier revision symlinked the whole directory at the repo, linking
+    # scripts "into" it would rewrite the repo's own files as self-referential
+    # symlinks. Break that first.
+    if [ -L "$HOME/.claude/hooks" ]; then
+      rm -f "$HOME/.claude/hooks"
+    fi
     mkdir -p "$HOME/.claude/hooks"
     rm -f "$HOME/.claude/hooks/hooks"   # stray link from an earlier revision
     _hk=0
