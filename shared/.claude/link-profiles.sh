@@ -130,7 +130,11 @@ if [ "$mode" = check ]; then
     for item in "${SHARED[@]}"; do
       p="$d/$item"
       if [ -L "$p" ] && [ -e "$p" ]; then
-        :
+        # Aimed somewhere other than ~/.claude still resolves, but defeats the point:
+        # it puts whatever it points at — usually the repo — back in the write path.
+        [ "$(readlink "$p")" = "$CANON/$item" ] || {
+          echo "MISAIMED ~${p#$HOME} -> $(readlink "$p")  (expected ~/.claude/$item)"; rc=1
+        }
       elif [ -L "$p" ]; then
         echo "BROKEN  ~${p#$HOME} -> $(readlink "$p")"; rc=1
       elif [ -e "$p" ]; then
@@ -177,7 +181,19 @@ for d in "${profiles[@]}"; do
     src="$d/$item" dst="$CANON/$item"
 
     if [ -L "$src" ]; then
-      echo "   $item already linked"
+      # A symlink is not automatically the *right* symlink. Profiles created before
+      # settings.json stopped being a repo asset point straight at ~/.dotfiles, which
+      # bypasses the canonical file and puts the repo back in the write path — the
+      # exact thing seeding settings.json was meant to stop. Re-aim those.
+      if [ "$(readlink "$src")" = "$dst" ]; then
+        echo "   $item already linked"
+      elif [ "$mode" = dry ]; then
+        echo "   would re-aim $item: $(readlink "$src") -> $dst"
+      else
+        was="$(readlink "$src")"
+        rm -f "$src"; ln -s "$dst" "$src"
+        echo "   $item re-aimed: ${was/#$HOME/\~} -> ~/.claude/$item"
+      fi
       continue
     fi
 
