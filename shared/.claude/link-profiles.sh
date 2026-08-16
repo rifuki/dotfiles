@@ -192,7 +192,7 @@ for d in "${profiles[@]}"; do
       else
         was="$(readlink "$src")"
         rm -f "$src"; ln -s "$dst" "$src"
-        echo "   $item re-aimed: ${was/#$HOME/\~} -> ~/.claude/$item"
+        echo "   $item re-aimed: ~${was#$HOME} -> ~/.claude/$item"
       fi
       continue
     fi
