@@ -39,6 +39,12 @@ fi
 step()     { echo -e "\n${BOLD}${MAGENTA}  ◆ $1${NC}"; }
 done_msg() { echo -e "  ${GREEN}✔${NC} $1"; }
 warn_msg() { echo -e "  ${PEACH}▸${NC} $1"; }
+confirm() {
+  local _ans
+  printf "    %s [y/n]: " "$1"
+  read -r _ans < /dev/tty
+  case "${_ans}" in [yY]|[yY][eE][sS]) return 0 ;; *) return 1 ;; esac
+}
 
 # ========== Detect Installed Components ==========
 LABELS=()
@@ -188,7 +194,17 @@ else
   DETECTED+=(0); SELECTED+=(0); EXTERNAL+=(0)
 fi
 
-# 16: Deep Clean
+# 16: memmon
+LABELS+=("memmon")
+DESCRIPTIONS+=("Binaries, LaunchAgent and sampling database")
+if [ -x "$HOME/.local/bin/memmon-panel" ] \
+   || [ -f "$HOME/Library/LaunchAgents/dev.rifuki.memmon.panel.plist" ]; then
+  DETECTED+=(1); SELECTED+=(1); EXTERNAL+=(0)
+else
+  DETECTED+=(0); SELECTED+=(0); EXTERNAL+=(0)
+fi
+
+# 17: Deep Clean
 LABELS+=("Deep Clean")
 DESCRIPTIONS+=(".cache, .local, .npm, .wakatime, .gitconfig")
 DETECTED+=(1); SELECTED+=(0); EXTERNAL+=(0)
@@ -538,8 +554,28 @@ if [ "${SELECTED[15]}" = "1" ]; then
   done_msg "mousecloak removed"
 fi
 
-# ========== Deep Clean (index 16) ==========
+# ========== memmon (index 16) ==========
 if [ "${SELECTED[16]}" = "1" ]; then
+  step "Removing memmon"
+  launchctl bootout "gui/$(id -u)/dev.rifuki.memmon.panel" 2>/dev/null || true
+  rm -f "$HOME/Library/LaunchAgents/dev.rifuki.memmon.panel.plist"
+  rm -f "$HOME/.local/bin/memmon" "$HOME/.local/bin/memmon-bar" "$HOME/.local/bin/memmon-panel"
+  # The sampling database is the whole point of the tool — months of memory
+  # history that a reinstall cannot recreate. Ask before dropping it.
+  if [ -d "$HOME/.local/share/memmon" ]; then
+    if confirm "Delete the memmon database too ($(du -sh "$HOME/.local/share/memmon" | cut -f1) of sampled history)?"; then
+      rm -rf "$HOME/.local/share/memmon"
+      done_msg "Database removed"
+    else
+      warn_msg "Database kept at ~/.local/share/memmon"
+    fi
+  fi
+  # Source checkout is a git repo of its own; not this script's to delete.
+  done_msg "memmon removed"
+fi
+
+# ========== Deep Clean (index 17) ==========
+if [ "${SELECTED[17]}" = "1" ]; then
   step "Deep cleaning residue files"
 
   # Kill running processes that might recreate files
