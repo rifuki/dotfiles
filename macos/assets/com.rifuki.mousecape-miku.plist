@@ -24,7 +24,7 @@
 	<array>
 		<string>/bin/sh</string>
 		<string>-c</string>
-		<string>/Applications/Mousecape.app/Contents/MacOS/mousecloak apply "$HOME/Library/Application Support/Mousecape/capes/miku-cursor.cape" --suppress-copyright</string>
+		<string>"$HOME/.local/libexec/mousecloak" apply "$HOME/Library/Application Support/Mousecape/capes/miku-cursor.cape" --suppress-copyright</string>
 	</array>
 
 	<!-- No KeepAlive: this is a one-shot job, and KeepAlive would respawn it forever. -->

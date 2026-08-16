@@ -30,7 +30,7 @@ Verified working on macOS 26.5.2 (Tahoe), Apple Silicon: 49 of 49 cursors applie
 
 | Piece | Where |
 |---|---|
-| Mousecape.app (pinned `Swift_v1.1.4`) | `/Applications/Mousecape.app` |
+| `mousecloak` CLI (pinned `Swift_v1.1.4`) | `~/.local/libexec/mousecloak` |
 | Cape, committed pre-built | `macos/assets/miku-cursor.cape` → `~/Library/Application Support/Mousecape/capes/` |
 | LaunchAgent | `macos/assets/com.rifuki.mousecape-miku.plist` → `~/Library/LaunchAgents/` |
 | Generator | `macos/.local/bin/build-miku-cape` → symlinked into `~/.local/bin/` |
@@ -39,6 +39,15 @@ Verified working on macOS 26.5.2 (Tahoe), Apple Silicon: 49 of 49 cursors applie
 `install.sh` offers this as menu item **Miku Cursor**. The release zip is pinned by
 sha256 — that build is adhoc-signed with no Team ID, so the checksum is the only thing
 vouching for it.
+
+**Only `mousecloak` is kept, not the `.app` around it.** The GUI is for browsing and
+editing capes, none of which this setup does — `build-miku-cape` produces the cape and
+`mousecloak` applies it. The binary links nothing outside the system libraries and its
+adhoc signature survives being copied out, so the bundle bought nothing but a Launchpad
+icon: 1.7 MB instead of 8.9 MB, and nothing to click by accident. `install.sh` deletes
+`/Applications/Mousecape.app` if an earlier revision of this script left one behind.
+
+Grab the app from the same release if you ever want the GUI; it is not needed here.
 
 The xcursor archive is deliberately **not** duplicated under `macos/`. Both platforms
 build from the same 53 KB vendored tarball; only the output format differs.
@@ -220,7 +229,7 @@ The numbered ones are undocumented. The mapping in `build-miku-cape` was **not g
 xcursor name by looking at Apple's own artwork for it:
 
 ```bash
-/Applications/Mousecape.app/Contents/MacOS/mousecloak dump system.cape
+~/.local/libexec/mousecloak dump system.cape
 ```
 
 That is how `#11` is the closed hand and `#12` the open one, `#17`/`#18` are the left and
@@ -261,7 +270,7 @@ Prefer this over editing `POINTS`; the scale multiplier does not disturb the pix
 the way a non-integer `POINTS` does.
 
 ```bash
-mousecloak scale 1.2    # no argument prints the current scale
+~/.local/libexec/mousecloak scale 1.2   # no argument prints the current scale
 ```
 
 ---

@@ -180,8 +180,9 @@ if [ -L "$HOME/.ssh" ]; then DETECTED+=(1); SELECTED+=(1); EXTERNAL+=(0); else D
 
 # 15: Miku Cursor (Mousecape)
 LABELS+=("Miku Cursor")
-DESCRIPTIONS+=("Mousecape.app, cape, LaunchAgent — restores stock cursors")
-if [ -d "/Applications/Mousecape.app" ] || [ -f "$HOME/Library/LaunchAgents/com.rifuki.mousecape-miku.plist" ]; then
+DESCRIPTIONS+=("mousecloak, cape, LaunchAgent — restores stock cursors")
+if [ -x "$HOME/.local/libexec/mousecloak" ] || [ -d "/Applications/Mousecape.app" ] \
+   || [ -f "$HOME/Library/LaunchAgents/com.rifuki.mousecape-miku.plist" ]; then
   DETECTED+=(1); SELECTED+=(1); EXTERNAL+=(0)
 else
   DETECTED+=(0); SELECTED+=(0); EXTERNAL+=(0)
@@ -519,17 +520,22 @@ if [ "${SELECTED[15]}" = "1" ]; then
     done_msg "LaunchAgent removed"
   fi
 
-  # Reset before deleting the app — mousecloak is what restores the stock cursors.
-  if [ -x "/Applications/Mousecape.app/Contents/MacOS/mousecloak" ]; then
-    "/Applications/Mousecape.app/Contents/MacOS/mousecloak" reset --suppress-copyright >/dev/null 2>&1 || true
-    done_msg "Stock cursors restored"
-  fi
+  # Reset before deleting anything — mousecloak is what restores the stock cursors.
+  for _mc in "$HOME/.local/libexec/mousecloak" \
+             "/Applications/Mousecape.app/Contents/MacOS/mousecloak"; do
+    if [ -x "$_mc" ]; then
+      "$_mc" reset --suppress-copyright >/dev/null 2>&1 || true
+      done_msg "Stock cursors restored"
+      break
+    fi
+  done
 
-  rm -rf "/Applications/Mousecape.app"
+  rm -f "$HOME/.local/libexec/mousecloak"
+  rm -rf "/Applications/Mousecape.app"   # only present from older installs
   rm -rf "$HOME/Library/Application Support/Mousecape"
   rm -f "$HOME/.local/bin/build-miku-cape"
   defaults delete com.sdmj76.Mousecape 2>/dev/null || true
-  done_msg "Mousecape removed"
+  done_msg "mousecloak removed"
 fi
 
 # ========== Deep Clean (index 16) ==========
