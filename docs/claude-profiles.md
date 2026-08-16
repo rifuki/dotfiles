@@ -45,7 +45,7 @@ done
 | `projects/` | yes | transcripts *and* `memory/` live here |
 | `skills/` | yes | install once |
 | `plugins/` | yes | install once |
-| `settings.json` | yes | hooks, statusline, permissions |
+| `settings.json` | yes | hooks, statusline, permissions — shared across profiles, but **seeded from the repo, never symlinked to it** (see below) |
 | `CLAUDE.md` | yes | global instructions |
 | `.claude.json` | **no** | holds `oauthAccount` |
 | `.credentials.json` | **no** | per-account token |
@@ -79,6 +79,22 @@ default-profile session on a different account, in both directions.
 
 `settings.json` is shared, but `settings.local.json` overrides it and stays local, so
 each profile keeps its own `model`, `theme`, `tui`, `effortLevel`.
+
+## Why `settings.json` is copied, not symlinked
+
+Every profile's `settings.json` points at `~/.claude/settings.json`, but that canonical
+file is a **copy** of the repo's, not a link to it.
+
+It used to be a symlink, and that was a mistake worth recording. Claude Code rewrites
+`settings.json` every time you touch `/config`, so the link turned each UI change into
+an edit of a git-tracked file: the working tree was permanently dirty, and every single
+`git pull` conflicted on it. One machine sat like that for months.
+
+The repo copy is a starting point, not the source of truth. `link-profiles.sh` seeds it
+when missing, converts an old symlink back into a real file, and otherwise leaves yours
+alone. Machine-specific keys belong in `settings.local.json`, which is never shared and
+never tracked. To publish a setting you changed through the UI, copy it into the repo
+deliberately.
 
 ## Notification sounds
 

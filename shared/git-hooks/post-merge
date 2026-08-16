@@ -1,0 +1,57 @@
+#!/usr/bin/env bash
+# Warn when a pull brings in changes that only install.sh can wire into $HOME.
+#
+# `git pull` moves files into ~/.dotfiles. It never touches $HOME — creating the
+# symlinks is install.sh's job, on purpose, so a pull can't silently rewrite your
+# home directory. The gap that motivated this hook: a machine pulled 81 commits,
+# including the one that first wired Claude Code setup, and nothing said to re-run
+# the installer. The result was a broken Stop hook firing on every single turn
+# ("~/.claude/sounds/play.sh: No such file or directory") with no hint of the cause.
+#
+# This hook only reports. It changes nothing, and never fails the merge.
+
+set -uo pipefail
+
+DOTFILES="$(git rev-parse --show-toplevel 2>/dev/null)" || exit 0
+[ -n "$DOTFILES" ] || exit 0
+
+YELLOW=$'\033[38;2;255;184;108m'
+CYAN=$'\033[38;2;0;217;255m'
+DIM=$'\033[2m'
+NC=$'\033[0m'
+
+# Which paths in this merge need install.sh to take effect in $HOME?
+changed="$(git diff-tree -r --name-only --no-commit-id ORIG_HEAD HEAD 2>/dev/null)" || changed=""
+[ -n "$changed" ] || exit 0
+
+needs_install=""
+case "$changed" in
+  *shared/.config/*|*macos/.config/*|*linux/*/.config/*) needs_install="config" ;;
+esac
+case "$changed" in
+  *shared/.claude/*) needs_install="${needs_install:+$needs_install, }claude" ;;
+esac
+case "$changed" in
+  *macos/assets/*|*.local/bin/*) needs_install="${needs_install:+$needs_install, }assets" ;;
+esac
+
+linker="$DOTFILES/shared/.claude/link-profiles.sh"
+unlinked=""
+if [ -x "$linker" ] && [ -d "$HOME/.claude" ]; then
+  unlinked="$("$linker" --check 2>/dev/null | grep -E '^(UNSHARED|MISSING)' | head -5)"
+fi
+
+[ -n "$needs_install" ] || [ -n "$unlinked" ] || exit 0
+
+echo ""
+echo "${YELLOW}▸${NC} Pull touched files that only ${CYAN}install.sh${NC} can wire into \$HOME."
+[ -n "$needs_install" ] && echo "  ${DIM}areas: ${needs_install}${NC}"
+if [ -n "$unlinked" ]; then
+  echo "  ${DIM}~/.claude is not fully linked:${NC}"
+  echo "$unlinked" | sed "s/^/    ${DIM}/;s/$/${NC}/"
+fi
+echo "  ${DIM}run: ${NC}${CYAN}$DOTFILES/install.sh${NC}${DIM}   (or, for ~/.claude only:${NC}"
+echo "  ${DIM}     $linker )${NC}"
+echo ""
+
+exit 0

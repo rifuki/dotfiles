@@ -39,10 +39,43 @@ readonly NEVER=(.claude.json .credentials.json settings.local.json history.jsonl
 
 # Assets this repo ships for ~/.claude. Linked in only when it is safe: missing,
 # already linked, or byte-identical. Anything that has diverged is reported and left
-# alone — settings.json in particular drifts as you change things through the UI, and
-# the copy in the repo is usually the older one.
-ASSETS=(CLAUDE.md sounds statusline-command.sh settings.json)
+# alone.
+ASSETS=(CLAUDE.md sounds statusline-command.sh)
+
+# settings.json is seeded, never symlinked. Claude Code writes this file every time you
+# touch /config, so a symlink turns every UI change into an edit of a git-tracked file:
+# the working tree is permanently dirty and every pull conflicts. It is still shared
+# across profiles below — only the repo -> ~/.claude hop is a copy.
+#
+# The repo copy is a starting point, not the source of truth. Machine-specific keys
+# (tui, theme, model, autoCompactEnabled) belong in settings.local.json, which is in
+# NEVER above and therefore never shared and never tracked. To publish a change you
+# made through the UI, copy it into the repo deliberately.
+SEEDED=(settings.json)
 REPO_ASSETS="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
+seed_assets() {
+  local item src dst
+  for item in "${SEEDED[@]}"; do
+    src="$REPO_ASSETS/$item" dst="$CANON/$item"
+    [ -e "$src" ] || continue
+    if [ -L "$dst" ]; then
+      # Migration from the era when this was linked: keep the content, drop the link,
+      # so /config stops writing straight into the repo.
+      case "$(readlink "$dst")" in
+        "$REPO_ASSETS"/*)
+          if [ "$1" != dry ]; then rm -f "$dst"; cp "$src" "$dst"; fi
+          echo "   $item was a symlink into the repo -> replaced with a real copy" ;;
+        *) echo "   $item linked elsewhere — left alone" ;;
+      esac
+    elif [ ! -e "$dst" ]; then
+      [ "$1" = dry ] || cp "$src" "$dst"
+      echo "   $item seeded (copy, not a link)"
+    else
+      echo "   $item already present — left alone (yours is authoritative)"
+    fi
+  done
+}
 
 install_assets() {
   local item src dst
@@ -62,6 +95,7 @@ install_assets() {
       echo "   $item DIVERGED — left alone (yours is authoritative; copy it into the repo yourself if you want it tracked)"
     fi
   done
+  seed_assets "$1"
   echo
 }
 
