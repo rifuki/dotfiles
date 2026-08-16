@@ -1,0 +1,132 @@
+# Resources & Reference
+
+## Environment Variables
+
+```bash
+# Devnet
+SOLANA_RPC_ENDPOINT=https://rpc.magicblock.app/devnet
+ROUTER_ENDPOINT=https://devnet-router.magicblock.app/
+WS_ROUTER_ENDPOINT=wss://devnet-router.magicblock.app/
+
+# Mainnet
+SOLANA_RPC_ENDPOINT=https://rpc.magicblock.app/mainnet
+ROUTER_ENDPOINT=https://router.magicblock.app/
+
+# Set this from router getDelegationStatus result.fqdn for the account.
+EPHEMERAL_PROVIDER_ENDPOINT=https://devnet-as.magicblock.app/
+EPHEMERAL_WS_ENDPOINT=wss://devnet-as.magicblock.app/
+```
+
+## Status JSON API
+
+- Source of truth: `https://status.magicblock.app/api/services`
+- JSON path: `.environments[network].regions[region].servers[fqdn]`
+- Network keys: `mainnet`, `devnet`
+- Region keys: `asia`, `europe`, `usa`, `tee`
+- Service IDs: `er`, `rpc_router`, `pricing_oracle`, `vrf_oracle`
+- Live state: `.live_status[service]` (`true` = Operational, `false` = Down, missing = N/A)
+- Downtime history: `.metrics[service]` minutes per day aligned with `.meta.days` in UTC
+
+Current FQDNs are discoverable from the API. Common entries:
+
+| Network | Region | Status API FQDN                 |
+| ------- | ------ | ------------------------------- |
+| Mainnet | Asia   | `as.magicblock.app`             |
+| Mainnet | Europe | `eu.magicblock.app`             |
+| Mainnet | USA    | `us.magicblock.app`             |
+| Mainnet | TEE    | `mainnet-tee-as.magicblock.app` |
+| Devnet  | Asia   | `devnet-as.magicblock.app`      |
+| Devnet  | Europe | `devnet-eu.magicblock.app`      |
+| Devnet  | USA    | `devnet-us.magicblock.app`      |
+| Devnet  | TEE    | `devnet-tee-as.magicblock.app`  |
+
+Example:
+
+```bash
+curl -sS https://status.magicblock.app/api/services \
+  | jq '.environments.mainnet.regions.asia.servers["as.magicblock.app"].live_status'
+```
+
+## Version Requirements
+
+| Software | Version |
+| -------- | ------- |
+| Solana   | 3.1.9   |
+| Rust     | 1.89.0  |
+| Anchor   | 1.0.2   |
+| Node     | 24.10.0 |
+
+> Active examples target **Anchor 1.0.2**. Anchor 0.32.1 programs are kept
+> under `00-LEGACY_EXAMPLES/` in the engine examples repo for projects still
+> on the old line — see the feature-flag note below.
+
+## Key Program IDs
+
+| Program                  | Address                                        |
+| ------------------------ | ---------------------------------------------- |
+| Delegation Program       | `DELeGGvXpWV2fqJUhqcF5ZSYMS4JTLjteaAMARRSaeSh` |
+| Magic Program            | `Magic11111111111111111111111111111111111111`  |
+| Magic Context            | `MagicContext1111111111111111111111111111111`  |
+| Session Key Program      | `KeyspM2ssCJbqUhQ4k7sveSiY4WjnYsrXkC8oDbwde5`  |
+| Permission Program (PER) | `ACLseoPoyC3cBqoUtkbjZ4aDrkurZW86v19pXz2XQnp1` |
+| VRF Program              | `Vrf1RNUjXmQGjmQrQLvJHs9SNkvDJEsRVFPkfSQUwGz`  |
+| Ephemeral SPL Token      | `SPLxh1LVZzEkX99H6rqYizhytLWPZVV296zyYDPagv2`  |
+| Localnet Validator       | `mAGicPQYBMvcYveUZA5F5UNNwyHvfYh5xkLS2Fr1mev`  |
+
+Prefer the SDK constants over hardcoding these where available:
+`ephemeral_rollups_sdk::consts::PERMISSION_PROGRAM_ID`,
+`ephemeral_rollups_sdk::consts::ESPL_TOKEN_PROGRAM_ID`,
+`ephemeral_vrf_sdk::consts::VRF_PROGRAM_ID` (and `VRF_PROGRAM_IDENTITY`,
+`DEFAULT_QUEUE`, `DEFAULT_EPHEMERAL_QUEUE`).
+
+## Rust Dependencies
+
+```toml
+[dependencies]
+anchor-lang = { version = "1.0.2", features = ["init-if-needed"] }
+ephemeral-rollups-sdk = { version = "0.14.3", features = ["anchor"] }
+
+# Feature flag picks the Anchor line:
+#   "anchor"        → Anchor 1.0.x (current default)
+#   "anchor-compat" → Anchor 0.32.1 (legacy)
+# The "disable-realloc" feature no longer exists — drop it if migrating from <0.14.
+
+# Add the access-control feature for Private Ephemeral Rollups (PER)
+# ephemeral-rollups-sdk = { version = "0.14.3", features = ["anchor", "access-control"] }
+
+# For cranks
+magicblock-magic-program-api = { version = "0.10.1", default-features = false }
+bincode = "^1.3"
+sha2 = "0.10"
+
+# For VRF
+ephemeral-vrf-sdk = { version = "0.3.0", features = ["anchor"] }
+```
+
+## NPM Dependencies
+
+```json
+{
+  "dependencies": {
+    "@coral-xyz/anchor": "0.32.1",
+    "@magicblock-labs/ephemeral-rollups-sdk": "0.14.3"
+  }
+}
+```
+
+> The TypeScript `@coral-xyz/anchor` client stays on **0.32.1** even when the
+> on-chain program is built with Anchor 1.0.2 — the IDL/client are compatible,
+> so don't bump the npm anchor package to 1.x.
+
+## Documentation Links
+
+- [MagicBlock Documentation](https://docs.magicblock.gg/)
+- [Router getDelegationStatus](https://docs.magicblock.gg/pages/ephemeral-rollups-ers/api-reference/er/getDelegationStatus)
+- [MagicBlock Status API](https://status.magicblock.app/api/services)
+- [MagicBlock Engine Examples](https://github.com/magicblock-labs/magicblock-engine-examples)
+- [Ephemeral SPL Token](https://github.com/magicblock-labs/ephemeral-spl-token)
+- [MagicBlock Validator](https://github.com/magicblock-labs/magicblock-validator)
+- [Ephemeral Rollups SDK (Rust)](https://crates.io/crates/ephemeral-rollups-sdk)
+- [Ephemeral VRF SDK (Rust)](https://crates.io/crates/ephemeral-vrf-sdk)
+- [NPM Package](https://www.npmjs.com/package/@magicblock-labs/ephemeral-rollups-sdk)
+- [Private Payments API Reference](https://payments.magicblock.app/reference)

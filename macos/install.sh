@@ -860,8 +860,80 @@ fi
 if [ -x "$SHARED_DIR/.claude/link-profiles.sh" ]; then
   step "Setting up Claude Code"
   mkdir -p "$HOME/.claude"
+
+  # ~/.agents/skills holds the personal skills. ~/.claude/skills entries are relative
+  # symlinks into it (../../.agents/skills/<name>), so pointing ~/.agents at the repo
+  # keeps every one of them resolving.
+  if [ -d "$SHARED_DIR/.agents/skills" ]; then
+    if [ -L "$HOME/.agents" ]; then
+      ln -sfn "$SHARED_DIR/.agents" "$HOME/.agents"
+    elif [ -d "$HOME/.agents" ]; then
+      _ag_backup="$HOME/.agents-backup-$(date +%Y%m%d-%H%M%S)"
+      mv "$HOME/.agents" "$_ag_backup"
+      ln -s "$SHARED_DIR/.agents" "$HOME/.agents"
+      warn_msg "Existing ~/.agents moved to $(basename "$_ag_backup")"
+    else
+      ln -s "$SHARED_DIR/.agents" "$HOME/.agents"
+    fi
+    # Register each one as a personal skill; the loader follows symlinks.
+    mkdir -p "$HOME/.claude/skills"
+    _sk_new=0
+    for _sk in "$SHARED_DIR/.agents/skills"/*/; do
+      [ -d "$_sk" ] || continue
+      _sk_name="$(basename "$_sk")"
+      [ -e "$HOME/.claude/skills/$_sk_name" ] && continue
+      ln -s "../../.agents/skills/$_sk_name" "$HOME/.claude/skills/$_sk_name"
+      _sk_new=$((_sk_new + 1))
+    done
+    done_msg "Skills: $(ls "$SHARED_DIR/.agents/skills" | wc -l | tr -d ' ') available, $_sk_new newly linked"
+  fi
+
+  # obsidian-wiki and graphify ship their own skills inside the installed package.
+  # Register them from wherever uv put them rather than vendoring a copy into the
+  # repo — a vendored copy goes stale the moment the tool updates, and the symlinks
+  # would dangle on any machine that does not have the tool.
+  if ! command -v uv &>/dev/null && [ ! -x "$HOME/.local/bin/uv" ]; then
+    info_msg "Installing uv (ships the obsidian-wiki / graphify skills)..."
+    curl -LsSf https://astral.sh/uv/install.sh | sh >/dev/null 2>&1 || warn_msg "uv install failed"
+  fi
+  export PATH="$HOME/.local/bin:$PATH"
+
+  if command -v uv &>/dev/null; then
+    for _tool in obsidian-wiki graphifyy; do
+      uv tool list 2>/dev/null | grep -q "^$_tool " || {
+        info_msg "Installing $_tool via uv..."
+        uv tool install "$_tool" >/dev/null 2>&1 || warn_msg "$_tool install failed"
+      }
+    done
+    _pkg_linked=0
+    for _sd in "$HOME/.local/share/uv/tools"/*/lib/python*/site-packages/*/_data/skills; do
+      [ -d "$_sd" ] || continue
+      for _sk in "$_sd"/*/; do
+        [ -d "$_sk" ] || continue
+        _sk_name="$(basename "$_sk")"
+        [ -e "$HOME/.claude/skills/$_sk_name" ] && continue
+        ln -s "$_sk" "$HOME/.claude/skills/$_sk_name"
+        _pkg_linked=$((_pkg_linked + 1))
+      done
+    done
+    [ "$_pkg_linked" -gt 0 ] && done_msg "Linked $_pkg_linked skill(s) shipped by uv tools"
+  else
+    warn_msg "uv not installed — skipping obsidian-wiki/graphify skills"
+  fi
+
+  if [ -d "$SHARED_DIR/.claude/hooks" ]; then
+    ln -sfn "$SHARED_DIR/.claude/hooks" "$HOME/.claude/hooks"
+    done_msg "Hook scripts linked"
+  fi
+
   "$SHARED_DIR/.claude/link-profiles.sh" | sed 's/^/  /'
   done_msg "Claude Code assets linked"
+
+  # MCP lives in .claude.json, which link-profiles.sh never shares — so each profile
+  # needs its own copy of the same server list.
+  if [ -x "$SHARED_DIR/.claude/apply-mcp-servers.sh" ]; then
+    "$SHARED_DIR/.claude/apply-mcp-servers.sh" | sed 's/^/  /'
+  fi
 fi
 
 # ========== Hush Login ==========
