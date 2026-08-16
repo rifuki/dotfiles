@@ -51,3 +51,6 @@ shared/.claude/*.local.json
 # Editor and tool backups — never publish
 **/*.bak
 **/*.bak.*
+
+# Hook runtime state — regenerated, never committed
+shared/.claude/hooks/.do-inventory-cache.json

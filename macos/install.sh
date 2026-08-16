@@ -921,9 +921,27 @@ if [ -x "$SHARED_DIR/.claude/link-profiles.sh" ]; then
     warn_msg "uv not installed — skipping obsidian-wiki/graphify skills"
   fi
 
+  # Link the scripts individually rather than the directory. Hooks write runtime
+  # state next to themselves (do-raflux-guard.py keeps .do-inventory-cache.json
+  # there), so a symlinked directory would put those writes inside the repo and
+  # leave the working tree permanently dirty — the same trap settings.json was in.
   if [ -d "$SHARED_DIR/.claude/hooks" ]; then
-    ln -sfn "$SHARED_DIR/.claude/hooks" "$HOME/.claude/hooks"
-    done_msg "Hook scripts linked"
+    mkdir -p "$HOME/.claude/hooks"
+    rm -f "$HOME/.claude/hooks/hooks"   # stray link from an earlier revision
+    _hk=0
+    for _h in "$SHARED_DIR/.claude/hooks"/*; do
+      [ -f "$_h" ] || continue
+      ln -sf "$_h" "$HOME/.claude/hooks/$(basename "$_h")"
+      _hk=$((_hk + 1))
+    done
+    done_msg "Hook scripts linked ($_hk)"
+  fi
+
+  # compound-engineering ships its skills inside the plugin; the skill loader does
+  # not pick them up from there, so they need registering as personal skills.
+  if [ -x "$SHARED_DIR/.claude/sync-ce-skills.sh" ] \
+     && [ -d "$HOME/.claude/plugins/cache/compound-engineering-plugin" ]; then
+    "$SHARED_DIR/.claude/sync-ce-skills.sh" 2>&1 | tail -1 | sed 's/^/  /'
   fi
 
   "$SHARED_DIR/.claude/link-profiles.sh" | sed 's/^/  /'
