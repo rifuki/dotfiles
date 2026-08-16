@@ -1,11 +1,14 @@
 #!/usr/bin/env bash
 # Restart yabai when its resident memory crosses a threshold.
 #
-# yabai leaks steadily — on this setup roughly 100-130 MB per hour, so an
-# uninterrupted day reaches 2-3 GB. `yabai --restart-service` brings it back to
-# ~30 MB and preserves the window layout, so the cheap fix is to do that on a
-# threshold rather than on a schedule: no restart while it is behaving, and no
-# unbounded growth when it is not.
+# yabai grows with window-event load, not with uptime. Measured on this machine:
+# 130-160 MB/hour through a busy stretch of many terminals opening and closing,
+# then 29 MB after 8.5 hours of light use — no drift at all. So a nightly restart
+# would fire on the quiet days and still let a busy afternoon run away.
+#
+# A threshold handles both: nothing happens while yabai is behaving, and a busy
+# spell gets capped wherever it lands. `yabai --restart-service` returns it to
+# ~30 MB and keeps the window layout, so the restart itself costs nothing.
 #
 #   memory-guard.sh              # check once, restart if over the limit
 #   memory-guard.sh --status     # print current usage and do nothing
