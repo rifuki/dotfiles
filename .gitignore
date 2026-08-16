@@ -46,6 +46,7 @@
 shared/.claude/*.json
 shared/.claude/*.local.json
 !shared/.claude/settings.json
+!shared/.claude/mcp-servers.json
 
 # Editor and tool backups — never publish
 **/*.bak

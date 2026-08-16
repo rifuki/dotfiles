@@ -1,0 +1,30 @@
+{
+  "_comment": [
+    "MCP servers to register on every machine and in every Claude profile.",
+    "",
+    "These live here rather than in settings.json because Claude Code keeps user-scope",
+    "MCP config in ~/.claude.json — a file link-profiles.sh refuses to share, since it",
+    "also holds oauthAccount and gets rewritten constantly. So each profile needs its",
+    "own copy, and apply-mcp-servers.sh merges this file into all of them.",
+    "",
+    "Never put credentials in here: this repo is public. Anything needing a token",
+    "belongs in that profile's ~/.claude.json by hand, or in an env var the command",
+    "reads at runtime."
+  ],
+  "mcpServers": {
+    "graphify": {
+      "type": "stdio",
+      "command": "graphify-mcp",
+      "args": ["--transport", "stdio"],
+      "env": {}
+    },
+    "monkies": {
+      "type": "http",
+      "url": "https://monkies-mcp.monklabs.io/mcp"
+    },
+    "rill-swap-stake": {
+      "type": "http",
+      "url": "https://api.rill.naisu.one/api/mcp/skill_efcd"
+    }
+  }
+}

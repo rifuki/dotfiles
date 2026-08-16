@@ -1,0 +1,4 @@
+interface:
+  display_name: "MagicBlock"
+  short_description: "MagicBlock Ephemeral Rollups development and debugging patterns"
+  default_prompt: "Use the magicblock skill to help integrate or debug MagicBlock Ephemeral Rollups in this Solana project, including router getDelegationStatus, delegation flows, transaction routing, cranks, VRF, or private payments."
