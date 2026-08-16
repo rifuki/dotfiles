@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>Label</key>
+	<string>dev.rifuki.memmon.panel</string>
+
+	<!-- memmon-panel draws the menu bar figure and owns the popover; it is the only
+	     piece that needs to stay resident. memmon (CLI) and memmon-bar are invoked
+	     on demand and need no agent of their own.
+
+	     Run through /bin/sh so $HOME is expanded at run time rather than baked in —
+	     launchd does not expand variables in ProgramArguments, and a hardcoded
+	     /Users/<name> path does not survive being restored onto another machine. -->
+	<key>ProgramArguments</key>
+	<array>
+		<string>/bin/sh</string>
+		<string>-c</string>
+		<string>exec "$HOME/.local/bin/memmon-panel"</string>
+	</array>
+
+	<key>RunAtLoad</key>
+	<true/>
+	<key>KeepAlive</key>
+	<true/>
+
+	<!-- A monitor must never compete with what it is monitoring. -->
+	<key>ProcessType</key>
+	<string>Background</string>
+	<key>LowPriorityIO</key>
+	<true/>
+	<key>Nice</key>
+	<integer>10</integer>
+
+	<key>StandardErrorPath</key>
+	<string>/tmp/memmon-panel.err.log</string>
+</dict>
+</plist>

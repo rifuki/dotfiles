@@ -304,6 +304,18 @@ else
   STATUS+=(""); SELECTED+=(1); EXTERNAL+=(0)
 fi
 
+# 19: memmon
+LABELS+=("memmon")
+DESCRIPTIONS+=("Memory creep monitor — menu bar + CLI, built from source")
+if [ -x "$HOME/.local/bin/memmon-panel" ] \
+   && [ -f "$HOME/Library/LaunchAgents/dev.rifuki.memmon.panel.plist" ]; then
+  STATUS+=("installed"); SELECTED+=(0); EXTERNAL+=(0)
+elif [ -d "$HOME/mgodonf/others/memmon/.git" ]; then
+  STATUS+=("source present, not built"); SELECTED+=(0); EXTERNAL+=(0)
+else
+  STATUS+=("private repo — needs GitHub SSH"); SELECTED+=(0); EXTERNAL+=(0)
+fi
+
 _total=${#LABELS[@]}
 
 # ========== Draw Menu ==========
@@ -1130,6 +1142,62 @@ if [ "${SELECTED[18]}" = "1" ]; then
         >/dev/null 2>&1 || true
     fi
     info_msg "Apps with their own cursors (Terminal, Excel) keep their own"
+  fi
+fi
+
+# ========== 19: memmon ==========
+if [ "${SELECTED[19]}" = "1" ]; then
+  step "Setting up memmon"
+
+  _mm_src="$HOME/mgodonf/others/memmon"
+  _mm_repo="git@github.com:rifuki/memmon.git"
+
+  # Private repo, and the GitHub key is passphrase-protected. On a machine whose
+  # keychain has not seen that passphrase yet the clone fails — say so plainly
+  # instead of leaving a half-installed state.
+  if [ ! -d "$_mm_src/.git" ]; then
+    info_msg "Cloning memmon..."
+    mkdir -p "$(dirname "$_mm_src")"
+    if ! git clone -q "$_mm_repo" "$_mm_src" 2>/dev/null; then
+      fail_msg "Could not clone memmon (private repo)"
+      info_msg "Unlock the key once, then re-run:"
+      info_msg "  ssh-add --apple-use-keychain ~/.ssh/github/github-rifuki"
+      _mm_src=""
+    fi
+  else
+    git -C "$_mm_src" pull --ff-only -q 2>/dev/null || true
+    done_msg "Source up to date"
+  fi
+
+  if [ -n "$_mm_src" ] && [ -d "$_mm_src" ]; then
+    if ! command -v cargo &>/dev/null && [ ! -x "$HOME/.cargo/bin/cargo" ]; then
+      warn_msg "Rust not installed — select it in the menu and re-run"
+    else
+      export PATH="$HOME/.cargo/bin:$PATH"
+      # egui + accesskit make this a long build; run it in tmux like the other
+      # slow one so the installer is not blocked for ten minutes.
+      if command -v tmux &>/dev/null; then
+        tmux kill-session -t memmon-build 2>/dev/null || true
+        info_msg "Building in a background tmux session..."
+        tmux new-session -d -s memmon-build -n memmon \
+          "cd '$_mm_src' && cargo build --release && \
+           mkdir -p \"\$HOME/.local/bin\" && \
+           for b in memmon memmon-bar memmon-panel; do \
+             [ -f target/release/\$b ] && install -m 755 target/release/\$b \"\$HOME/.local/bin/\$b\"; \
+           done && \
+           launchctl bootout gui/\$(id -u)/dev.rifuki.memmon.panel 2>/dev/null; \
+           cp '$PLATFORM_DIR/assets/dev.rifuki.memmon.panel.plist' \"\$HOME/Library/LaunchAgents/\" && \
+           launchctl bootstrap gui/\$(id -u) \"\$HOME/Library/LaunchAgents/dev.rifuki.memmon.panel.plist\" && \
+           echo '' && echo 'memmon installed — menu bar item should appear.'; \
+           read -r _dummy"
+        done_msg "Build started in background"
+        echo -e "  ${DIM}Monitor:  tmux attach -t memmon-build${NC}"
+        echo -e "  ${DIM}Detach:   Ctrl+b then d${NC}"
+      else
+        warn_msg "tmux not installed — build memmon by hand:"
+        info_msg "  cd $_mm_src && cargo build --release"
+      fi
+    fi
   fi
 fi
 
