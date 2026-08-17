@@ -1,6 +1,11 @@
 ## Necessary Setup
-yabai -m signal --add event=dock_did_restart action="sudo yabai --load-sa"  # Reload SA after restart
+# --load-sa restarts Dock to inject the payload, which means the SA is briefly
+# down while the rest of this file runs. Settings that need it are in
+# sa_config.sh and get re-applied once Dock is back -- see that file for why.
 sudo yabai --load-sa  # Load scripting addition
+yabai -m signal --add event=dock_did_restart \
+  action="sudo yabai --load-sa && $HOME/.config/yabai/sa_config.sh" \
+  label=reload_sa
 
 ## Signals
 # Window Ghostty baru muncul di monitor tempat kursor aktif (bukan main display).
@@ -19,7 +24,7 @@ yabai -m config mouse_modifier alt  # Hold Alt for mouse options
 yabai -m config mouse_action1 move      # default
 yabai -m config mouse_action2 resize    # default
 yabai -m config mouse_drop_action swap  # default
-yabai -m config focus_follows_mouse autofocus # Auto-raise on focus
+# focus_follows_mouse lives in sa_config.sh -- it needs the scripting addition
 # yabai -m config mouse_follows_focus on
 
 ## Padding & Gaps
@@ -30,13 +35,13 @@ yabai -m config right_padding 10
 yabai -m config window_gap 10
 
 ## Window Configs
+# The window_opacity family lives in sa_config.sh -- it needs the scripting addition.
+# window_topmost was dropped in yabai v7 and errored on every boot:
+#   unknown command 'window_topmost' for domain 'config'
+# The per-window replacement is `--sub-layer above` (or a rule with sub-layer=above).
+# This was set to the default, so there is nothing to carry over.
 yabai -m config window_animation_duration 0.2
 yabai -m config window_animation_easing   ease_out_quint
-yabai -m config window_opacity            on
-yabai -m config window_opacity_duration   0.25
-yabai -m config active_window_opacity     0.95
-yabai -m config normal_window_opacity     0.85
-yabai -m config window_topmost            off
 yabai -m config window_shadow             on
 
 ## Disable Window Management for Specific Apps
@@ -46,3 +51,8 @@ yabai -m rule --add app="Calculator" manage=off
 yabai -m rule --add app="Raycast" manage=off
 yabai -m rule --add app="CleanMyMac X" manage=off
 yabai -m rule --add app="Google Chrome" title="(MetaMask.*|Keplr.*|HaHa.*|.*Wallet.*)" manage=off
+
+## Scripting-addition config
+# Applied last so the SA has had the whole file to come back up after --load-sa.
+# Re-applied by the dock_did_restart signal as well.
+"$HOME/.config/yabai/sa_config.sh"
