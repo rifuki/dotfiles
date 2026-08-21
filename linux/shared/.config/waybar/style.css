@@ -43,7 +43,6 @@
   padding: 0.35rem 0.75rem;
   background-color: @bg;
   border: 1px solid @border;
-  box-shadow: 0 10px 26px rgba(0, 0, 0, 0.28);
   transition: background-color 180ms ease, color 180ms ease, border-color 180ms ease;
 }
 
