@@ -91,7 +91,7 @@ if [ -z "$_RESUME_SEL" ]; then
   LABELS+=("Arch Desktop + Fonts")
   DESCRIPTIONS+=("Hyprland, Waybar, Wofi, Ghostty, PipeWire, NetworkManager, Bluetooth, fonts, screenshot tools")
   _desktop_count=0
-  for _cmd in Hyprland waybar wofi ghostty hyprlock hyprpaper dunstify grim slurp wl-copy brightnessctl nvim zsh; do
+  for _cmd in Hyprland waybar fuzzel ghostty hyprlock hyprpaper dunstify grim slurp wl-copy brightnessctl nvim zsh; do
     command -v "$_cmd" &>/dev/null && ((_desktop_count++)) || true
   done
   if ls "$HOME/.local/share/fonts/JetBrainsMono"*"NerdFont"* &>/dev/null 2>&1 || fc-match "JetBrainsMono Nerd Font" >/dev/null 2>&1; then
@@ -239,7 +239,7 @@ if [ "${SELECTED[0]}" = "1" ]; then
   _desktop_pkgs=(
     base-devel git curl wget unzip zsh tmux neovim htop ripgrep fd fzf yazi lua luarocks trash-cli
     xdg-user-dirs xdg-utils fontconfig terminus-font ttf-jetbrains-mono-nerd ttf-firacode-nerd noto-fonts noto-fonts-cjk noto-fonts-emoji
-    hyprland xdg-desktop-portal-hyprland waybar wofi ghostty hyprpaper hyprlock swww dunst grim slurp wl-clipboard swappy satty
+    hyprland xdg-desktop-portal-hyprland waybar fuzzel ghostty hyprpaper hyprlock swww dunst grim slurp wl-clipboard swappy satty
     pipewire pipewire-alsa pipewire-pulse pipewire-jack wireplumber pavucontrol playerctl brightnessctl
     networkmanager bluez bluez-utils blueman dolphin ark qt5-wayland qt6-wayland qt5ct qt6ct papirus-icon-theme adw-gtk-theme
     python-gobject gtk3 imagemagick polkit-kde-agent cliphist wtype github-cli
@@ -424,7 +424,7 @@ if [ "$_is_vps" = "0" ]; then
     done_msg "~/.config/$_name (arch)"
   done
 else
-  warn_msg "VPS detected — skipping desktop configs (hypr, waybar, wofi, dunst, ghostty)"
+  warn_msg "VPS detected — skipping desktop configs (hypr, waybar, fuzzel, dunst, ghostty)"
 fi
 
 # Symlink cross-platform shared bin scripts

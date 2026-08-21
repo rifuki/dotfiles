@@ -98,7 +98,7 @@ bash ~/.dotfiles/macos/uninstall-brew.sh
 |------|-------------|
 | [Hyprland](https://hyprland.org) | Wayland tiling compositor |
 | [Waybar](https://github.com/Alexays/Waybar) | Status bar |
-| [Wofi](https://hg.sr.ht/~scoopta/wofi) | App launcher |
+| [Fuzzel](https://codeberg.org/dnkl/fuzzel) | App launcher |
 | [Ghostty](https://ghostty.org) | Terminal emulator |
 | [hyprlock](https://github.com/hyprwm/hyprlock) | Screen locker |
 | [hyprpaper](https://github.com/hyprwm/hyprpaper) | Wallpaper daemon |
@@ -174,7 +174,7 @@ bash ~/.dotfiles/macos/uninstall-brew.sh
 │   │   ├── ghostty/       # Terminal emulator config
 │   │   ├── hypr/          # Hyprland + hyprlock + hyprpaper
 │   │   ├── waybar/        # Rifuki Shell bar
-│   │   └── wofi/          # App launcher + dmenu popups
+│   │   └── fuzzel/        # App launcher
 │   ├── .local/
 │   │   └── bin/           # Screenshot scripts
 │   ├── .zprofile          # Auto-start Hyprland on TTY1
@@ -187,7 +187,7 @@ bash ~/.dotfiles/macos/uninstall-brew.sh
 │   │   ├── ghostty/       # Terminal emulator config
 │   │   ├── hypr/          # Hyprland + hyprlock + hyprpaper
 │   │   ├── waybar/        # Status bar (TokyoNight theme)
-│   │   └── wofi/          # App launcher
+│   │   └── fuzzel/        # App launcher
 │   ├── .local/
 │   │   └── bin/           # Screenshot scripts + three-finger drag daemon
 │   ├── system/            # System config backup (reference only, not installed)

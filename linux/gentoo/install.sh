@@ -256,7 +256,7 @@ fi
 
 step "Checking Hyprland / desktop tools"
 _hypr_missing=()
-for _tool in hyprctl waybar wofi ghostty hyprlock hyprpaper grim slurp dunstify brightnessctl wl-copy wl-paste wtype cliphist python3 libinput ydotoold; do
+for _tool in hyprctl waybar fuzzel ghostty hyprlock hyprpaper grim slurp dunstify brightnessctl wl-copy wl-paste wtype cliphist python3 libinput ydotoold; do
   if command -v "$_tool" &>/dev/null; then
     done_msg "$_tool found"
   else
@@ -282,7 +282,7 @@ fi
 if [ "${#_hypr_missing[@]}" -gt 0 ]; then
   echo ""
   warn_msg "Missing desktop tools: ${_hypr_missing[*]}"
-  warn_msg "Install via portage, e.g.: sudo emerge gui-wm/hyprland gui-apps/waybar gui-apps/wofi gui-apps/grim gui-apps/slurp gui-apps/wl-clipboard x11-misc/dunst x11-misc/ydotool dev-libs/libinput x11-libs/gtk+ x11-libs/gdk-pixbuf dev-python/pygobject sys-apps/xdg-desktop-portal-gtk"
+  warn_msg "Install via portage, e.g.: sudo emerge gui-wm/hyprland gui-apps/waybar gui-apps/fuzzel gui-apps/grim gui-apps/slurp gui-apps/wl-clipboard x11-misc/dunst x11-misc/ydotool dev-libs/libinput x11-libs/gtk+ x11-libs/gdk-pixbuf dev-python/pygobject sys-apps/xdg-desktop-portal-gtk"
   warn_msg "wtype + cliphist require unmask: echo 'gui-apps/wtype ~amd64' | sudo tee /etc/portage/package.accept_keywords/wtype && echo 'app-misc/cliphist ~amd64' | sudo tee /etc/portage/package.accept_keywords/cliphist && sudo emerge gui-apps/wtype app-misc/cliphist"
   warn_msg "Optional: install gui-apps/swww for smoother wallpaper transitions. hyprpaper fallback still works."
   warn_msg "Three-finger drag also needs libinput device access and an accessible ydotoold socket."
@@ -539,7 +539,7 @@ if [ "$_is_vps" = "0" ]; then
     done_msg "~/.config/$_name (gentoo)"
   done
 else
-  warn_msg "VPS detected — skipping desktop configs (hypr, waybar, wofi, dunst, ghostty)"
+  warn_msg "VPS detected — skipping desktop configs (hypr, waybar, fuzzel, dunst, ghostty)"
 fi
 
 # Symlink cross-platform shared bin scripts
