@@ -1,0 +1,39 @@
+# =============================================================================
+#  wayvnc — server VNC untuk sesi Wayland
+# =============================================================================
+#  Dipakai dengan niri (dan Hyprland). Keduanya menyediakan tiga protokol
+#  wlroots yang dibutuhkan: zwlr_screencopy, zwlr_virtual_pointer, dan
+#  zwp_virtual_keyboard.
+#
+#  KEAMANAN — kenapa tanpa autentikasi:
+#  Server hanya mendengar di 127.0.0.1, jadi tidak ada port terbuka ke LAN;
+#  satu-satunya jalan masuk adalah terowongan SSH, dan SSH itulah lapisan
+#  autentikasinya. Ini pendekatan yang direkomendasikan README wayvnc sendiri.
+#
+#  Kalau suatu saat mau diekspos ke LAN, wayvnc BISA diautentikasi dengan cara
+#  yang dimengerti Screen Sharing bawaan macOS:
+#      enable_auth=true
+#      relax_encryption=true     # mengaktifkan Apple Diffie-Hellman
+#      password=...
+#      certificate_file=tls_cert.pem
+#      private_key_file=tls_key.pem
+#      use_relative_paths=true
+#  Cara membuat sertifikatnya ada di /usr/share/doc/wayvnc-0.10.1/README.md.bz2
+#
+#  Cara menyambung dari Mac:
+#      ssh -i fujitsu -L 5901:127.0.0.1:5900 rifuki@192.168.1.27
+#      open vnc://127.0.0.1:5901     # di tab terminal Mac yang LAIN
+#
+#  Port lokal 5901 dipakai karena macOS memakai 5900 untuk Screen Sharing
+#  miliknya sendiri (com.apple.screensharing.agent).
+#
+#  CATATAN: render_cursor, max_fps, dan nama desktop BUKAN kunci config —
+#  itu opsi baris perintah, dan diset di wayvnc.service.
+# =============================================================================
+
+address=127.0.0.1
+port=5900
+
+enable_auth=false
+
+xkb_layout=us

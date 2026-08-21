@@ -1,0 +1,344 @@
+// =============================================================================
+//  niri — config utama
+// =============================================================================
+//  Diterjemahkan dari ~/.config/hypr/conf/*.lua (Hyprland 0.56.2), 2026-08-19.
+//  Format: KDL — https://kdl.dev.  "/-" mengomentari node berikutnya.
+//  Skema diverifikasi terhadap niri 26.4.0 (resources/default-config.kdl
+//  + docs/wiki/ yang ikut terbundel di source ebuild guru).
+//
+//  Validasi setiap kali habis diedit:   niri validate
+// =============================================================================
+
+
+// ─────────────────────────────────────────────────────────────────────────────
+//  INPUT  — dari conf/input.lua
+// ─────────────────────────────────────────────────────────────────────────────
+input {
+    keyboard {
+        xkb {
+            layout "us"
+        }
+        // Hyprland: repeat_rate 70 / repeat_delay 150
+        repeat-rate 70
+        repeat-delay 150
+    }
+
+    touchpad {
+        tap                             // hyprland: tap_to_click = true
+        drag true                       // hyprland: tap_and_drag = true
+        dwt                             // hyprland: disable_while_typing = true
+        natural-scroll                  // hyprland: natural_scroll = true
+        scroll-factor 0.4               // hyprland: scroll_factor = 0.4
+        click-method "clickfinger"      // hyprland: clickfinger_behavior = true
+        accel-speed 0.0                 // hyprland: sensitivity = 0
+        // drag-lock TIDAK diaktifkan — hyprland: drag_lock = false
+        // middle-emulation TIDAK diaktifkan — hyprland: middle_button_emulation = false
+    }
+
+    mouse {
+        accel-speed 0.0
+    }
+
+    // hyprland: follow_mouse = 1
+    focus-follows-mouse
+}
+
+
+// ─────────────────────────────────────────────────────────────────────────────
+//  OUTPUT  — dari conf/monitors.lua
+// ─────────────────────────────────────────────────────────────────────────────
+//  Hyprland pakai output "" (semua monitor) dengan scale 1.333.
+//  niri butuh nama eksplisit; panel internal laptop ini = eDP-1
+//  (dicek lewat /sys/class/drm: card0-eDP-1, card0-DP-1, card0-DP-2).
+//  Daftar lengkap saat niri jalan:  niri msg outputs
+output "eDP-1" {
+    // Hyprland punya mode "preferred"; di niri padanannya adalah MENGHILANGKAN
+    // baris `mode` sama sekali — niri lalu memilih mode terbaik sendiri.
+    // (niri hanya menerima format "LEBARxTINGGI" atau "LEBARxTINGGI@REFRESH".)
+    scale 1.333
+    transform "normal"
+}
+
+
+// ─────────────────────────────────────────────────────────────────────────────
+//  LAYOUT  — dari conf/looknfeel.lua
+// ─────────────────────────────────────────────────────────────────────────────
+layout {
+    // Hyprland: gaps_in = 5, gaps_out = 20.
+    // niri `gaps` berlaku di sekeliling TIAP jendela, jadi jarak antar dua
+    // jendela = 2 x gaps. gaps 5 → 10px antar jendela, sama persis dgn gaps_in 5.
+    // Sisa selisih ke tepi layar (20 - 5 = 15) ditambal lewat struts.
+    gaps 5
+
+    struts {
+        left 15
+        right 15
+        top 15
+        bottom 15
+    }
+
+    center-focused-column "never"
+
+    preset-column-widths {
+        proportion 0.33333
+        proportion 0.5
+        proportion 0.66667
+    }
+
+    default-column-width { proportion 0.5; }
+
+    // Hyprland: border_size 2, active rgba(ffffff20), inactive rgba(00000000).
+    // Karena border inactive-mu transparan penuh, perilakunya sama dengan
+    // focus-ring niri (cuma tergambar di jendela aktif) — bukan `border`,
+    // yang di niri selalu kelihatan di semua jendela.
+    focus-ring {
+        width 2
+        active-color "#ffffff20"
+        inactive-color "#00000000"
+    }
+
+    border {
+        off
+    }
+
+    // Hyprland: decoration.shadow { range 4, render_power 3, color 0xee1a1a1a }
+    // Warna hyprland 0xAARRGGBB → niri pakai #RRGGBBAA, jadi ee1a1a1a → #1a1a1aee
+    shadow {
+        on
+        softness 4
+        spread 0
+        offset x=0 y=0
+        color "#1a1a1aee"
+    }
+}
+
+
+// ─────────────────────────────────────────────────────────────────────────────
+//  CURSOR & ENVIRONMENT  — dari conf/env.lua
+// ─────────────────────────────────────────────────────────────────────────────
+//  HYPRCURSOR_THEME/SIZE sengaja DIBUANG: hyprcursor cuma dipakai Hyprland.
+//  niri memakai XCursor biasa.
+cursor {
+    xcursor-theme "miku-cursor-linux"
+    xcursor-size 24
+}
+
+environment {
+    XCURSOR_THEME "miku-cursor-linux"
+    XCURSOR_SIZE "24"
+    // Supaya app Qt/Electron tahu ini sesi Wayland biasa
+    QT_QPA_PLATFORM "wayland"
+}
+
+
+// ─────────────────────────────────────────────────────────────────────────────
+//  AUTOSTART  — dari conf/autostart.lua
+// ─────────────────────────────────────────────────────────────────────────────
+//  Yang HILANG dibanding Hyprland, sengaja:
+//    - hl.plugin.load(libhyprgrass.so) → tidak perlu, gesture niri native
+//    - hyprctl setcursor              → digantikan blok cursor {} di atas
+//    - xdg-desktop-portal-hyprland    → diganti xdg-desktop-portal-gnome
+//                                       (dependensi niri, dipasang otomatis)
+spawn-at-startup "waybar"
+spawn-at-startup "dunst"
+spawn-at-startup "copyq"
+spawn-at-startup "nm-applet" "--indicator"
+
+// Wallpaper: hyprpaper TIDAK dipakai lagi — IPC-nya butuh
+// HYPRLAND_INSTANCE_SIGNATURE yang tidak ada di niri. Diganti swaybg.
+spawn-sh-at-startup "$HOME/.local/bin/wallpaper-daemon"
+
+spawn-sh-at-startup "sleep 3 && nmcli dev wifi rescan"
+
+
+// ─────────────────────────────────────────────────────────────────────────────
+//  MISC
+// ─────────────────────────────────────────────────────────────────────────────
+screenshot-path "~/Pictures/Screenshots/Screenshot from %Y-%m-%d %H-%M-%S.png"
+
+hotkey-overlay {
+    skip-at-startup
+}
+
+// Hyprland: xwayland.force_zero_scaling = true.
+// Padanan niri diatur per-jendela lewat window-rule di bawah.
+
+
+// ─────────────────────────────────────────────────────────────────────────────
+//  WINDOW RULES  — dari conf/windowrules.lua
+// ─────────────────────────────────────────────────────────────────────────────
+//  Hyprland `class` → niri `app-id`. Regex dibungkus r#"..."# (raw string KDL).
+
+// Sudut membulat — Hyprland: decoration.rounding = 10
+window-rule {
+    geometry-corner-radius 10
+    clip-to-geometry true
+}
+
+// popup-float-center + ukurannya masing-masing
+window-rule {
+    match app-id=r#"^wallpaper-picker$"#
+    open-floating true
+    default-column-width { fixed 760; }
+    default-window-height { fixed 560; }
+}
+
+window-rule {
+    match app-id=r#"^actions$"#
+    open-floating true
+    default-column-width { fixed 420; }
+    default-window-height { fixed 560; }
+}
+
+window-rule {
+    match app-id=r#"^power-menu$"#
+    open-floating true
+    default-column-width { fixed 360; }
+    default-window-height { fixed 370; }
+}
+
+// screenshot thumbnail — melayang, selalu di atas, pojok kanan bawah
+window-rule {
+    match app-id=r#"^(floating-screenshot|screenshot-thumbnail)$"#
+    match title=r#"^(floating-screenshot|screenshot-thumbnail)$"#
+    open-floating true
+    default-column-width { fixed 326; }
+    default-window-height { fixed 246; }
+}
+
+
+// ─────────────────────────────────────────────────────────────────────────────
+//  KEYBINDS  — dari conf/keybinds.lua
+// ─────────────────────────────────────────────────────────────────────────────
+//  "Mod" = Super saat jalan di TTY.
+binds {
+    Mod+Shift+Slash { show-hotkey-overlay; }
+
+    // ── Tutup / keluar ──────────────────────────────────────────────────────
+    Mod+Q repeat=false { close-window; }
+    Mod+W repeat=false { close-window; }
+    Mod+Shift+Q { quit; }                       // dulu: hypr-logout.sh
+    Ctrl+Alt+Delete { quit; }
+
+    Ctrl+Alt+L { spawn "hyprlock"; }            // hyprlock jalan di niri (ext-session-lock-v1)
+    Ctrl+Alt+S { spawn "systemctl" "suspend"; }
+
+    // ── Fokus (vim keys) ────────────────────────────────────────────────────
+    Mod+H { focus-column-left; }
+    Mod+L { focus-column-right; }
+    Mod+K { focus-window-up; }
+    Mod+J { focus-window-down; }
+
+    // ── Pindahkan jendela ───────────────────────────────────────────────────
+    Mod+Shift+H { move-column-left; }
+    Mod+Shift+L { move-column-right; }
+    Mod+Shift+K { move-window-up; }
+    Mod+Shift+J { move-window-down; }
+
+    // ── Ukuran ──────────────────────────────────────────────────────────────
+    //  Hyprland: resizeactive +/- 40px
+    Mod+Ctrl+H { set-column-width "-40"; }
+    Mod+Ctrl+L { set-column-width "+40"; }
+    Mod+Ctrl+K { set-window-height "-40"; }
+    Mod+Ctrl+J { set-window-height "+40"; }
+    Mod+Minus { set-column-width "-10%"; }
+    Mod+Equal { set-column-width "+10%"; }
+    Mod+R { switch-preset-column-width; }
+    Mod+Ctrl+R { reset-window-height; }
+
+    // ── Float / fullscreen / zoom ───────────────────────────────────────────
+    //  Skrip float-toggle & zoom-toggle TIDAK dipakai lagi — keduanya
+    //  memanggil hyprctl. Fungsinya sudah jadi aksi bawaan niri.
+    Mod+Return { toggle-window-floating; }              // dulu: float-toggle
+    Mod+Alt+Space { toggle-window-floating; }
+    Mod+Shift+V { switch-focus-between-floating-and-tiling; }
+    Mod+F { maximize-column; }                          // dulu: zoom-toggle
+    Alt+F { maximize-column; }
+    Mod+Shift+F { fullscreen-window; }
+    Mod+Shift+Return { fullscreen-window; }
+    Mod+Ctrl+F { expand-column-to-available-width; }
+    Mod+C { center-column; }
+
+    // ── Kolom & tab (khas niri, tidak ada padanannya di Hyprland) ───────────
+    Mod+E { consume-or-expel-window-right; }            // dulu: togglesplit
+    Mod+Shift+E { consume-or-expel-window-left; }
+    Mod+Comma { consume-window-into-column; }
+    Mod+Period { expel-window-from-column; }
+    Mod+Shift+W { toggle-column-tabbed-display; }
+    Mod+O repeat=false { toggle-overview; }             // overview — fitur andalan niri
+
+    // ── Workspace ───────────────────────────────────────────────────────────
+    //  niri menyusun workspace VERTIKAL, jadi e-1/e+1 → up/down.
+    Mod+Tab { focus-workspace-previous; }
+    Mod+P { focus-workspace-up; }
+    Mod+N { focus-workspace-down; }
+
+    Mod+1 { focus-workspace 1; }
+    Mod+2 { focus-workspace 2; }
+    Mod+3 { focus-workspace 3; }
+    Mod+4 { focus-workspace 4; }
+    Mod+5 { focus-workspace 5; }
+    Mod+6 { focus-workspace 6; }
+    Mod+7 { focus-workspace 7; }
+    Mod+8 { focus-workspace 8; }
+    Mod+9 { focus-workspace 9; }
+    Mod+0 { focus-workspace 10; }
+
+    Mod+Shift+1 { move-column-to-workspace 1; }
+    Mod+Shift+2 { move-column-to-workspace 2; }
+    Mod+Shift+3 { move-column-to-workspace 3; }
+    Mod+Shift+4 { move-column-to-workspace 4; }
+    Mod+Shift+5 { move-column-to-workspace 5; }
+    Mod+Shift+6 { move-column-to-workspace 6; }
+    Mod+Shift+7 { move-column-to-workspace 7; }
+    Mod+Shift+8 { move-column-to-workspace 8; }
+    Mod+Shift+9 { move-column-to-workspace 9; }
+    Mod+Shift+0 { move-column-to-workspace 10; }
+
+    // Hyprland punya "special workspace: magic". niri tidak punya konsep itu;
+    // padanan terdekat = workspace bernama (dideklarasikan di bawah blok binds).
+    Mod+S { focus-workspace "magic"; }
+    Mod+Shift+S { move-column-to-workspace "magic"; }
+
+    Mod+WheelScrollDown cooldown-ms=150 { focus-workspace-down; }
+    Mod+WheelScrollUp cooldown-ms=150 { focus-workspace-up; }
+
+    // ── Screenshot ──────────────────────────────────────────────────────────
+    //  Dipertahankan berbasis grim supaya perilakunya persis seperti dulu.
+    Print { spawn-sh "grim -l 0 - | wl-copy"; }
+    Shift+Print { spawn-sh "grim -l 0 -g \"$(slurp)\" - | wl-copy"; }
+    Mod+Print { spawn-sh "$HOME/.local/bin/screenshot-copy"; }
+    Mod+Shift+Print { spawn-sh "$HOME/.local/bin/screenshot-area-copy"; }
+    // Screenshot bawaan niri (interaktif, bisa pilih area/jendela):
+    Mod+Ctrl+Print { screenshot; }
+
+    // ── Multimedia & kecerahan ──────────────────────────────────────────────
+    XF86AudioRaiseVolume allow-when-locked=true { spawn-sh "wpctl set-volume -l 1 @DEFAULT_AUDIO_SINK@ 5%+"; }
+    XF86AudioLowerVolume allow-when-locked=true { spawn-sh "wpctl set-volume @DEFAULT_AUDIO_SINK@ 5%-"; }
+    XF86AudioMute allow-when-locked=true { spawn-sh "wpctl set-mute @DEFAULT_AUDIO_SINK@ toggle"; }
+    XF86AudioMicMute allow-when-locked=true { spawn-sh "wpctl set-mute @DEFAULT_AUDIO_SOURCE@ toggle"; }
+    XF86MonBrightnessUp allow-when-locked=true { spawn "brightnessctl" "-e4" "-n2" "set" "5%+"; }
+    XF86MonBrightnessDown allow-when-locked=true { spawn "brightnessctl" "-e4" "-n2" "set" "5%-"; }
+    XF86AudioNext allow-when-locked=true { spawn "playerctl" "next"; }
+    XF86AudioPrev allow-when-locked=true { spawn "playerctl" "previous"; }
+    XF86AudioPlay allow-when-locked=true { spawn "playerctl" "play-pause"; }
+    XF86AudioPause allow-when-locked=true { spawn "playerctl" "play-pause"; }
+
+    // ── Peluncur & aplikasi ─────────────────────────────────────────────────
+    Mod+Space { spawn "fuzzel"; }
+    Ctrl+Space { spawn "fuzzel"; }
+    Alt+Space { spawn "fuzzel"; }
+    Ctrl+Alt+T { spawn "ghostty"; }
+    Ctrl+Alt+E { spawn "dolphin"; }
+    Mod+V { spawn-sh "$HOME/.local/bin/clipboard-paste"; }
+    Mod+Y { spawn-sh "$HOME/.local/bin/wallpaper-picker"; }
+    Mod+X { spawn-sh "$HOME/.local/bin/actions"; }
+    Mod+F5 { spawn-sh "toggle-theme"; }
+
+    // ── Lain-lain ───────────────────────────────────────────────────────────
+    Mod+Escape allow-inhibiting=false { toggle-keyboard-shortcuts-inhibit; }
+    Mod+Shift+P { power-off-monitors; }
+}
+
+// Workspace bernama, pengganti "special workspace: magic" milik Hyprland.
+workspace "magic"
