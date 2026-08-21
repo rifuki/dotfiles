@@ -113,7 +113,7 @@ bash ~/.dotfiles/macos/uninstall-brew.sh
 ### Tools (Arch — Fresh Hyprland Desktop)
 | Tool | Description |
 |------|-------------|
-| Hyprland stack | Hyprland, Waybar, Wofi, Ghostty, hyprlock, hyprpaper, swww |
+| Hyprland stack | Hyprland, Waybar, Fuzzel, Ghostty, hyprlock, hyprpaper, swww |
 | System stack | PipeWire/WirePlumber, NetworkManager, Bluetooth, Dunst |
 | Desktop apps | Dolphin, Pavucontrol, CopyQ, Papirus icons, GTK/Qt theming helpers |
 | Fonts | JetBrainsMono Nerd Font, FiraCode Nerd Font, Noto fonts, Terminus TTY font |

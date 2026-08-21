@@ -89,7 +89,7 @@ if [ -z "$_RESUME_SEL" ]; then
   EXTERNAL=()
 
   LABELS+=("Arch Desktop + Fonts")
-  DESCRIPTIONS+=("Hyprland, Waybar, Wofi, Ghostty, PipeWire, NetworkManager, Bluetooth, fonts, screenshot tools")
+  DESCRIPTIONS+=("Hyprland, Waybar, Fuzzel, Ghostty, PipeWire, NetworkManager, Bluetooth, fonts, screenshot tools")
   _desktop_count=0
   for _cmd in Hyprland waybar fuzzel ghostty hyprlock hyprpaper dunstify grim slurp wl-copy brightnessctl nvim zsh; do
     command -v "$_cmd" &>/dev/null && ((_desktop_count++)) || true

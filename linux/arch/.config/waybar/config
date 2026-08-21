@@ -26,7 +26,7 @@
   "custom/launcher": {
     "format": "󰣇",
     "tooltip": false,
-    "on-click": "sh -lc '$HOME/.config/wofi/launch.sh'"
+    "on-click": "pkill fuzzel || fuzzel"
   },
 
   "hyprland/workspaces": {
