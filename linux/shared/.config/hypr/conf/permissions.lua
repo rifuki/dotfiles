@@ -1,0 +1,21 @@
+-- =============================================================================
+--  Permissions
+--  https://wiki.hypr.land/Configuring/Advanced-and-Cool/Permissions/
+--
+--  Changes here require a full Hyprland restart — they are deliberately not
+--  applied on the fly.
+--
+--  Note the shape changed from hyprlang: it is no longer three positional
+--  arguments but a spec table. Per /usr/share/hypr/stubs/hl.meta.lua,
+--  HL.PermissionSpec is { binary, type, mode, text?, timeout? }.
+-- =============================================================================
+
+-- hl.config({
+--     ecosystem = {
+--         enforce_permissions = true,
+--     },
+-- })
+
+-- hl.permission({ binary = "/usr/(bin|local/bin)/grim", type = "screencopy", mode = "allow" })
+-- hl.permission({ binary = "/usr/(lib|libexec|lib64)/xdg-desktop-portal-hyprland", type = "screencopy", mode = "allow" })
+-- hl.permission({ binary = "/usr/(bin|local/bin)/hyprpm", type = "plugin", mode = "allow" })
