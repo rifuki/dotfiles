@@ -20,28 +20,75 @@ ACTIONS = [
     ("Suspend", ["systemctl", "suspend"]),
     ("Reboot", ["systemctl", "reboot"]),
     ("Power off", ["systemctl", "poweroff"]),
-    ("Logout Hyprland", ["hyprctl", "dispatch", "exit"]),
+    ("Logout", ["sh", "-lc",
+     'if [ -n "$NIRI_SOCKET" ]; then niri msg action quit -s;'
+     ' elif [ -n "$HYPRLAND_INSTANCE_SIGNATURE" ]; then hyprctl dispatch exit; fi']),
 ]
 
 
+def _compositor():
+    """Deteksi compositor yang sedang jalan lewat variabel lingkungannya."""
+    if os.environ.get("NIRI_SOCKET"):
+        return "niri"
+    if os.environ.get("HYPRLAND_INSTANCE_SIGNATURE"):
+        return "hyprland"
+    return None
+
+
 def close_existing_window(class_name):
-    try:
-        result = subprocess.run(["hyprctl", "clients", "-j"], capture_output=True, text=True, timeout=2)
-        clients = json.loads(result.stdout or "[]")
-    except Exception:
+    """Tutup instans lain dari jendela ini.
+
+    Mendukung niri (niri msg -j windows / close-window --id) dan Hyprland
+    (hyprctl clients -j / dispatch closewindow). Di niri field-nya bernama
+    `app_id`, di Hyprland `class` — nilainya sama.
+    """
+    comp = _compositor()
+
+    if comp == "niri":
+        try:
+            result = subprocess.run(["niri", "msg", "-j", "windows"],
+                                    capture_output=True, text=True, timeout=2)
+            windows = json.loads(result.stdout or "[]")
+        except Exception:
+            return False
+        for w in windows:
+            if w.get("app_id") != class_name or w.get("pid") == os.getpid():
+                continue
+            pid = w.get("pid")
+            if pid:
+                try:
+                    os.kill(int(pid), signal.SIGTERM)
+                except OSError:
+                    pass
+            elif w.get("id") is not None:
+                subprocess.run(["niri", "msg", "action", "close-window", "--id", str(w["id"])],
+                               stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+            return True
         return False
-    for client in clients:
-        if client.get("class") != class_name or client.get("pid") == os.getpid():
-            continue
-        pid = client.get("pid")
-        if pid:
-            try:
-                os.kill(int(pid), signal.SIGTERM)
-            except OSError:
-                pass
-        elif client.get("address"):
-            subprocess.run(["hyprctl", "dispatch", "closewindow", f"address:{client['address']}"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-        return True
+
+    if comp == "hyprland":
+        try:
+            result = subprocess.run(["hyprctl", "clients", "-j"],
+                                    capture_output=True, text=True, timeout=2)
+            clients = json.loads(result.stdout or "[]")
+        except Exception:
+            return False
+        for client in clients:
+            if client.get("class") != class_name or client.get("pid") == os.getpid():
+                continue
+            pid = client.get("pid")
+            if pid:
+                try:
+                    os.kill(int(pid), signal.SIGTERM)
+                except OSError:
+                    pass
+            elif client.get("address"):
+                subprocess.run(["hyprctl", "dispatch", "closewindow",
+                                f"address:{client['address']}"],
+                               stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+            return True
+        return False
+
     return False
 
 

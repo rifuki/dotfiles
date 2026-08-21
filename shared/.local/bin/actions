@@ -22,6 +22,7 @@ BIN_DIR = Path.home() / ".local/bin"
 ACTIONS = [
     ("Wallpaper picker", [str(BIN_DIR / "wallpaper-picker")]),
     ("Next wallpaper", [str(BIN_DIR / "wallpaper-next")]),
+    ("Toggle Theme", [str(BIN_DIR / "toggle-theme")]),
     ("Bluetooth manager", ["blueman-manager"]),
     ("Network editor", ["nm-connection-editor"]),
     ("Audio mixer", ["pavucontrol"]),
@@ -29,30 +30,77 @@ ACTIONS = [
     ("Brightness down", ["brightnessctl", "-e4", "-n2", "set", "5%-"]),
     ("Lock screen", ["hyprlock"]),
     ("Suspend", ["systemctl", "suspend"]),
-    ("Reload Hyprland", ["hyprctl", "reload"]),
-    ("Restart Waybar", ["sh", "-lc", "pkill -x waybar || true; hyprctl dispatch exec waybar"]),
+    ("Reload compositor", ["sh", "-lc",
+     'if [ -n "$NIRI_SOCKET" ]; then pkill -SIGUSR2 -x niri || true;'
+     ' elif [ -n "$HYPRLAND_INSTANCE_SIGNATURE" ]; then hyprctl reload; fi']),
+    ("Restart Waybar", ["sh", "-lc", "pkill -x waybar || true; sleep 0.3; setsid waybar >/dev/null 2>&1 &"]),
     ("Power menu", [str(BIN_DIR / "power-menu")]),
 ]
 
 
+def _compositor():
+    """Deteksi compositor yang sedang jalan lewat variabel lingkungannya."""
+    if os.environ.get("NIRI_SOCKET"):
+        return "niri"
+    if os.environ.get("HYPRLAND_INSTANCE_SIGNATURE"):
+        return "hyprland"
+    return None
+
+
 def close_existing_window(class_name):
-    try:
-        result = subprocess.run(["hyprctl", "clients", "-j"], capture_output=True, text=True, timeout=2)
-        clients = json.loads(result.stdout or "[]")
-    except Exception:
+    """Tutup instans lain dari jendela ini.
+
+    Mendukung niri (niri msg -j windows / close-window --id) dan Hyprland
+    (hyprctl clients -j / dispatch closewindow). Di niri field-nya bernama
+    `app_id`, di Hyprland `class` — nilainya sama.
+    """
+    comp = _compositor()
+
+    if comp == "niri":
+        try:
+            result = subprocess.run(["niri", "msg", "-j", "windows"],
+                                    capture_output=True, text=True, timeout=2)
+            windows = json.loads(result.stdout or "[]")
+        except Exception:
+            return False
+        for w in windows:
+            if w.get("app_id") != class_name or w.get("pid") == os.getpid():
+                continue
+            pid = w.get("pid")
+            if pid:
+                try:
+                    os.kill(int(pid), signal.SIGTERM)
+                except OSError:
+                    pass
+            elif w.get("id") is not None:
+                subprocess.run(["niri", "msg", "action", "close-window", "--id", str(w["id"])],
+                               stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+            return True
         return False
-    for client in clients:
-        if client.get("class") != class_name or client.get("pid") == os.getpid():
-            continue
-        pid = client.get("pid")
-        if pid:
-            try:
-                os.kill(int(pid), signal.SIGTERM)
-            except OSError:
-                pass
-        elif client.get("address"):
-            subprocess.run(["hyprctl", "dispatch", "closewindow", f"address:{client['address']}"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-        return True
+
+    if comp == "hyprland":
+        try:
+            result = subprocess.run(["hyprctl", "clients", "-j"],
+                                    capture_output=True, text=True, timeout=2)
+            clients = json.loads(result.stdout or "[]")
+        except Exception:
+            return False
+        for client in clients:
+            if client.get("class") != class_name or client.get("pid") == os.getpid():
+                continue
+            pid = client.get("pid")
+            if pid:
+                try:
+                    os.kill(int(pid), signal.SIGTERM)
+                except OSError:
+                    pass
+            elif client.get("address"):
+                subprocess.run(["hyprctl", "dispatch", "closewindow",
+                                f"address:{client['address']}"],
+                               stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+            return True
+        return False
+
     return False
 
 
