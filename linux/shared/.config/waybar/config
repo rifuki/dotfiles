@@ -5,7 +5,7 @@
   "spacing" : 0,
   "modules-left": [
     "custom/launcher",
-    "hyprland/workspaces",
+    "ext/workspaces",
     "custom/uptime",
     "cpu",
     "memory"
@@ -29,8 +29,9 @@
     "on-click": "pkill fuzzel || fuzzel"
   },
 
-  "hyprland/workspaces": {
+  "ext/workspaces": {
     "format": "{name}: {icon}",
+    "on-click": "activate",
     "format-icons": {
       "active": "",
       "default": ""
