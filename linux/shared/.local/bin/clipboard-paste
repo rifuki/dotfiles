@@ -1,32 +1,86 @@
 #!/usr/bin/env bash
 # CopyQ clipboard picker: detect clipboard change → hide CopyQ → paste
+#
+# Sadar-compositor: jalan di niri (NIRI_SOCKET) maupun Hyprland
+# (HYPRLAND_INSTANCE_SIGNATURE). Alur logikanya tidak berubah dari versi
+# Hyprland; yang diabstraksi hanya empat operasi jendela di bawah.
 
 _clip_hash() { wl-paste 2>/dev/null | sha256sum; }
 
-PREV_ADDR=$(hyprctl activewindow -j | jq -r '.address')
+COPYQ_ID="com.github.hluk.copyq"
+
+if [ -n "${NIRI_SOCKET:-}" ]; then
+    COMP=niri
+elif [ -n "${HYPRLAND_INSTANCE_SIGNATURE:-}" ]; then
+    COMP=hyprland
+else
+    COMP=
+fi
+
+# ── abstraksi operasi jendela ────────────────────────────────────────────────
+# niri memakai id numerik, Hyprland memakai address heksadesimal.
+_focused_window() {
+    case "$COMP" in
+        niri)     niri msg -j focused-window 2>/dev/null | jq -r '.id // empty' ;;
+        hyprland) hyprctl activewindow -j 2>/dev/null | jq -r '.address // empty' ;;
+    esac
+}
+
+_copyq_visible() {
+    case "$COMP" in
+        niri)     niri msg -j windows 2>/dev/null \
+                      | jq -e --arg a "$COPYQ_ID" '.[] | select(.app_id == $a)' >/dev/null 2>&1 ;;
+        hyprland) hyprctl clients -j 2>/dev/null \
+                      | jq -e --arg a "$COPYQ_ID" '.[] | select(.class == $a and .mapped == true)' >/dev/null 2>&1 ;;
+        *)        return 1 ;;
+    esac
+}
+
+_close_copyq() {
+    case "$COMP" in
+        niri)
+            niri msg -j windows 2>/dev/null \
+                | jq -r --arg a "$COPYQ_ID" '.[] | select(.app_id == $a) | .id' \
+                | while IFS= read -r id; do
+                      [ -n "$id" ] && niri msg action close-window --id "$id" >/dev/null 2>&1 || true
+                  done ;;
+        hyprland)
+            hyprctl dispatch closewindow "class:^(com.github.hluk.copyq)$" >/dev/null 2>&1 || true ;;
+    esac
+}
+
+_focus_window() {
+    [ -n "${1:-}" ] || return 0
+    case "$COMP" in
+        niri)     niri msg action focus-window --id "$1" >/dev/null 2>&1 || true ;;
+        hyprland) hyprctl dispatch focuswindow "address:$1" >/dev/null 2>&1 || true ;;
+    esac
+}
+
+# ── alur utama ───────────────────────────────────────────────────────────────
+PREV_WIN=$(_focused_window)
 OLD_HASH=$(_clip_hash)
 
 copyq show
 sleep 0.3
 
 while true; do
-    # Window closed manually (Escape/click outside)
-    if ! hyprctl clients -j | jq -e '.[] | select(.class == "com.github.hluk.copyq" and .mapped == true)' > /dev/null 2>&1; then
+    # Jendela ditutup manual (Escape / klik di luar)
+    if ! _copyq_visible; then
         break
     fi
-    # Clipboard changed = user activated an item (Enter/double-click)
+    # Clipboard berubah = user memilih item (Enter / klik ganda)
     if [ "$(_clip_hash)" != "$OLD_HASH" ]; then
         copyq hide
         sleep 0.05
-        # Force close if copyq hide didn't work
-        hyprctl clients -j | jq -e '.[] | select(.class == "com.github.hluk.copyq" and .mapped == true)' > /dev/null 2>&1 && \
-            hyprctl dispatch closewindow "class:^(com.github.hluk.copyq)$"
+        # Paksa tutup kalau `copyq hide` tidak mempan
+        _copyq_visible && _close_copyq
         break
     fi
     sleep 0.05
 done
 
 sleep 0.1
-hyprctl dispatch focuswindow "address:$PREV_ADDR"
+_focus_window "$PREV_WIN"
 sleep 0.15
 wtype -M ctrl -k v -m ctrl

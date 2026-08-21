@@ -88,26 +88,68 @@ def notify(title, body):
             return
 
 
+def _compositor():
+    """Deteksi compositor yang sedang jalan lewat variabel lingkungannya."""
+    if os.environ.get("NIRI_SOCKET"):
+        return "niri"
+    if os.environ.get("HYPRLAND_INSTANCE_SIGNATURE"):
+        return "hyprland"
+    return None
+
+
 def close_existing_picker():
-    try:
-        result = subprocess.run(["hyprctl", "clients", "-j"], capture_output=True, text=True, timeout=2)
-        clients = json.loads(result.stdout or "[]")
-    except Exception:
+    """Tutup instans picker lain. Mendukung niri dan Hyprland."""
+    comp = _compositor()
+
+    if comp == "niri":
+        try:
+            result = subprocess.run(["niri", "msg", "-j", "windows"],
+                                    capture_output=True, text=True, timeout=2)
+            windows = json.loads(result.stdout or "[]")
+        except Exception:
+            return False
+        for w in windows:
+            if w.get("app_id") != "wallpaper-picker":
+                continue
+            if w.get("pid") == os.getpid():
+                continue
+            pid = w.get("pid")
+            if pid:
+                try:
+                    os.kill(int(pid), signal.SIGTERM)
+                except OSError:
+                    pass
+            elif w.get("id") is not None:
+                subprocess.run(["niri", "msg", "action", "close-window", "--id", str(w["id"])],
+                               stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+            return True
         return False
-    for client in clients:
-        if client.get("class") != "wallpaper-picker":
-            continue
-        if client.get("pid") == os.getpid():
-            continue
-        pid = client.get("pid")
-        if pid:
-            try:
-                os.kill(int(pid), signal.SIGTERM)
-            except OSError:
-                pass
-        elif client.get("address"):
-            subprocess.run(["hyprctl", "dispatch", "closewindow", f"address:{client['address']}"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-        return True
+
+    if comp == "hyprland":
+        try:
+            result = subprocess.run(["hyprctl", "clients", "-j"],
+                                    capture_output=True, text=True, timeout=2)
+            clients = json.loads(result.stdout or "[]")
+        except Exception:
+            return False
+        for client in clients:
+            if client.get("class") != "wallpaper-picker":
+                continue
+            if client.get("pid") == os.getpid():
+                continue
+            pid = client.get("pid")
+            if pid:
+                try:
+                    os.kill(int(pid), signal.SIGTERM)
+                except OSError:
+                    pass
+            elif client.get("address"):
+                subprocess.run(["hyprctl", "dispatch", "closewindow",
+                                f"address:{client['address']}"],
+                               stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+            return True
+        return False
+
     return False
 
 

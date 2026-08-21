@@ -37,7 +37,11 @@ if command -v swww >/dev/null 2>&1; then
   exit 0
 fi
 
-if command -v hyprctl >/dev/null 2>&1 && command -v hyprpaper >/dev/null 2>&1; then
+# hyprpaper hanya dipakai kalau memang sedang di dalam sesi Hyprland:
+# IPC-nya lewat soket /run/user/$UID/hypr/$HYPRLAND_INSTANCE_SIGNATURE/,
+# yang tidak pernah ada di niri.
+if [ -n "${HYPRLAND_INSTANCE_SIGNATURE:-}" ] \
+   && command -v hyprctl >/dev/null 2>&1 && command -v hyprpaper >/dev/null 2>&1; then
   if ! pgrep -x hyprpaper >/dev/null 2>&1; then
     hyprpaper >/dev/null 2>&1 &
     sleep 0.4
@@ -58,4 +62,17 @@ EOF
   exit 0
 fi
 
-fail "Install swww or hyprpaper first"
+# swaybg — fallback universal (niri, sway, compositor wlroots lain).
+# Tidak punya IPC: mengganti wallpaper = jalankan proses baru, matikan yang lama.
+if command -v swaybg >/dev/null 2>&1; then
+  setsid swaybg --image "$wallpaper_path" --mode fill >/dev/null 2>&1 &
+  new_pid=$!
+  sleep 0.3
+  for p in $(pgrep -x swaybg 2>/dev/null || true); do
+    [ "$p" = "$new_pid" ] || kill "$p" 2>/dev/null || true
+  done
+  notify "Wallpaper Updated" "$(basename "$wallpaper_path")"
+  exit 0
+fi
+
+fail "Install swww, swaybg, or hyprpaper first"

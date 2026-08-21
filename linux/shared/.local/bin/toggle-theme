@@ -4,10 +4,18 @@ set -euo pipefail
 STATE="$HOME/.cache/theme-mode"
 current=$(cat "$STATE" 2>/dev/null || echo "dark")
 
+notify() {
+  if command -v dunstify >/dev/null 2>&1; then
+    dunstify -a "Rifuki Shell" -u low -t 2000 "$@" >/dev/null 2>&1 || true
+  fi
+}
+
 if [[ "$current" == "dark" ]]; then
     gsettings set org.gnome.desktop.interface color-scheme 'prefer-light'
     echo "light" > "$STATE"
+    notify "Theme Mode" "Switched to Light Mode"
 else
     gsettings set org.gnome.desktop.interface color-scheme 'prefer-dark'
     echo "dark" > "$STATE"
+    notify "Theme Mode" "Switched to Dark Mode"
 fi
