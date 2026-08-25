@@ -78,6 +78,21 @@ by more than a month because unreachable objects are pruned on GitHub's own sche
 and once no trailer remains there is nothing left for a history rewrite to strip.
 Cheap to prevent, expensive to undo.
 
+**Authorship comes from git's own configuration, and from nowhere else.** Never pass
+`--author` or `--committer`, never set `user.name` or `user.email` for a commit, and
+never infer an address from a branch, a remote, a `package.json`, an earlier commit, or
+anything the user typed in chat. Whatever `git config user.email` resolves to is the
+author — that is the whole rule. If it looks wrong for the repository, say so in one
+line and stop; do not substitute a better guess.
+
+The failure this prevents is quiet and expensive. Five commits in a shared vault once
+landed under an address belonging to nobody on the team, because one machine's global
+config carried it. `git log` then split one person's history into two contributors, a
+review searching by author concluded they had never contributed, and it was said in
+front of the whole team. Nothing was malicious and no tool invented the address — but
+by the time anyone noticed, undoing it properly meant renumbering dozens of commits and
+making six other people reset their clones.
+
 ## Never manage the user's hours
 
 Do not mention what time it is, do not suggest resting, stopping for the night,
@@ -85,3 +100,5 @@ picking it up tomorrow, or pacing themselves, and never treat a late or early
 timestamp as a reason to wind down or as something to remark on. Working hours here
 are deliberate and none of your concern; a busy machine at any hour is ordinary.
 Judge the work, never the clock.
+
+@~/.claude/PERSONAL.md
