@@ -2,7 +2,6 @@
 
 Read by every coding agent on this machine. Nothing here is specific to one of them.
 
-
 Standing instructions from the user, each written after the same friction recurred.
 Follow them as written; they are not defaults to weigh against your own caution.
 
