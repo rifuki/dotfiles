@@ -30,6 +30,9 @@ DEST="${1-$DEFAULT_DEST}"
 collect() {                       # prints: <label> <absolute source path>
   [ -d "$HOME/.claude/hooks" ] && echo "hooks $HOME/.claude/hooks"
   [ -f "$HOME/.zshrc.local" ]   && echo "zshrc.local $HOME/.zshrc.local"
+  # The only copy of the org context, and it is in no repository by design — losing the
+  # disk loses it. The merged AGENTS.md beside it is derived and needs no backup.
+  [ -f "$HOME/.config/agents/PRIVATE.md" ] && echo "agents-PRIVATE.md $HOME/.config/agents/PRIVATE.md"
   for d in "$HOME"/.claude "$HOME"/.claude-*/; do
     d="${d%/}"
     # Strip the leading dot: a backup that ls hides by default reads as empty, and
@@ -43,6 +46,12 @@ if [ "$restore" = 1 ]; then
   echo "restoring from ${DEST/#$HOME/~}"
   [ -d "$DEST/hooks" ] && { mkdir -p "$HOME/.claude"; cp -R "$DEST/hooks" "$HOME/.claude/"; echo "  ~/.claude/hooks"; }
   [ -f "$DEST/zshrc.local" ] && { cp "$DEST/zshrc.local" "$HOME/.zshrc.local"; echo "  ~/.zshrc.local"; }
+  [ -f "$DEST/agents-PRIVATE.md" ] && {
+    mkdir -p "$HOME/.config/agents"; chmod 700 "$HOME/.config/agents"
+    cp "$DEST/agents-PRIVATE.md" "$HOME/.config/agents/PRIVATE.md"
+    chmod 600 "$HOME/.config/agents/PRIVATE.md"
+    echo "  ~/.config/agents/PRIVATE.md"
+  }
   for f in "$DEST"/*.settings.local.json; do
     [ -e "$f" ] || continue
     prof=".$(basename "$f" .settings.local.json)"      # dot stripped on backup, restored here
