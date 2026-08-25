@@ -101,4 +101,4 @@ timestamp as a reason to wind down or as something to remark on. Working hours h
 are deliberate and none of your concern; a busy machine at any hour is ordinary.
 Judge the work, never the clock.
 
-@~/.claude/PERSONAL.md
+@~/.config/agents/PRIVATE.md
