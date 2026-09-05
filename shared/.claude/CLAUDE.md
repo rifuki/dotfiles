@@ -11,9 +11,8 @@ private and reached only by path. Claude Code is the only one here that expands 
 import. Codex, pi and Copilot CLI read a merged copy built by
 `~/.config/agents/build.sh`, and opencode is handed both paths in its own config.
 
-## Gaya tulis
+## Writing style
 
-Jangan pernah pakai em dash (U+2014, si garis panjang penghubung) di teks apa pun:
-jawaban, commit, file, catatan. Terbaca AI banget. Pakai koma, titik dua, tanda kurung,
-atau pecah jadi kalimat terpisah.
-Aturan bahasa selengkapnya di `~/brain/RULES.md`.
+Never use the em dash (U+2014, the long connecting dash) in any text: replies, commits,
+files, notes. It reads as AI-generated. Use commas, colons, parentheses, or separate
+sentences instead. Full language rules live in `~/brain/RULES.md`.
