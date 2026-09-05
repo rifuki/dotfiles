@@ -121,7 +121,7 @@ export PATH="$HOME/.opencode/bin:$PATH"
 # keeps tmux-resurrect from collapsing empty-title fields and restoring panes to ~.
 autoload -Uz add-zsh-hook
 __osc7_report_cwd() { printf '\033]7;file://%s%s\033\\' "${HOST:-$(hostname -s)}" "$PWD" }
-__set_pane_title() { printf '\033]2;%s\033\\' "${PWD:t:-/}" }
+__set_pane_title() { printf '\033]2;%s\033\\' "${${PWD:t}:-/}" }
 add-zsh-hook chpwd   __osc7_report_cwd
 add-zsh-hook precmd  __osc7_report_cwd
 add-zsh-hook precmd  __set_pane_title
