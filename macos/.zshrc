@@ -1,3 +1,4 @@
+DISABLE_AUTO_TITLE="true"
 # ── Environment ──────────────────────
 [ -f "/opt/homebrew/bin/brew" ] && eval "$(/opt/homebrew/bin/brew shellenv zsh)"
 
@@ -115,3 +116,14 @@ export PATH="/opt/homebrew/opt/openjdk/bin:$PATH"
 
 # opencode
 export PATH="$HOME/.opencode/bin:$PATH"
+
+# OSC 7 reports cwd (macOS tmux can't read it from /proc); a non-empty pane title
+# keeps tmux-resurrect from collapsing empty-title fields and restoring panes to ~.
+autoload -Uz add-zsh-hook
+__osc7_report_cwd() { printf '\033]7;file://%s%s\033\\' "${HOST:-$(hostname -s)}" "$PWD" }
+__set_pane_title() { printf '\033]2;%s\033\\' "${PWD:t:-/}" }
+add-zsh-hook chpwd   __osc7_report_cwd
+add-zsh-hook precmd  __osc7_report_cwd
+add-zsh-hook precmd  __set_pane_title
+__osc7_report_cwd
+__set_pane_title
