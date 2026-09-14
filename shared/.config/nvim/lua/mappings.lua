@@ -13,7 +13,7 @@ map("n", "q", "<Nop>", { noremap = true, silent = true })
 --   require("conform").format()
 -- end, { desc = "Format with Prettier" })
 map("n", "<leader>fm", function()
-    require("conform").format({ async = true, lsp_fallback = true })
+    require("conform").format({ async = true, lsp_format = "fallback" })
 end, { desc = "Format file" })
 
 map("n", "<leader>rc", function()
