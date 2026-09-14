@@ -35,6 +35,7 @@ return {
             "markdown_inline",
             "caddy",
             "solidity",
+            "prisma",
         },
         auto_install = true,
         highlight = {
