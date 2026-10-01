@@ -28,6 +28,12 @@ return {
             "clangd",
         }
 
+        -- Mason builds gopls with `go install`; without a Go toolchain the install
+        -- just fails, so only ask for it where `go` exists.
+        if vim.fn.executable("go") == 1 then
+            table.insert(lsps, "gopls")
+        end
+
         if not is_minimal then
             vim.list_extend(lsps, {
                 "prismals",              -- Prisma ORM

@@ -965,7 +965,7 @@ if command -v nvim &>/dev/null && [ -d "$HOME/.config/nvim" ]; then
     # The lua -c registers progress listeners before MasonInstall fires events.
     nvim --headless \
       -c "lua local r=require('mason-registry');r:on('package:install:start',function(p)vim.api.nvim_out_write('  [mason] installing '..p.name..'...\n')end);r:on('package:install:success',function(p)vim.api.nvim_out_write('  [mason] done '..p.name..'\n')end);r:on('package:install:failed',function(p)vim.api.nvim_out_write('  [mason] FAILED '..p.name..'\n')end)" \
-      -c "MasonInstall lua-language-server taplo typescript-language-server deno intelephense dockerfile-language-server yaml-language-server gh-actions-language-server json-lsp css-lsp html-lsp bash-language-server clangd prettierd stylua" \
+      -c "MasonInstall lua-language-server taplo typescript-language-server deno intelephense dockerfile-language-server yaml-language-server gh-actions-language-server json-lsp css-lsp html-lsp bash-language-server clangd prettierd stylua$(command -v go >/dev/null 2>&1 && echo " gopls")" \
       -c "qall" 2>/dev/null || true
     done_msg "Mason packages installed"
   fi

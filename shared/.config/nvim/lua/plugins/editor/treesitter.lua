@@ -36,6 +36,10 @@ return {
             "caddy",
             "solidity",
             "prisma",
+            "go",
+            "gomod",
+            "gosum",
+            "gowork",
         },
         auto_install = true,
         highlight = {
