@@ -1,6 +1,6 @@
 # dotfiles
 
-Personal dotfiles for macOS, Debian, Arch, and Gentoo Linux — batteries included.
+Personal dotfiles for macOS, Debian, Arch, and Gentoo Linux, batteries included.
 
 ## Screenshots
 
@@ -83,7 +83,7 @@ bash ~/.dotfiles/macos/uninstall-brew.sh
 | [Hot](https://formulae.brew.sh/cask/hot) | Menu bar thermal monitor |
 | [Google Chrome](https://www.google.com/chrome) | Browser |
 | [JetBrainsMono Nerd Font](https://www.nerdfonts.com) | Patched developer font |
-| [Mousecape](https://github.com/sdmj76/Mousecape-swiftUI) | Miku system cursor — same theme as Hyprland ([docs](docs/cursor-macos.md)) |
+| [Mousecape](https://github.com/sdmj76/Mousecape-swiftUI) | Miku system cursor, same theme as Hyprland ([docs](docs/cursor-macos.md)) |
 
 ### Blockchain Tools (optional, macOS)
 | Tool | Description |
@@ -93,7 +93,7 @@ bash ~/.dotfiles/macos/uninstall-brew.sh
 | [suiup](https://sui.io) | Sui version manager |
 | [sui-move-analyzer](https://github.com/movebit/sui-move-analyzer) | Sui Move LSP (~10min build) |
 
-### Tools (Gentoo — Hyprland Desktop)
+### Tools (Gentoo, Hyprland Desktop)
 | Tool | Description |
 |------|-------------|
 | [Hyprland](https://hyprland.org) | Wayland tiling compositor |
@@ -110,7 +110,7 @@ bash ~/.dotfiles/macos/uninstall-brew.sh
 
 > **Note:** Hyprland-related tools are installed via portage by the user. The dotfiles installer symlinks configs and warns about missing tools.
 
-### Tools (Arch — Fresh Hyprland Desktop)
+### Tools (Arch, Fresh Hyprland Desktop)
 | Tool | Description |
 |------|-------------|
 | Hyprland stack | Hyprland, Waybar, Fuzzel, Ghostty, hyprlock, hyprpaper, swww |
@@ -122,17 +122,17 @@ bash ~/.dotfiles/macos/uninstall-brew.sh
 > **Note:** Arch install can bootstrap a very fresh TTY system. It installs packages with `pacman`, sets a readable TTY font, symlinks configs, and adds `.zprofile` to auto-start Hyprland on TTY1.
 
 ### Configs
-- `nvim` — NvChad-based config with LSP, Treesitter, and plugins
-- `tmux` — Catppuccin Frappe theme, TPM plugins (resurrect, continuum, cpu, battery)
-- `starship` — Cyan-magenta prompt theme
-- `ghostty` — Terminal emulator config (macOS + Gentoo)
-- `yabai` + `skhd` — Tiling window manager + hotkeys (macOS)
-- `screenshot-floating` — Gentoo/Hyprland screenshot app with temporary draggable thumbnails
-- `three-finger-drag` — Gentoo/Hyprland touchpad daemon for macOS-style three-finger drag/select
-- `wallpaper-picker` / `actions` — shared Waybar popup scripts for Arch + Gentoo
-- `neofetch` — Miku ASCII art + config (unified)
-- `yazi` — Terminal file manager with cross-platform opener
-- `.zshrc` — Cyan-magenta syntax highlighting, aliases, PATH setup
+- `nvim`: NvChad-based config with LSP, Treesitter, and plugins
+- `tmux`: Catppuccin Frappe theme, TPM plugins (resurrect, continuum, cpu, battery)
+- `starship`: Cyan-magenta prompt theme
+- `ghostty`: Terminal emulator config (macOS + Gentoo)
+- `yabai` + `skhd`: Tiling window manager + hotkeys (macOS)
+- `screenshot-floating`: Gentoo/Hyprland screenshot app with temporary draggable thumbnails
+- `three-finger-drag`: Gentoo/Hyprland touchpad daemon for macOS-style three-finger drag/select
+- `wallpaper-picker` / `actions`: shared Waybar popup scripts for Arch + Gentoo
+- `neofetch`: Miku ASCII art + config (unified)
+- `yazi`: Terminal file manager with cross-platform opener
+- `.zshrc`: Cyan-magenta syntax highlighting, aliases, PATH setup
 
 ## Structure
 
@@ -244,14 +244,14 @@ Re-running `install.sh` is safe:
 ## Theme
 
 **Color Palette** (used in Starship, Zsh, installer/uninstaller):
-- Cyan: `#00D9FF` — Commands, time, headers
-- Green: `#50FA7B` — Paths, success messages
-- Magenta: `#FF79C6` — Git branches, selected items
-- Purple: `#BD93F9` — Builtins
-- Teal: `#01CBC6` — Aliases
-- Orange: `#FFB86C` — Path alternates
-- Peach: `#F0CAA4` — Status, warnings
-- Gray: `#6C757D` — Secondary text
+- Cyan `#00D9FF`: Commands, time, headers
+- Green `#50FA7B`: Paths, success messages
+- Magenta `#FF79C6`: Git branches, selected items
+- Purple `#BD93F9`: Builtins
+- Teal `#01CBC6`: Aliases
+- Orange `#FFB86C`: Path alternates
+- Peach `#F0CAA4`: Status, warnings
+- Gray `#6C757D`: Secondary text
 
 Colors are consistent across:
 - `.zshrc` syntax highlighting
