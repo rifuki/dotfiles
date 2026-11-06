@@ -23,16 +23,6 @@
 !docs/
 !docs/**
 
-# Legacy platform dirs (kept for uninstall reference during transition)
-!debian/
-!debian/**
-
-!arch/
-!arch/**
-
-!gentoo/
-!gentoo/**
-
 # Ignore specific files
 .DS_Store
 **/.DS_Store
@@ -41,6 +31,7 @@
 **/lazy-lock.json
 **/.config/tmux/plugins/
 **/*.zwc
+**/node_modules/
 
 # Claude (shared, ignore runtime json files)
 shared/.claude/*.json
@@ -48,9 +39,11 @@ shared/.claude/*.local.json
 !shared/.claude/settings.json
 !shared/.claude/mcp-servers.json
 
-# Editor and tool backups — never publish
+# Editor and tool backups, never published
 **/*.bak
 **/*.bak.*
+**/*.bak-*
 
-# Hook runtime state — regenerated, never committed
-shared/.claude/hooks/.do-inventory-cache.json
+# Sound mute toggles (play.sh), per machine
+shared/.claude/sounds/mute
+shared/.claude/sounds/*.mute
