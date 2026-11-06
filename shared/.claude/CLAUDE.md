@@ -8,8 +8,8 @@ The gate. Both halves live elsewhere, and nothing but this file is Claude-specif
 
 The first is public and shared with every other agent on this machine; the second is
 private and reached only by path. Claude Code is the only one here that expands an
-import. pi reads a merged copy built by `~/.config/agents/build.sh`, and opencode is
-handed both paths in its own config.
+import, and opencode is handed both paths in its own config. `~/.config/agents/build.sh`
+also builds a merged copy for any agent that can only read one file.
 
 ## Writing style
 
