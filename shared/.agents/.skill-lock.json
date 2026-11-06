@@ -297,15 +297,6 @@
       "skillFolderHash": "13817bbdc5a2c12793f7ddc33704ed6e8af7f391",
       "installedAt": "2026-08-18T00:58:52.309Z",
       "updatedAt": "2026-08-18T00:58:52.309Z"
-    },
-    "binance-agentic-wallet": {
-      "source": "binance/binance-skills-hub",
-      "sourceType": "github",
-      "sourceUrl": "https://github.com/binance/binance-skills-hub.git",
-      "skillPath": "skills/binance-web3/binance-agentic-wallet/SKILL.md",
-      "skillFolderHash": "defe8d1e97633bcfa7a72887b2b235cb7e672b7d",
-      "installedAt": "2026-10-23T13:35:52.257Z",
-      "updatedAt": "2026-11-04T01:41:31.002Z"
     }
   },
   "lastSelectedAgents": [
