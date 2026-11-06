@@ -438,7 +438,7 @@ for _d in "$SHARED_DIR/.config"/*/ "$PLATFORM_DIR/.config"/*/; do
     _did_backup=1
   fi
 done
-for _f in "$HOME/.zshrc" "$HOME/.hyper.js"; do
+for _f in "$HOME/.zshrc"; do
   if [ -f "$_f" ] && [ ! -L "$_f" ]; then
     [ "$_did_backup" = "0" ] && mkdir -p "$BACKUP_DIR"
     mv "$_f" "$BACKUP_DIR/"
@@ -460,7 +460,7 @@ for _d in "$SHARED_DIR/.config"/*/ "$PLATFORM_DIR/.config"/*/; do
     fi
   fi
 done
-for _f in macos/.zshrc macos/.hyper.js; do
+for _f in macos/.zshrc; do
   if git -C "$DOTFILES_DIR" status --porcelain "$_f" 2>/dev/null | grep -q .; then
     _basename="$(basename "$_f")"
     if [ -L "$HOME/$_basename" ] || [ -e "$HOME/$_basename" ]; then
@@ -854,8 +854,6 @@ done
 # Root dotfiles
 ln -sf "$PLATFORM_DIR/.zshrc" "$HOME/.zshrc"
 done_msg "~/.zshrc"
-ln -sf "$PLATFORM_DIR/.hyper.js" "$HOME/.hyper.js"
-done_msg "~/.hyper.js"
 
 # ========== Claude Code ==========
 # Links CLAUDE.md, settings.json, statusline and sounds into ~/.claude, then shares
@@ -937,10 +935,10 @@ if [ -x "$SHARED_DIR/.claude/link-profiles.sh" ]; then
     warn_msg "uv not installed — skipping obsidian-wiki/graphify skills"
   fi
 
-  # Link the scripts individually rather than the directory. Hooks write runtime
-  # state next to themselves (do-raflux-guard.py keeps .do-inventory-cache.json
-  # there), so a symlinked directory would put those writes inside the repo and
-  # leave the working tree permanently dirty — the same trap settings.json was in.
+  # Link the scripts individually rather than the directory. Hooks may write
+  # runtime state next to themselves, so a symlinked directory would put those
+  # writes inside the repo and leave the working tree permanently dirty, the same
+  # trap settings.json was in.
   if [ -d "$SHARED_DIR/.claude/hooks" ]; then
     # If an earlier revision symlinked the whole directory at the repo, linking
     # scripts "into" it would rewrite the repo's own files as self-referential
