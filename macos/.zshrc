@@ -91,18 +91,6 @@ eval "$(starship init zsh)"
 # ─── Local Secrets ───────────────────────────────────────────────────────────
 # [ -f "$HOME/.secrets.sh" ] && source "$HOME/.secrets.sh"
 
-export PATH="$HOME/.browser-use-env/bin:$PATH"
-
-# Added by Windsurf
-export PATH="/Users/rifuki/.codeium/windsurf/bin:$PATH"
-
-
-
-export PATH="/Users/rifuki/.local/bin:$PATH"
-export PATH="$HOME/.local/share/solana/install/active_release/bin:$PATH"
-
-export PATH="$HOME/.local/share/solana/install/active_release/bin:$PATH"
-
 export PATH="/opt/homebrew/opt/libpq/bin:$PATH"
 export PATH="/opt/homebrew/opt/openjdk/bin:$PATH"
 
