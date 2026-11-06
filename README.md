@@ -155,6 +155,7 @@ bash ~/.dotfiles/macos/uninstall-brew.sh
 │   ├── .local/
 │   │   └── bin/           # build-miku-cape (xcursor → Mousecape .cape)
 │   ├── assets/            # Prebuilt miku cursor cape + its LaunchAgent
+│   ├── .hyper.js          # Hyper terminal config
 │   ├── .zshrc             # macOS shell config
 │   ├── install.sh         # macOS installer
 │   ├── uninstall.sh       # macOS uninstaller
