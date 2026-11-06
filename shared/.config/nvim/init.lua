@@ -39,6 +39,7 @@ require("nvchad.autocmds")
 -- Load custom configs
 require("custom.options")
 require("custom.autocmds")
+require("custom.commands")
 
 vim.schedule(function()
     require("mappings")
