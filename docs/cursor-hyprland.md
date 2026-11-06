@@ -15,7 +15,7 @@ Two cursor themes are installed and serve different roles:
 
 ### Why two themes?
 
-Hyprland's compositor cursor (what you see when moving over most apps) comes from the **hyprcursor** theme. Apps that use the `cursor-shape-v1` Wayland protocol let the compositor draw the cursor entirely — they never touch cursor images themselves.
+Hyprland's compositor cursor (what you see when moving over most apps) comes from the **hyprcursor** theme. Apps that use the `cursor-shape-v1` Wayland protocol let the compositor draw the cursor entirely; they never touch cursor images themselves.
 
 GTK apps (notably Ghostty) load cursor images **client-side** directly from the xcursor theme via `XCURSOR_THEME`. They draw their own cursor surface over Wayland, which is why Ghostty always had correct colors even when the compositor cursor was wrong.
 
@@ -47,9 +47,9 @@ upstream disappears:
 |---|---|---|
 | `theme_miku-cursor` (animated hyprcursor, 66 cursors + 65 aliases) | `linux/shared/.local/share/icons/theme_miku-cursor/` | 1.6 MB |
 | `miku-cursor-linux` (xcursor source, pinned **1.2.6**) | `linux/shared/assets/miku-cursor-linux-1.2.6.tar.xz` | 53 KB |
-| Generator | `linux/shared/.local/bin/build-miku-hyprcursor` | — |
+| Generator | `linux/shared/.local/bin/build-miku-hyprcursor` | n/a |
 
-The archive is 53 KB because xcursor stores **uncompressed raw ARGB** bitmaps — 18 MB extracted
+The archive is 53 KB because xcursor stores **uncompressed raw ARGB** bitmaps: 18 MB extracted
 compresses ~340×.
 
 `install.sh` extracts the vendored archive first and only falls back to a download. The version is
@@ -72,7 +72,7 @@ hyprctl setcursor theme_miku-cursor 24
 ```
 
 `build-miku-hyprcursor` wipes and regenerates `~/.local/share/icons/theme_miku-cursor/hyprcursors/`.
-When `install.sh` has symlinked the repo copies in there, the wipe removes only those symlinks —
+When `install.sh` has symlinked the repo copies in there, the wipe removes only those symlinks;
 the files in the repo are never touched.
 
 ### Re-syncing the backup after a rebuild
@@ -94,14 +94,14 @@ The hyprcursor theme was generated from `miku-cursor-linux` using a Python scrip
 
 > **The live theme is animated.** The generator that actually produces it is tracked at
 > `linux/shared/.local/bin/build-miku-hyprcursor` (installed to `~/.local/bin/`). It keeps every
-> animation frame — 32 frames per cursor at 116 ms (`default`, `wait`) and 83 ms (`progress`) —
+> animation frame (32 frames per cursor at 116 ms for `default` and `wait`, 83 ms for `progress`)
 > and recreates the 65 legacy-name alias symlinks. The standalone script further down this page
 > is the simpler *static* variant, kept as a reference for converting other themes.
 > Run the real one with `python3 ~/.local/bin/build-miku-hyprcursor` (needs Pillow).
 
 ### The xcur2png Channel Swap Bug
 
-`xcur2png` outputs BGRA bytes read as RGBA PNG — red and blue are swapped. The correct approach is to parse xcursor binary files directly with Python.
+`xcur2png` outputs BGRA bytes read as RGBA PNG, so red and blue are swapped. The correct approach is to parse xcursor binary files directly with Python.
 
 ### Xcursor Binary Format
 
@@ -115,9 +115,9 @@ Image chunk at position:
   pixel bits: (A<<24)|(R<<16)|(G<<8)|B
 ```
 
-The version field (4th uint32 in the image header) is easy to miss — omitting it shifts all subsequent fields and produces wrong dimensions (e.g. 1×32 instead of 32×32).
+The version field (4th uint32 in the image header) is easy to miss: omitting it shifts all subsequent fields and produces wrong dimensions (e.g. 1×32 instead of 32×32).
 
-Pixels are **premultiplied alpha** — un-premultiply before saving PNG:
+Pixels are **premultiplied alpha**; un-premultiply before saving PNG:
 
 ```python
 if a > 0:
@@ -146,8 +146,8 @@ cursors_directory = hyprcursors
 ```
 
 Each `.hlc` is a **zip archive** containing:
-- `meta.hl` — metadata for this cursor shape
-- `<name>_<size>.png` — one PNG per size
+- `meta.hl`: metadata for this cursor shape
+- `<name>_<size>.png`: one PNG per size
 
 `meta.hl` format:
 
@@ -160,7 +160,7 @@ define_size = 48, arrow_48.png, 0
 define_size = 64, arrow_64.png, 0
 ```
 
-The third field in `define_size` is the frame delay in milliseconds. `0` means static (one frame); a non-zero delay with multiple `define_size` lines for the same size makes the cursor animated. The Miku theme uses animation (see the v0.49.0 crash note below — it does not apply to current Hyprland).
+The third field in `define_size` is the frame delay in milliseconds. `0` means static (one frame); a non-zero delay with multiple `define_size` lines for the same size makes the cursor animated. The Miku theme uses animation (see the v0.49.0 crash note below; it does not apply to current Hyprland).
 
 `resize_algorithm` **must be** `bilinear`. See crash section below.
 
@@ -320,17 +320,17 @@ Cairo cannot create a surface for fractional-scaled sizes with no resize.
 
 **Fix (hyprcursor theme):** Set `resize_algorithm = bilinear` in every `meta.hl`.
 
-**Fix (animated cursors) — historical, v0.49.0 only:** Back then the crash persisted with
+**Fix (animated cursors), historical, v0.49.0 only:** Back then the crash persisted with
 animated cursors, so the theme was flattened to static (`delay = 0`, one frame per size)
 to work around a secondary bug in `tickAnimatedCursor`.
 
 **No longer needed.** Verified on **Hyprland 0.54.3** with fractional scale **1.33**: the fully
 animated theme (32 frames per cursor) runs without crashing. Do not flatten the theme to static
-on current Hyprland — you would lose the animation for nothing. Keep `resize_algorithm = bilinear`.
+on current Hyprland; you would lose the animation for nothing. Keep `resize_algorithm = bilinear`.
 
 ### xcur2png produces wrong colors (blue instead of teal)
 
-`xcur2png` outputs BGRA pixels labeled as RGBA — red and blue channels are swapped.
+`xcur2png` outputs BGRA pixels labeled as RGBA, so red and blue channels are swapped.
 Use the Python script above instead, which parses the xcursor binary directly.
 
 ### Compositor cursor stays as default after changing `XCURSOR_THEME`

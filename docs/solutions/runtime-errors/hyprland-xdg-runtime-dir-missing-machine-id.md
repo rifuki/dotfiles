@@ -34,7 +34,7 @@ from the system, which silently disabled systemd session creation for every logi
     what():  XDG_RUNTIME_DIR is not set!
   ```
 - `loginctl list-sessions` prints `No sessions.` even with an active TTY/SSH login.
-- `ls /run/user/` is empty — the per-user runtime directory is never created.
+- `ls /run/user/` is empty: the per-user runtime directory is never created.
 - `journalctl -b -p err` shows, on both TTY and SSH logins:
   ```
   login[797]: pam_systemd(login:session): Failed to get user record: No such process
@@ -68,7 +68,7 @@ Confirm the file is genuinely absent, then regenerate it as root:
 
 ```bash
 ls -la /etc/machine-id          # No such file or directory
-ls -la /run/machine-id          # also absent — no transient fallback in place
+ls -la /run/machine-id          # also absent, no transient fallback in place
 
 sudo systemd-machine-id-setup   # "Initializing machine ID from random generator."
 sudo systemctl restart systemd-logind
@@ -83,7 +83,7 @@ ls -ld /run/user/1000            # drwx------ ... rifuki rifuki
 ```
 
 `/var/lib/dbus/machine-id` is a symlink to `/etc/machine-id` on this system, so it
-is repaired by the same step — no separate `dbus-uuidgen` needed. Check with
+is repaired by the same step; no separate `dbus-uuidgen` needed. Check with
 `readlink -f /var/lib/dbus/machine-id` before assuming this holds elsewhere.
 
 ## Why This Works
@@ -106,7 +106,7 @@ The udev "Unknown group" errors belong to the same chain: `nsswitch.conf` routes
 machine identity is unresolved, so early-boot lookups fail even though `/etc/group`
 is perfectly fine. Once `machine-id` exists, they stop.
 
-`XDG_RUNTIME_DIR` is not something a compositor can synthesize — it must be a
+`XDG_RUNTIME_DIR` is not something a compositor can synthesize; it must be a
 logind-owned, correctly-permissioned directory. Hyprland is right to refuse.
 
 ## Prevention
@@ -123,7 +123,7 @@ logind-owned, correctly-permissioned directory. Hyprland is right to refuse.
   `systemd-userdbd` both reported `active (running)` throughout the outage.
 - **Quick triage one-liner:**
   ```bash
-  test -s /etc/machine-id || echo "MISSING /etc/machine-id — regenerate with systemd-machine-id-setup"
+  test -s /etc/machine-id || echo "MISSING /etc/machine-id: regenerate with systemd-machine-id-setup"
   ```
 
 ## Related Issues
