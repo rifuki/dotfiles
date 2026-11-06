@@ -21,10 +21,6 @@
     "monkies": {
       "type": "http",
       "url": "https://monkies-mcp.monklabs.io/mcp"
-    },
-    "rill-swap-stake": {
-      "type": "http",
-      "url": "https://api.rill.naisu.one/api/mcp/skill_efcd"
     }
   }
 }
