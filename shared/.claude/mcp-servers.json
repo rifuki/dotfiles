@@ -21,10 +21,6 @@
     "work-mcp": {
       "type": "http",
       "url": "https://mcp.example.invalid/mcp"
-    },
-    "rill-swap-stake": {
-      "type": "http",
-      "url": "https://api.rill.naisu.one/api/mcp/skill_efcd"
     }
   }
 }
