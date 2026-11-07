@@ -1,6 +1,16 @@
 ## Keybindings
 keybind = super+r=reload_config
 keybind = super+i=inspector:toggle
+# Cmd+1..9: tmux window (Alt is yabai's).
+keybind = super+1=text:\x021
+keybind = super+2=text:\x022
+keybind = super+3=text:\x023
+keybind = super+4=text:\x024
+keybind = super+5=text:\x025
+keybind = super+6=text:\x026
+keybind = super+7=text:\x027
+keybind = super+8=text:\x028
+keybind = super+9=text:\x029
 
 ## Font Settings
 font-family = JetBrainsMono Nerd Font
@@ -34,3 +44,4 @@ shell-integration = zsh
 confirm-close-surface = false
 
 term = xterm-256color
+
