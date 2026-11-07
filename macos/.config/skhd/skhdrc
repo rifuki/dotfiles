@@ -101,3 +101,9 @@ alt + ctrl - i : ~/.local/bin/kz config window_opacity $(~/.local/bin/kz config 
 ## Toggle Ghostty Background Transparency
 alt + ctrl - t : ~/.config/ghostty/toggle-opacity.sh && skhd -k "cmd - r"
 
+
+## True Fullscreen Above the Notch (kaze-notchfs)
+# alt - f = zoom-fullscreen (in-layout). alt + shift - f = true fullscreen that
+# covers the menu bar and fills the notch band. Toggle again to restore.
+# Works on unhardened apps + Ghostty; not Chrome/Telegram (library validation).
+alt + shift - f : ~/.local/src/kaze/scripts/kaze-notchfs
