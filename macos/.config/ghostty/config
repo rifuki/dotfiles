@@ -45,3 +45,7 @@ confirm-close-surface = false
 
 term = xterm-256color
 
+
+# kaze resizes windows when the layout changes; the size label that pops up
+# on every resize read as a flash.
+resize-overlay = never
