@@ -1,26 +1,10 @@
 ## Window Navigation (Focus & Swap)
 # Focus Window (Move between windows)
-alt - h : ~/.local/bin/ume window focus west
-alt - j : ~/.local/bin/ume window focus south
-alt - k : ~/.local/bin/ume window focus north
-alt - l : ~/.local/bin/ume window focus east
 # Swap Window (Rearrange window positions)
-alt + shift - h : ~/.local/bin/ume window swap west
-alt + shift - j : ~/.local/bin/ume window swap south
-alt + shift - k : ~/.local/bin/ume window swap north
-alt + shift - l : ~/.local/bin/ume window swap east
 
 ## Window Resizing (Increase/Decrease Size)
 # Increase Size
-alt + ctrl - h : ~/.local/bin/ume window resize west 20
-alt + ctrl - j : ~/.local/bin/ume window resize south 20
-alt + ctrl - k : ~/.local/bin/ume window resize north 20
-alt + ctrl - l : ~/.local/bin/ume window resize east 20
 # Decrease Size
-alt + ctrl + shift - h : ~/.local/bin/ume window resize west -20
-alt + ctrl + shift - j : ~/.local/bin/ume window resize south -20
-alt + ctrl + shift - k : ~/.local/bin/ume window resize north -20
-alt + ctrl + shift - l : ~/.local/bin/ume window resize east -20
 
 ## Display Navigation (Focus between monitors)
 # skhd tidak menerima ',' '.' mentah -> pakai keycode (0x2B = ',' , 0x2F = '.')
@@ -46,17 +30,11 @@ alt + shift - up : ~/.local/bin/kz window --grid 1:1:0:0:1:1
 alt + shift - right : ~/.local/bin/kz window --grid 1:2:1:0:1:1
 
 ## Zoom & Parent Resize
-alt - f : ~/.local/bin/ume window zoom
 alt - d : ~/.local/bin/kz window --toggle zoom-parent # Expand inside BSP container
 
 ## Rotate (BSP) & Mirror Layouts
-alt - r : ~/.local/bin/ume batch 'space rotate 270' 'space balance'
-alt + shift - r : ~/.local/bin/ume batch 'space rotate 90' 'space balance'
-alt - y : ~/.local/bin/ume space mirror horizontal
-alt - x : ~/.local/bin/ume space mirror vertical
 
 ## Balance & Split Layout
-alt + shift - 0 : ~/.local/bin/ume space balance
 alt - e : ~/.local/bin/kz window --toggle split ## Toggle horizontal/vertical split
 
 ## Toggle Padding & Gaps (Show/Hide window spacing)
@@ -88,9 +66,6 @@ alt + shift - 8 : ~/.local/bin/kz window --space 8
 alt + shift - 9 : ~/.local/bin/kz window --space 9
 
 ## Change Layout Mode
-alt + ctrl - z : ~/.local/bin/ume space layout bsp
-alt + ctrl - x : ~/.local/bin/ume space layout float
-alt + ctrl - c : ~/.local/bin/ume space layout stack
 
 ## Toggle Active Window Opacity
 alt + ctrl - o : ~/.local/bin/kz config active_window_opacity $(~/.local/bin/kz config active_window_opacity | grep -q 1.0 && echo 0.95 || echo 1.0)
