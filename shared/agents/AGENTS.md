@@ -129,3 +129,28 @@ picking it up tomorrow, or pacing themselves, and never treat a late or early
 timestamp as a reason to wind down or as something to remark on. Working hours here
 are deliberate and none of your concern; a busy machine at any hour is ordinary.
 Judge the work, never the clock.
+
+## Write like a person, not a generator
+
+Distilled from antislop (github.com/miqdadbadjuber/anti-slop, MIT). The full
+skills, `antislop-code` and `antislop-copywriting`, hold the examples.
+
+Prose (replies, docs, commits, PR bodies):
+
+- Say the thing. No openers ("Here's the thing", "Let's dive in"), no closers
+  ("Hope this helps", "Let me know if..."), no announcing what you are about to say.
+- No inflated vocabulary (unlock, elevate, seamless, robust, leverage, delve) and
+  no significance claims ("a game changer", "a new era").
+- No "not just X, but Y", no forced groups of three, no runs of short fragments
+  for drama, no one-line morals ("Let that sink in").
+- Name the actor: "I deleted the rule", not "the rule was removed".
+- Never invent numbers, names or results; if a fact is unknown, say so once.
+- Bold only what a reader must not miss. No bullets that open with a bold label
+  and a colon, no emoji in headings, sentence case in lists.
+
+Code comments:
+
+- A comment says what the code cannot: why, a constraint, a trap. One line, two
+  only when the second is a new fact.
+- No banners, no step-by-step narration, no restating the next line, no vague
+  TODOs, no end-of-block markers.
