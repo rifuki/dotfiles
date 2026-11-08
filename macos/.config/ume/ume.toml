@@ -12,6 +12,12 @@ duration_ms = 250
 focus_follows_mouse = true
 mouse_follows_focus = false
 
+[opacity]
+# Unfocused windows dimmed to inactive; ctrl-alt-i turns it on.
+enabled = false
+active = 0.95
+inactive = 0.85
+
 [border]
 enabled = false
 width = 3
@@ -77,8 +83,8 @@ color = "#c678dd"
 "alt-shift-7" = "window space 7"
 "alt-shift-8" = "window space 8"
 "alt-shift-9" = "window space 9"
-"ctrl-alt-o" = "exec ~/.local/bin/kz config active_window_opacity $(~/.local/bin/kz config active_window_opacity | grep -q 1.0 && echo 0.95 || echo 1.0)"
-"ctrl-alt-i" = "exec ~/.local/bin/kz config window_opacity $(~/.local/bin/kz config window_opacity | grep -q on && echo off || echo on)"
+"ctrl-alt-o" = "opacity focused"
+"ctrl-alt-i" = "opacity toggle"
 "ctrl-alt-t" = "exec ~/.config/ghostty/toggle-opacity.sh && osascript -e 'tell application \"System Events\" to keystroke \"r\" using command down'"
 "alt-shift-f" = "exec ~/.local/src/kaze/scripts/kaze-notchfs"
 "alt-shift-n" = "exec ~/.local/bin/notchkiller"
