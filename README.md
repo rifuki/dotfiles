@@ -8,7 +8,7 @@ Personal dotfiles for macOS, Debian, Arch, and Gentoo Linux, batteries included.
 |:---:|:---:|
 | <img src="https://github.com/user-attachments/assets/b7319a56-27d4-4ed0-80f7-e56fb3148711" width="400"> | <img src="https://github.com/user-attachments/assets/ddff5552-6e67-43fd-8f9e-1aee9148136a" width="400"> |
 
-| Tiling (Yabai) |
+| Tiling |
 |:---:|
 | <img src="https://github.com/user-attachments/assets/ce95680d-2226-4ff9-8f41-7dd82b31397c" width="400"> |
 
@@ -16,7 +16,7 @@ Personal dotfiles for macOS, Debian, Arch, and Gentoo Linux, batteries included.
 
 <video src="https://github.com/user-attachments/assets/523ac440-8b3c-40b8-b2da-8162a9b72ef7" width="100%" controls></video>
 
-*Theme: Cyan-magenta palette inspired by Miku color with Ghostty, Neovim, Yabai, and SKHD*
+*Theme: Cyan-magenta palette inspired by Miku color with Ghostty and Neovim*
 
 ## Install
 
@@ -70,8 +70,7 @@ bash ~/.dotfiles/macos/uninstall-brew.sh
 | [Bun](https://bun.sh) | JavaScript runtime & package manager |
 | [Rust](https://rustup.rs) | Rust toolchain (stable) |
 | [Yazi](https://github.com/sxyazi/yazi) | Terminal file manager |
-| [Yabai](https://github.com/asmvik/yabai) | Tiling window manager |
-| [Skhd](https://github.com/asmvik/skhd) | Hotkey daemon |
+| ume | Tiling window manager with its own hotkeys (built from source) |
 | [Ghostty](https://ghostty.org) | Terminal emulator |
 | [gh](https://cli.github.com) | GitHub CLI |
 | [trash](https://github.com/sindresorhus/trash-cli) | Safe `rm` replacement |
@@ -126,7 +125,7 @@ bash ~/.dotfiles/macos/uninstall-brew.sh
 - `tmux`: Catppuccin Frappe theme, TPM plugins (resurrect, continuum, cpu, battery)
 - `starship`: Cyan-magenta prompt theme
 - `ghostty`: Terminal emulator config (macOS + Gentoo)
-- `yabai` + `skhd`: Tiling window manager + hotkeys (macOS)
+- `ume`: Tiling window manager config and keybindings (macOS)
 - `screenshot-floating`: Gentoo/Hyprland screenshot app with temporary draggable thumbnails
 - `three-finger-drag`: Gentoo/Hyprland touchpad daemon for macOS-style three-finger drag/select
 - `wallpaper-picker` / `actions`: shared Waybar popup scripts for Arch + Gentoo
@@ -150,10 +149,9 @@ bash ~/.dotfiles/macos/uninstall-brew.sh
 ├── macos/
 │   ├── .config/
 │   │   ├── ghostty/       # Terminal config
-│   │   ├── skhd/          # Hotkey daemon
-│   │   └── yabai/         # Window manager
+│   │   └── ume/           # Window manager + keybindings
 │   ├── .local/
-│   │   └── bin/           # build-miku-cape (xcursor → Mousecape .cape)
+│   │   └── bin/           # build-miku-cape, ume-load-dock
 │   ├── assets/            # Prebuilt miku cursor cape + its LaunchAgent
 │   ├── .hyper.js          # Hyper terminal config
 │   ├── .zshrc             # macOS shell config
@@ -215,23 +213,14 @@ Requirements:
 
 If it does not start, check `~/.local/state/three-finger-drag.log`. Sensitivity can be tuned with `RIFUKI_THREE_FINGER_DRAG_SCALE`.
 
-## Post-Installation (Yabai & Skhd)
+## Post-Installation (ume)
 
-After install, manually set up Yabai and Skhd:
+ume is built from its own repos, `rifuki/ume` and `rifuki/ume-sa`:
 
-**Yabai:**
-1. Configure scripting addition (if SIP disabled):
-   ```bash
-   echo "$(whoami) ALL=(root) NOPASSWD: sha256:$(shasum -a 256 $(which yabai) | cut -d " " -f 1) $(which yabai) --load-sa" | sudo tee /private/etc/sudoers.d/yabai
-   ```
-2. Make sure `yabairc` has: `yabai -m signal --add event=dock_did_restart action="sudo yabai --load-sa"`
-3. Run: `yabai --start-service`
-4. When prompted, allow Yabai in **System Settings > Privacy & Security > Accessibility**
-
-**Skhd:**
-1. Run: `skhd --start-service`
-2. When prompted, allow Skhd in **System Settings > Privacy & Security > Accessibility**
-3. Disable **Secure Keyboard Entry** in Terminal if needed
+1. In ume: `UME_SIGN_IDENTITY=<cert> cargo xtask install` (keep the same certificate, or the Accessibility grant is lost)
+2. In ume-sa: `make install` (the Dock payload, installed under `~/.local/lib/ume/`)
+3. When prompted, allow ume in **System Settings > Privacy & Security > Accessibility**
+4. The Dock payload needs partial SIP off and a NOPASSWD sudoers rule for its loader. `ume.toml` runs `~/.local/bin/ume-load-dock` on the `helper_lost` signal, which loads it at login and after every Dock restart.
 
 ## Re-run / Update
 

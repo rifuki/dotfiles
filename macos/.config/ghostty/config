@@ -1,7 +1,7 @@
 ## Keybindings
 keybind = super+r=reload_config
 keybind = super+i=inspector:toggle
-# Cmd+1..9: tmux window (Alt is yabai's).
+# Cmd+1..9: tmux window (Alt is the window manager's).
 keybind = super+digit_1=text:\x021
 keybind = super+digit_2=text:\x022
 keybind = super+digit_3=text:\x023
@@ -46,6 +46,6 @@ confirm-close-surface = false
 term = xterm-256color
 
 
-# kaze resizes windows when the layout changes; the size label that pops up
+# The window manager resizes windows when the layout changes; the size label that pops up
 # on every resize read as a flash.
 resize-overlay = never
