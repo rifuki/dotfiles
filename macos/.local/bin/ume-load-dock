@@ -1,0 +1,31 @@
+#!/bin/zsh
+# Loads ume's Dock payload into the running Dock. ume runs it on the helper_lost signal:
+# at login, and after every Dock restart.
+# Needs passwordless sudo for the loader; without it, it logs the refusal and exits.
+
+LOADER=$HOME/.local/src/suika-sa/build/loader
+DYLIB=$HOME/.local/lib/ume/ume-dock.current
+LOG=$HOME/Library/Logs/ume/load-dock.log
+LOCK=/tmp/ume-load-dock.lock
+
+exec >>$LOG 2>&1
+mkdir $LOCK 2>/dev/null || exit 0
+trap 'rmdir $LOCK' EXIT
+
+dylib=${DYLIB:A}
+[[ -x $LOADER && -f $dylib ]] || { print "$(date +%T) missing loader or payload"; exit 1 }
+
+for _ in {1..40}; do
+  pid=$(pgrep -x Dock) && break
+  sleep 0.25
+done
+[[ -n $pid ]] || { print "$(date +%T) no Dock"; exit 1 }
+
+# A Dock that just started is still building its Spaces; loading earlier finds no manager.
+sleep 2
+if sudo -n $LOADER $pid $dylib; then
+  print "$(date +%T) loaded ${dylib:t} into Dock $pid"
+else
+  print "$(date +%T) loader refused for Dock $pid"
+  exit 1
+fi

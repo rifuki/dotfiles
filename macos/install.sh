@@ -123,13 +123,11 @@ elif [ "$_fi" -gt 0 ]; then STATUS+=("${_fi}/15 installed"); SELECTED+=(1)
 else STATUS+=(""); SELECTED+=(1); fi
 EXTERNAL+=(0)
 
-# 1: Yabai + Skhd — install.sh installs via brew
-LABELS+=("Yabai + Skhd")
-DESCRIPTIONS+=("Tiling WM + hotkey daemon")
-if brew list yabai &>/dev/null 2>&1 || brew list skhd &>/dev/null 2>&1; then
+# 1: ume — built from source, not brew
+LABELS+=("ume")
+DESCRIPTIONS+=("Tiling WM with its own hotkeys")
+if [ -x "$HOME/.local/bin/ume" ]; then
   STATUS+=("installed"); SELECTED+=(0); EXTERNAL+=(0)
-elif command -v yabai &>/dev/null || command -v skhd &>/dev/null; then
-  STATUS+=("installed (external)"); SELECTED+=(0); EXTERNAL+=(1)
 else
   STATUS+=(""); SELECTED+=(1); EXTERNAL+=(0)
 fi
@@ -540,22 +538,13 @@ if [ "${SELECTED[0]}" = "1" ]; then
   fi
 fi
 
-# ========== 1: Yabai + Skhd ==========
+# ========== 1: ume ==========
 if [ "${SELECTED[1]}" = "1" ]; then
   step "Installing window manager"
-  if ! command -v yabai &>/dev/null; then
-    info_msg "Installing Yabai..."
-    brew install asmvik/formulae/yabai
-    done_msg "Yabai installed"
+  if [ ! -x "$HOME/.local/bin/ume" ]; then
+    warn_msg "ume builds from its private repo; see the notes at the end"
   else
-    done_msg "Yabai already installed"
-  fi
-  if ! command -v skhd &>/dev/null; then
-    info_msg "Installing Skhd..."
-    brew install asmvik/formulae/skhd
-    done_msg "Skhd installed"
-  else
-    done_msg "Skhd already installed"
+    done_msg "ume already installed"
   fi
 fi
 
@@ -1232,28 +1221,12 @@ echo -e "${BOLD}${CYAN}║           ✓ Installation complete!               �
 echo -e "${BOLD}${CYAN}╚══════════════════════════════════════════════════╝${NC}"
 echo ""
 if [ "${SELECTED[1]}" = "1" ]; then
-  echo -e "  ${CYAN}Yabai:${NC}"
-  echo -e "    ${DIM}1. echo \"\$(whoami) ALL=(root) NOPASSWD: sha256:\$(shasum -a 256 \$(which yabai) | cut -d \" \" -f 1) \$(which yabai) --load-sa\" | sudo tee /private/etc/sudoers.d/yabai${NC}"
-  echo -e "    ${DIM}2. yabai --start-service${NC}"
+  echo -e "  ${CYAN}ume:${NC}"
+  echo -e "    ${DIM}1. git clone git@github.com:rifuki/ume.git && git clone git@github.com:rifuki/ume-sa.git${NC}"
+  echo -e "    ${DIM}2. ume: UME_SIGN_IDENTITY=<cert> cargo xtask install; ume-sa: make install${NC}"
   echo -e "    ${DIM}3. Allow in System Settings > Privacy & Security > Accessibility${NC}"
-  echo ""
-  echo -e "  ${PEACH}⚠  For full Yabai features, partial SIP disable is required (2 reboots):${NC}"
-  if [[ "$(uname -m)" == "arm64" ]]; then
-    echo -e "    ${DIM}1. Recovery Mode (hold power) → Utilities → Terminal:${NC}"
-    echo -e "       ${DIM}csrutil enable --without fs --without debug --without nvram${NC}"
-    echo -e "    ${DIM}   → Reboot${NC}"
-    echo -e "    ${DIM}2. After reboot:  sudo nvram boot-args=-arm64e_preview_abi${NC}"
-    echo -e "    ${DIM}   → Reboot again${NC}"
-  else
-    echo -e "    ${DIM}1. Recovery Mode (Cmd+R) → Utilities → Terminal:${NC}"
-    echo -e "       ${DIM}csrutil disable --with kext --with dtrace --with nvram --with basesystem${NC}"
-    echo -e "    ${DIM}   → Reboot${NC}"
-  fi
-  echo -e "    ${DIM}Guide: https://github.com/asmvik/yabai/wiki/Disabling-System-Integrity-Protection${NC}"
-  echo ""
-  echo -e "  ${CYAN}Skhd:${NC}"
-  echo -e "    ${DIM}1. skhd --start-service${NC}"
-  echo -e "    ${DIM}2. Allow in System Settings > Privacy & Security > Accessibility${NC}"
+  echo -e "    ${DIM}4. The Dock payload needs partial SIP off and a NOPASSWD sudoers rule for its loader;${NC}"
+  echo -e "    ${DIM}   ~/.local/bin/ume-load-dock then loads it on ume's helper_lost signal${NC}"
   echo ""
 fi
 echo -e "  ${CYAN}👉 Restart your terminal or run: exec zsh${NC}"
