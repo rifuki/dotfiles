@@ -1,0 +1,77 @@
+# Hotkeys live in skhd, which calls `ume`; focus follows mouse stays with kaze's autofocus.
+
+[layout]
+gaps = 10
+padding = 10
+
+[mouse]
+focus_follows_mouse = false
+mouse_follows_focus = false
+
+[border]
+enabled = true
+width = 3
+color = "#c678dd"
+
+[bindings]
+"alt-h" = "window focus west"
+"alt-j" = "window focus south"
+"alt-k" = "window focus north"
+"alt-l" = "window focus east"
+"alt-shift-h" = "window swap west"
+"alt-shift-j" = "window swap south"
+"alt-shift-k" = "window swap north"
+"alt-shift-l" = "window swap east"
+"ctrl-alt-h" = "window resize west 20"
+"ctrl-alt-j" = "window resize south 20"
+"ctrl-alt-k" = "window resize north 20"
+"ctrl-alt-l" = "window resize east 20"
+"ctrl-alt-shift-h" = "window resize west -20"
+"ctrl-alt-shift-j" = "window resize south -20"
+"ctrl-alt-shift-k" = "window resize north -20"
+"ctrl-alt-shift-l" = "window resize east -20"
+"alt-f" = "window zoom"
+"alt-r" = "space rotate 270; space balance"
+"alt-shift-r" = "space rotate 90; space balance"
+"alt-y" = "space mirror horizontal"
+"alt-x" = "space mirror vertical"
+"alt-shift-0" = "space balance"
+"ctrl-alt-z" = "space layout bsp"
+"ctrl-alt-x" = "space layout float"
+"ctrl-alt-c" = "space layout stack"
+"alt-comma" = "exec ~/.config/kaze/focus_display.sh focus prev"
+"alt-period" = "exec ~/.config/kaze/focus_display.sh focus next"
+"alt-shift-comma" = "exec ~/.config/kaze/focus_display.sh move prev"
+"alt-shift-period" = "exec ~/.config/kaze/focus_display.sh move next"
+"alt-return" = "window toggle-float; exec ~/.local/bin/kz window --grid 20:20:1:1:18:18"
+"alt-shift-return" = "window toggle-float; exec ~/.local/bin/kz window --grid 4:4:1:1:2:2"
+"alt-shift-left" = "exec ~/.local/bin/kz window --grid 1:2:0:0:1:1"
+"alt-shift-down" = "exec ~/.local/bin/kz window --grid 20:20:1:1:18:18"
+"alt-shift-up" = "exec ~/.local/bin/kz window --grid 1:1:0:0:1:1"
+"alt-shift-right" = "exec ~/.local/bin/kz window --grid 1:2:1:0:1:1"
+"alt-tab" = "exec ~/.local/bin/kz space --focus recent"
+"alt-p" = "exec ~/.local/bin/kz --space-cycle prev"
+"alt-n" = "exec ~/.local/bin/kz --space-cycle next"
+"alt-1" = "exec ~/.local/bin/kz space --focus 1"
+"alt-2" = "exec ~/.local/bin/kz space --focus 2"
+"alt-3" = "exec ~/.local/bin/kz space --focus 3"
+"alt-4" = "exec ~/.local/bin/kz space --focus 4"
+"alt-5" = "exec ~/.local/bin/kz space --focus 5"
+"alt-6" = "exec ~/.local/bin/kz space --focus 6"
+"alt-7" = "exec ~/.local/bin/kz space --focus 7"
+"alt-8" = "exec ~/.local/bin/kz space --focus 8"
+"alt-9" = "exec ~/.local/bin/kz space --focus 9"
+"alt-shift-1" = "exec ~/.local/bin/kz window --space 1"
+"alt-shift-2" = "exec ~/.local/bin/kz window --space 2"
+"alt-shift-3" = "exec ~/.local/bin/kz window --space 3"
+"alt-shift-4" = "exec ~/.local/bin/kz window --space 4"
+"alt-shift-5" = "exec ~/.local/bin/kz window --space 5"
+"alt-shift-6" = "exec ~/.local/bin/kz window --space 6"
+"alt-shift-7" = "exec ~/.local/bin/kz window --space 7"
+"alt-shift-8" = "exec ~/.local/bin/kz window --space 8"
+"alt-shift-9" = "exec ~/.local/bin/kz window --space 9"
+"ctrl-alt-o" = "exec ~/.local/bin/kz config active_window_opacity $(~/.local/bin/kz config active_window_opacity | grep -q 1.0 && echo 0.95 || echo 1.0)"
+"ctrl-alt-i" = "exec ~/.local/bin/kz config window_opacity $(~/.local/bin/kz config window_opacity | grep -q on && echo off || echo on)"
+"ctrl-alt-t" = "exec ~/.config/ghostty/toggle-opacity.sh && skhd -k \"cmd - r\""
+"alt-shift-f" = "exec ~/.local/src/kaze/scripts/kaze-notchfs"
+"alt-shift-n" = "exec ~/.local/bin/notchkiller"
