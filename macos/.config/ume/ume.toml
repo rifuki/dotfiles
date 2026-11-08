@@ -5,15 +5,15 @@ gaps = 10
 padding = 10
 
 [animation]
-# Windows step to new frames over this many milliseconds; 0 moves them at once.
-duration_ms = 0
+# Move animation in milliseconds, at most 1000; 0 moves windows at once.
+duration_ms = 250
 
 [mouse]
-focus_follows_mouse = false
+focus_follows_mouse = true
 mouse_follows_focus = false
 
 [border]
-enabled = true
+enabled = false
 width = 3
 color = "#c678dd"
 
