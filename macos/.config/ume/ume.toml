@@ -13,8 +13,9 @@ focus_follows_mouse = true
 mouse_follows_focus = false
 
 [opacity]
-# Unfocused windows dimmed to inactive; ctrl-alt-i turns it on.
-enabled = false
+# The focused window at active, the others at inactive. alt-o turns the focused
+# window's off and on, alt-shift-o both.
+enabled = true
 active = 0.95
 inactive = 0.85
 
@@ -44,6 +45,7 @@ color = "#c678dd"
 "alt-d" = "window zoom-parent"
 "alt-e" = "window split"
 "alt-a" = "space gaps"
+"ctrl-alt-r" = "space gather"
 "alt-r" = "space rotate 270; space balance"
 "alt-shift-r" = "space rotate 90; space balance"
 "alt-y" = "space mirror horizontal"
@@ -83,8 +85,8 @@ color = "#c678dd"
 "alt-shift-7" = "window space 7"
 "alt-shift-8" = "window space 8"
 "alt-shift-9" = "window space 9"
-"ctrl-alt-o" = "opacity focused"
-"ctrl-alt-i" = "opacity toggle"
+"alt-o" = "opacity focused"
+"alt-shift-o" = "opacity toggle"
 "ctrl-alt-t" = "exec ~/.config/ghostty/toggle-opacity.sh && osascript -e 'tell application \"System Events\" to keystroke \"r\" using command down'"
 "alt-shift-f" = "exec ~/.local/bin/notchfs"
 "alt-shift-n" = "exec ~/.local/bin/notchkiller"
