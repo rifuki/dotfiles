@@ -4,6 +4,10 @@
 gaps = 10
 padding = 10
 
+[animation]
+# Windows step to new frames over this many milliseconds; 0 moves them at once.
+duration_ms = 150
+
 [mouse]
 focus_follows_mouse = false
 mouse_follows_focus = false
