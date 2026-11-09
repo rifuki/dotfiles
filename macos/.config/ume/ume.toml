@@ -13,8 +13,8 @@ focus_follows_mouse = true
 mouse_follows_focus = false
 
 [opacity]
-# The focused window at active, the others at inactive. alt-o turns the focused
-# window's off and on, alt-shift-o both.
+# The focused window at active, the others at inactive. ctrl-alt-o turns the focused
+# window's off and on, ctrl-alt-shift-o both.
 enabled = true
 active = 0.95
 inactive = 0.85
@@ -85,8 +85,8 @@ color = "#c678dd"
 "alt-shift-7" = "window space 7"
 "alt-shift-8" = "window space 8"
 "alt-shift-9" = "window space 9"
-"alt-o" = "opacity focused"
-"alt-shift-o" = "opacity toggle"
+"ctrl-alt-o" = "opacity focused"
+"ctrl-alt-shift-o" = "opacity toggle"
 "ctrl-alt-t" = "exec ~/.config/ghostty/toggle-opacity.sh && osascript -e 'tell application \"System Events\" to keystroke \"r\" using command down'"
 "alt-shift-f" = "exec ~/.local/bin/notchfs"
 "alt-shift-n" = "exec ~/.local/bin/notchkiller"
