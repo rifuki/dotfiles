@@ -87,7 +87,6 @@ color = "#c678dd"
 "alt-shift-9" = "window space 9"
 "ctrl-alt-o" = "opacity focused"
 "ctrl-alt-shift-o" = "opacity toggle"
-"ctrl-alt-t" = "exec ~/.config/ghostty/toggle-opacity.sh && osascript -e 'tell application \"System Events\" to keystroke \"r\" using command down'"
 "ctrl-alt-f" = "exec ~/.local/bin/notchfs"
 "ctrl-alt-n" = "exec ~/.local/bin/notchkiller"
 
