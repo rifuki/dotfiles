@@ -89,7 +89,7 @@ color = "#c678dd"
 "ctrl-alt-shift-o" = "opacity toggle"
 "ctrl-alt-t" = "exec ~/.config/ghostty/toggle-opacity.sh && osascript -e 'tell application \"System Events\" to keystroke \"r\" using command down'"
 "ctrl-alt-f" = "exec ~/.local/bin/notchfs"
-"alt-shift-n" = "exec ~/.local/bin/notchkiller"
+"ctrl-alt-n" = "exec ~/.local/bin/notchkiller"
 
 # Reloads the Dock payload at login and after every Dock restart.
 [[signal]]
