@@ -422,6 +422,10 @@ DOTFILES_DIR="$HOME/.dotfiles"
 SHARED_DIR="$DOTFILES_DIR/shared"
 PLATFORM_DIR="$DOTFILES_DIR/macos"
 
+# The repo hook keeps personal skills out of the public skill tree.
+step "Enabling repo hooks"
+git -C "$DOTFILES_DIR" config core.hooksPath .githooks
+
 # ========== Backup ==========
 step "Checking for existing configs"
 BACKUP_DIR="$HOME/.config/backup-$(date +%Y%m%d-%H%M%S)"

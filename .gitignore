@@ -3,6 +3,8 @@
 
 # Root files
 !.gitignore
+!.githooks/
+!.githooks/**
 !README.md
 !install.sh
 !uninstall.sh

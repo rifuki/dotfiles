@@ -1,0 +1,35 @@
+#!/bin/sh
+# This repo is public; skills under shared/.agents/skills are third-party with
+# provenance. A new skill directory without a SOURCE line is personal or
+# unattributed work and must not be committed here.
+status=0
+seen=""
+for p in $(git diff --cached --name-only --diff-filter=A -- 'shared/.agents/skills/'); do
+  rest="${p#shared/.agents/skills/}"
+  case "$rest" in
+    */*) ;;
+    *)
+      echo "pre-commit: $p sits at the skills root; skills live in directories here," >&2
+      echo "  and a root markdown file would itself be discovered as a skill." >&2
+      status=1
+      continue
+      ;;
+  esac
+  dir="${p%/*}"
+  case "$p" in
+    */SOURCE) continue ;;
+  esac
+  case "$seen" in *"|$dir|"*) continue ;; esac
+  seen="$seen|$dir|"
+  if [ -n "$(git diff --cached --name-only -- "$dir/SOURCE")" ]; then
+    continue
+  fi
+  if git cat-file -e "HEAD:$dir/SOURCE" 2>/dev/null; then
+    continue
+  fi
+  echo "pre-commit: $dir has no SOURCE line." >&2
+  echo "  third-party skill: add $dir/SOURCE naming project, version, commit, license" >&2
+  echo "  personal or internal skill: it does not belong in this public repo, move it out" >&2
+  status=1
+done
+exit $status
