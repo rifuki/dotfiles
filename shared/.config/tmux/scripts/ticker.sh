@@ -9,6 +9,9 @@ ocspin=("▘" "▝" "▗" "▖")
 dance=("♪ヽ(•ᴗ•)ノ " " ヾ(•ᴗ•)ゞ♫" "♫＼(˘ᴗ˘)／ " " ヽ(•ᴗ•)ノ♪" "♪ヾ(•ᴗ<)ゞ " " ＼(•ᴗ•)／♫")
 doze=(" ＿(-ᴗ-)＿z" " ＿(-ᴗ-)＿z" " ＿(-ᴗ-)＿Z" " ＿(-ᴗ-)＿Z" " ＿(˘ᴗ˘)＿ " " ＿(˘ᴗ˘)＿ ")
 np="$HOME/.config/tmux/scripts/now-playing.sh"
+meters="$HOME/.config/tmux/scripts/meters.sh"
+save="$HOME/.config/tmux/plugins/tmux-resurrect/scripts/save.sh"
+export METER_NCPU=$(sysctl -n hw.ncpu) METER_MEM=$(sysctl -n hw.memsize)
 i=0
 busy=0
 clients=()
@@ -24,9 +27,12 @@ while :; do
     done <<< "$out"
   fi
   [ $((i % 15)) -eq 0 ] && playing=$("$np")
+  [ $((i % 10)) -eq 0 ] && mt=$("$meters")
+  # resurrect auto-save every 5 min, replacing continuum's per-second check
+  [ $i -gt 0 ] && [ $((i % 1500)) -eq 0 ] && { "$save" quiet >/dev/null 2>&1 & }
   if [ -n "$playing" ]; then m=${dance[$(( (i / 2) % 6 ))]}; else m=${doze[$(( (i / 4) % 6 ))]}; fi
   b="●"; [ $(( (i / 3) % 2 )) -eq 1 ] && b="○"
-  cmd=(set -gq @spin "${spin[$((i % 10))]}" \; set -gq @ocspin "${ocspin[$(( (i / 2) % 4 ))]}" \; set -gq @miku "$m" \; set -gq @blink "$b")
+  cmd=(set -gq @spin "${spin[$((i % 10))]}" \; set -gq @ocspin "${ocspin[$(( (i / 2) % 4 ))]}" \; set -gq @miku "$m" \; set -gq @blink "$b" \; set -gq @meters "$mt")
   if [ "$busy" -gt 0 ] || [ -n "$playing" ] || [ $((i % 4)) -eq 0 ]; then
     for c in "${clients[@]}"; do cmd+=(\; refresh-client -S -t "$c"); done
   fi

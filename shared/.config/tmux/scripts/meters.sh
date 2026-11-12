@@ -1,8 +1,8 @@
 #!/bin/sh
 # cpu and mem meters; mem counts like Activity Monitor.
-cores=$(sysctl -n hw.ncpu)
+cores=${METER_NCPU:-$(sysctl -n hw.ncpu)}
 cpu=$(ps -A -o %cpu= | awk -v n="$cores" '{s+=$1} END {v=s/n; if (v>100) v=100; printf "%d", v+0.5}')
-mem=$(vm_stat | awk -v total="$(sysctl -n hw.memsize)" '
+mem=$(vm_stat | awk -v total="${METER_MEM:-$(sysctl -n hw.memsize)}" '
   /page size of/ {ps=$8} /Anonymous pages/ {a=$3} /Pages wired down/ {w=$4}
   /occupied by compressor/ {c=$5} /Pages purgeable/ {p=$3}
   END {printf "%d", (a-p+w+c)*ps*100/total + 0.5}')
