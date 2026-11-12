@@ -13,8 +13,13 @@ The Skills CLI writes through the `~/.agents` symlink straight into this repo:
 ```sh
 npx skills find <query>     # browse, then:
 npx skills add <package>    # installs into skills/ and updates .skill-lock.json
-git add -A shared/.agents && git commit
+git status shared/.agents   # review what it dropped before adding it
+git add shared/.agents && git commit
 ```
+
+The pre-commit hook (.githooks/pre-commit, enabled by macos/install.sh) refuses a
+new skill directory without a SOURCE line, so an install of something personal
+cannot be committed by reflex. It also refuses files at the skills root.
 
 By hand, for a skill from anywhere else:
 
