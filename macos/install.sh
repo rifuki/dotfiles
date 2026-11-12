@@ -872,8 +872,21 @@ if [ -x "$SHARED_DIR/.claude/link-profiles.sh" ]; then
     for _sk in "$SHARED_DIR/.agents/skills"/*/; do
       [ -d "$_sk" ] || continue
       _sk_name="$(basename "$_sk")"
-      [ -e "$HOME/.claude/skills/$_sk_name" ] && continue
-      ln -s "../../.agents/skills/$_sk_name" "$HOME/.claude/skills/$_sk_name"
+      _sk_dst="$HOME/.claude/skills/$_sk_name"
+      if [ -L "$_sk_dst" ]; then
+        continue
+      fi
+      if [ -d "$_sk_dst" ]; then
+        # A real directory shadows the shared source: replace it when it is only
+        # a copy, leave it alone when its content has drifted from the repo.
+        if diff -rq "$_sk_dst" "$SHARED_DIR/.agents/skills/$_sk_name" >/dev/null 2>&1; then
+          rm -rf "$_sk_dst"
+        else
+          warn_msg "~/.claude/skills/$_sk_name differs from the repo; left as is"
+          continue
+        fi
+      fi
+      ln -s "../../.agents/skills/$_sk_name" "$_sk_dst"
       _sk_new=$((_sk_new + 1))
     done
     done_msg "Skills: $(ls "$SHARED_DIR/.agents/skills" | wc -l | tr -d ' ') available, $_sk_new newly linked"
