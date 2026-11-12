@@ -25,6 +25,10 @@ tmux list-panes -a -F '#{session_name}	#{window_index}	#{pane_index}	#{pane_pid}
     done
   done
 
+# Kept for claude-panes-keep.sh: two saves in one second share a file name, and the second
+# deletes the file the first just linked as the last save.
+keep=$(dirname "$file")/.last-save
+trap 'cp "$file" "$keep" 2>/dev/null; rm -f "$map" "$map.out"' EXIT
 [ -s "$map" ] || exit 0
 # Bytes, not characters: a pane title may hold anything.
 LC_ALL=C awk -F '\t' -v OFS='\t' -v map="$map" '
