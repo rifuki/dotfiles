@@ -3,7 +3,7 @@
 # at login, and after every Dock restart.
 # Needs passwordless sudo for the loader; without it, it logs the refusal and exits.
 
-LOADER=$HOME/.local/src/ume-sa/loader/build/loader
+LOADER=$HOME/.local/lib/ume/loader
 DYLIB=$HOME/.local/lib/ume/ume-dock.current
 LOG=$HOME/Library/Logs/ume/load-dock.log
 LOCK=/tmp/ume-load-dock.lock
