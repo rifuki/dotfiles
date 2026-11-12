@@ -297,6 +297,87 @@
       "skillFolderHash": "13817bbdc5a2c12793f7ddc33704ed6e8af7f391",
       "installedAt": "2026-08-18T00:58:52.309Z",
       "updatedAt": "2026-08-18T00:58:52.309Z"
+    },
+    "api-security-testing": {
+      "source": "usestrix/strix",
+      "sourceType": "github",
+      "sourceUrl": "https://github.com/usestrix/strix.git",
+      "skillPath": "skills/api-security-testing/SKILL.md",
+      "skillFolderHash": "9a20db4e3f30c141376a0eb68d5d5e53cd5065f3",
+      "installedAt": "2026-11-09T05:52:11.874Z",
+      "updatedAt": "2026-11-09T05:52:11.874Z"
+    },
+    "application-security-testing": {
+      "source": "usestrix/strix",
+      "sourceType": "github",
+      "sourceUrl": "https://github.com/usestrix/strix.git",
+      "skillPath": "skills/application-security-testing/SKILL.md",
+      "skillFolderHash": "d6eed1475befd72f2a5bb551fabf33c36257a816",
+      "installedAt": "2026-11-09T05:52:11.886Z",
+      "updatedAt": "2026-11-09T05:52:11.886Z"
+    },
+    "ci-security-scanning-with-strix": {
+      "source": "usestrix/strix",
+      "sourceType": "github",
+      "sourceUrl": "https://github.com/usestrix/strix.git",
+      "skillPath": "skills/ci-security-scanning-with-strix/SKILL.md",
+      "skillFolderHash": "b3ee8c4780c187d607516ed557d23bc5b2902490",
+      "installedAt": "2026-11-09T05:52:11.902Z",
+      "updatedAt": "2026-11-09T05:52:11.902Z"
+    },
+    "find-security-vulnerabilities-in-code": {
+      "source": "usestrix/strix",
+      "sourceType": "github",
+      "sourceUrl": "https://github.com/usestrix/strix.git",
+      "skillPath": "skills/find-security-vulnerabilities-in-code/SKILL.md",
+      "skillFolderHash": "c1074a151145de99bcdb5e193aebbfd7a066b954",
+      "installedAt": "2026-11-09T05:52:11.914Z",
+      "updatedAt": "2026-11-09T05:52:11.914Z"
+    },
+    "fix-security-vulnerabilities-with-strix": {
+      "source": "usestrix/strix",
+      "sourceType": "github",
+      "sourceUrl": "https://github.com/usestrix/strix.git",
+      "skillPath": "skills/fix-security-vulnerabilities-with-strix/SKILL.md",
+      "skillFolderHash": "4659be6594ea2f5538350f3dd2edc9a13e458e12",
+      "installedAt": "2026-11-09T05:52:11.937Z",
+      "updatedAt": "2026-11-09T05:52:11.937Z"
+    },
+    "managed-pentesting-with-strix": {
+      "source": "usestrix/strix",
+      "sourceType": "github",
+      "sourceUrl": "https://github.com/usestrix/strix.git",
+      "skillPath": "skills/managed-pentesting-with-strix/SKILL.md",
+      "skillFolderHash": "6f869119c820804a9a85c0a873a14e4e83292c07",
+      "installedAt": "2026-11-09T05:52:11.955Z",
+      "updatedAt": "2026-11-09T05:52:11.955Z"
+    },
+    "owasp-top-10-testing": {
+      "source": "usestrix/strix",
+      "sourceType": "github",
+      "sourceUrl": "https://github.com/usestrix/strix.git",
+      "skillPath": "skills/owasp-top-10-testing/SKILL.md",
+      "skillFolderHash": "5dd695a1bbf414fb1eec72f98dcc394b24bc454e",
+      "installedAt": "2026-11-09T05:52:11.965Z",
+      "updatedAt": "2026-11-09T05:52:11.965Z"
+    },
+    "penetration-testing-with-strix": {
+      "source": "usestrix/strix",
+      "sourceType": "github",
+      "sourceUrl": "https://github.com/usestrix/strix.git",
+      "skillPath": "skills/penetration-testing-with-strix/SKILL.md",
+      "skillFolderHash": "86746c362cd6e105042d307438fcca52f3615651",
+      "installedAt": "2026-11-09T05:52:11.969Z",
+      "updatedAt": "2026-11-09T05:52:11.969Z"
+    },
+    "web-app-penetration-testing": {
+      "source": "usestrix/strix",
+      "sourceType": "github",
+      "sourceUrl": "https://github.com/usestrix/strix.git",
+      "skillPath": "skills/web-app-penetration-testing/SKILL.md",
+      "skillFolderHash": "1d4f2c5328742a5af073d054e6d392f3e431f1c1",
+      "installedAt": "2026-11-09T05:52:11.971Z",
+      "updatedAt": "2026-11-09T05:52:11.971Z"
     }
   },
   "lastSelectedAgents": [
