@@ -90,7 +90,9 @@ color = "#c678dd"
 "ctrl-alt-f" = "exec ~/.local/bin/ume notch"
 "ctrl-alt-n" = "exec ~/.local/bin/ume notch"
 
-# Reloads the Dock payload at login and after every Dock restart.
-[[signal]]
-event = "helper_lost"
-action = "~/.local/bin/ume-load-dock"
+# Reloads the Dock payload at login and after every Dock restart. Disabled while the
+# loader refuses stage-1 and kills Dock on each failed attempt; re-enable once loading
+# works again.
+# [[signal]]
+# event = "helper_lost"
+# action = "~/.local/bin/ume-load-dock"
