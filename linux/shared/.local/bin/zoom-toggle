@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Toggle zoom: float active window and fill ~95% of workspace (tiled windows stay visible behind)
-# Mimics yabai zoom-fullscreen in Hyprland
+# Borderless zoom-fullscreen for Hyprland
 
 WINDOW=$(hyprctl activewindow -j)
 ADDRESS=$(echo "$WINDOW" | jq -r '.address')

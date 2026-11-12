@@ -37,7 +37,7 @@ hl.bind(superMod .. " + SHIFT + Q", hl.dsp.exec_cmd(home .. "/.config/hypr/scrip
 -- ── Floating / grid / fullscreen ─────────────────────────────────────────────
 hl.bind(superMod .. " + return", hl.dsp.exec_cmd(bin .. "float-toggle"))     -- toggle float, 900x600 + center
 hl.bind(superMod .. " + V",      hl.dsp.exec_cmd(bin .. "clipboard-paste"))  -- clipboard picker + auto-paste
-hl.bind(superMod .. " + F",      hl.dsp.exec_cmd(bin .. "zoom-toggle"))      -- zoom-fullscreen, yabai-style
+hl.bind(superMod .. " + F",      hl.dsp.exec_cmd(bin .. "zoom-toggle"))      -- zoom-fullscreen
 hl.bind(altMod   .. " + F",      hl.dsp.exec_cmd(bin .. "zoom-toggle"))
 
 -- True fullscreen (hides waybar). hyprlang `fullscreen, 0` meant mode 0, which
