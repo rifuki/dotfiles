@@ -123,9 +123,9 @@ elif [ "$_fi" -gt 0 ]; then STATUS+=("${_fi}/15 installed"); SELECTED+=(1)
 else STATUS+=(""); SELECTED+=(1); fi
 EXTERNAL+=(0)
 
-# 1: ume — built from source, not brew
+# 1: ume — built from source by macos/ume.sh, not brew
 LABELS+=("ume")
-DESCRIPTIONS+=("Tiling WM with its own hotkeys")
+DESCRIPTIONS+=("Tiling WM with its own hotkeys, built from source")
 if [ -x "$HOME/.local/bin/ume" ]; then
   STATUS+=("installed"); SELECTED+=(0); EXTERNAL+=(0)
 else
@@ -535,16 +535,6 @@ if [ "${SELECTED[0]}" = "1" ]; then
     done_msg "JetBrainsMono Nerd Font installed"
   else
     done_msg "JetBrainsMono Nerd Font already installed"
-  fi
-fi
-
-# ========== 1: ume ==========
-if [ "${SELECTED[1]}" = "1" ]; then
-  step "Installing window manager"
-  if [ ! -x "$HOME/.local/bin/ume" ]; then
-    warn_msg "ume builds from its private repo; see the notes at the end"
-  else
-    done_msg "ume already installed"
   fi
 fi
 
@@ -1026,6 +1016,22 @@ if [ "$SHELL" != "$(which zsh)" ]; then
   chsh -s "$(which zsh)" || warn_msg "chsh failed"
 fi
 
+# ========== 1: ume ==========
+# Here rather than in menu order: the build needs Rust, the SSH key and the linked config.
+if [ "${SELECTED[1]}" = "1" ]; then
+  step "Installing window manager"
+  if [ ! -x "$HOME/.local/bin/ume" ]; then
+    info_msg "Building ume from source..."
+    if bash "$PLATFORM_DIR/ume.sh"; then
+      done_msg "ume installed"
+    else
+      warn_msg "ume did not build; run macos/ume.sh again once it can"
+    fi
+  else
+    done_msg "ume already installed"
+  fi
+fi
+
 # ========== 13: sui-move-analyzer ==========
 if [ "${SELECTED[13]}" = "1" ]; then
   step "Checking sui-move-analyzer"
@@ -1222,10 +1228,11 @@ echo -e "${BOLD}${CYAN}╚══════════════════
 echo ""
 if [ "${SELECTED[1]}" = "1" ]; then
   echo -e "  ${CYAN}ume:${NC}"
-  echo -e "    ${DIM}1. git clone git@github.com:rifuki/ume.git && git clone git@github.com:rifuki/ume-sa.git${NC}"
-  echo -e "    ${DIM}2. ume: UME_SIGN_IDENTITY=<cert> cargo xtask install; ume-sa: make install${NC}"
-  echo -e "    ${DIM}3. Allow in System Settings > Privacy & Security > Accessibility${NC}"
-  echo -e "    ${DIM}4. The Dock payload needs partial SIP off and a NOPASSWD sudoers rule for its loader;${NC}"
+  echo -e "    ${DIM}1. Allow ume in System Settings > Privacy & Security, under Accessibility${NC}"
+  echo -e "    ${DIM}   and under Screen & System Audio Recording (for ume notch)${NC}"
+  echo -e "    ${DIM}2. Rebuild after an update: macos/ume.sh (UME_SRC names another checkout)${NC}"
+  echo -e "    ${DIM}3. Animation and Space moves need the Dock payload: clone ume-sa, make install,${NC}"
+  echo -e "    ${DIM}   partial SIP off and a NOPASSWD sudoers rule for its loader;${NC}"
   echo -e "    ${DIM}   ~/.local/bin/ume-load-dock then loads it on ume's helper_lost signal${NC}"
   echo ""
 fi
