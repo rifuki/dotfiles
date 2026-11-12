@@ -3,7 +3,7 @@ set -e
 
 # ========== Packages ==========
 BREW_FORMULAE=(neovim tmux trash htop ripgrep starship neofetch yazi fzf gh imagemagick luarocks wakatime-cli)
-TOOL_NAMES=(nvim starship ghostty yazi tmux neofetch wakatime orbstack yabai skhd solana anchor sui suiup walrus mvr gh ripgrep trash htop hot mise)
+TOOL_NAMES=(nvim starship ghostty yazi tmux neofetch wakatime orbstack solana anchor sui suiup walrus mvr gh ripgrep trash htop hot mise)
 
 # ========== Colors (Miku Cyberpunk Theme) ==========
 # Cyan: #00D9FF | Green: #50FA7B | Magenta: #FF79C6 | Purple: #BD93F9
@@ -71,18 +71,7 @@ else
   DETECTED+=(0); SELECTED+=(0); EXTERNAL+=(0)
 fi
 
-# 1: Yabai + Skhd — install.sh installs via brew
-LABELS+=("Yabai + Skhd")
-DESCRIPTIONS+=("Tiling WM + hotkey daemon")
-if brew list yabai &>/dev/null 2>&1 || brew list skhd &>/dev/null 2>&1; then
-  DETECTED+=(1); SELECTED+=(0); EXTERNAL+=(0)
-elif command -v yabai &>/dev/null || command -v skhd &>/dev/null; then
-  DETECTED+=(1); SELECTED+=(0); EXTERNAL+=(1)
-else
-  DETECTED+=(0); SELECTED+=(0); EXTERNAL+=(0)
-fi
-
-# 2: Ghostty — install.sh installs via brew cask
+# 1: Ghostty — install.sh installs via brew cask
 LABELS+=("Ghostty")
 DESCRIPTIONS+=("Ghostty terminal")
 if brew list --cask ghostty &>/dev/null 2>&1; then
@@ -93,7 +82,7 @@ else
   DETECTED+=(0); SELECTED+=(0); EXTERNAL+=(0)
 fi
 
-# 3: Cloudflare WARP + Hot — install.sh installs via brew cask
+# 2: Cloudflare WARP + Hot — install.sh installs via brew cask
 LABELS+=("Cloudflare WARP + Hot")
 DESCRIPTIONS+=("Menu bar: VPN + thermal monitor")
 _warp_brew=0; _hot_brew=0
@@ -116,7 +105,7 @@ else
   DETECTED+=(0); SELECTED+=(0); EXTERNAL+=(0)
 fi
 
-# 4: Google Chrome — check if managed by brew cask
+# 3: Google Chrome — check if managed by brew cask
 LABELS+=("Google Chrome")
 DESCRIPTIONS+=("Browser")
 if brew list --cask google-chrome &>/dev/null 2>&1; then
@@ -127,7 +116,7 @@ else
   DETECTED+=(0); SELECTED+=(0); EXTERNAL+=(0)
 fi
 
-# 5: OrbStack — check if managed by brew cask
+# 4: OrbStack — check if managed by brew cask
 LABELS+=("OrbStack")
 DESCRIPTIONS+=("Docker & Linux VM runtime")
 if brew list --cask orbstack &>/dev/null 2>&1; then
@@ -138,53 +127,53 @@ else
   DETECTED+=(0); SELECTED+=(0); EXTERNAL+=(0)
 fi
 
-# 6: mise
+# 5: mise
 LABELS+=("Mise")
 DESCRIPTIONS+=("~/.local/share/mise, brew uninstall mise")
 if command -v mise &>/dev/null || [ -d "$HOME/.local/share/mise" ]; then DETECTED+=(1); SELECTED+=(1); EXTERNAL+=(0)
 else DETECTED+=(0); SELECTED+=(0); EXTERNAL+=(0); fi
 
-# 7: Oh My Zsh
+# 6: Oh My Zsh
 LABELS+=("Oh My Zsh")
 DESCRIPTIONS+=("~/.oh-my-zsh")
 if [ -d "$HOME/.oh-my-zsh" ]; then DETECTED+=(1); SELECTED+=(1); EXTERNAL+=(0); else DETECTED+=(0); SELECTED+=(0); EXTERNAL+=(0); fi
 
-# 8: Rust
+# 7: Rust
 LABELS+=("Rust")
 DESCRIPTIONS+=("~/.cargo, ~/.rustup")
 if [ -d "$HOME/.cargo" ] || [ -d "$HOME/.rustup" ]; then DETECTED+=(1); SELECTED+=(1); EXTERNAL+=(0); else DETECTED+=(0); SELECTED+=(0); EXTERNAL+=(0); fi
 
-# 9: Bun
+# 8: Bun
 LABELS+=("Bun")
 DESCRIPTIONS+=("~/.bun")
 if [ -d "$HOME/.bun" ]; then DETECTED+=(1); SELECTED+=(1); EXTERNAL+=(0); else DETECTED+=(0); SELECTED+=(0); EXTERNAL+=(0); fi
 
-# 10: NVM
+# 9: NVM
 LABELS+=("NVM")
 DESCRIPTIONS+=("~/.nvm")
 if [ -d "$HOME/.nvm" ]; then DETECTED+=(1); SELECTED+=(1); EXTERNAL+=(0); else DETECTED+=(0); SELECTED+=(0); EXTERNAL+=(0); fi
 
-# 11: Solana + AVM
+# 10: Solana + AVM
 LABELS+=("Solana + AVM")
 DESCRIPTIONS+=("~/.local/share/solana, ~/.avm")
 if command -v solana &>/dev/null || [ -d "$HOME/.local/share/solana" ]; then DETECTED+=(1); SELECTED+=(1); EXTERNAL+=(0); else DETECTED+=(0); SELECTED+=(0); EXTERNAL+=(0); fi
 
-# 12: suiup + Sui
+# 11: suiup + Sui
 LABELS+=("Suiup + Sui")
 DESCRIPTIONS+=("~/.local/bin/sui*, ~/.sui")
 if [ -f "$HOME/.local/bin/suiup" ] || [ -d "$HOME/.sui" ]; then DETECTED+=(1); SELECTED+=(1); EXTERNAL+=(0); else DETECTED+=(0); SELECTED+=(0); EXTERNAL+=(0); fi
 
-# 13: sui-move-analyzer
+# 12: sui-move-analyzer
 LABELS+=("sui-move-analyzer")
 DESCRIPTIONS+=("~/.cargo/bin/sui-move-analyzer")
 if [ -f "$HOME/.cargo/bin/sui-move-analyzer" ]; then DETECTED+=(1); SELECTED+=(1); EXTERNAL+=(0); else DETECTED+=(0); SELECTED+=(0); EXTERNAL+=(0); fi
 
-# 14: SSH Keys (iCloud)
+# 13: SSH Keys (iCloud)
 LABELS+=("SSH Keys (iCloud)")
 DESCRIPTIONS+=("~/.ssh symlink only")
 if [ -L "$HOME/.ssh" ]; then DETECTED+=(1); SELECTED+=(1); EXTERNAL+=(0); else DETECTED+=(0); SELECTED+=(0); EXTERNAL+=(0); fi
 
-# 15: Miku Cursor (Mousecape)
+# 14: Miku Cursor (Mousecape)
 LABELS+=("Miku Cursor")
 DESCRIPTIONS+=("mousecloak, cape, LaunchAgent — restores stock cursors")
 if [ -x "$HOME/.local/libexec/mousecloak" ] || [ -d "/Applications/Mousecape.app" ] \
@@ -194,7 +183,7 @@ else
   DETECTED+=(0); SELECTED+=(0); EXTERNAL+=(0)
 fi
 
-# 16: memmon
+# 15: memmon
 LABELS+=("memmon")
 DESCRIPTIONS+=("Binaries, LaunchAgent and sampling database")
 if [ -x "$HOME/.local/bin/memmon-panel" ] \
@@ -204,12 +193,12 @@ else
   DETECTED+=(0); SELECTED+=(0); EXTERNAL+=(0)
 fi
 
-# 17: Deep Clean
+# 16: Deep Clean
 LABELS+=("Deep Clean")
 DESCRIPTIONS+=(".cache, .local, .npm, .wakatime, .gitconfig")
 DETECTED+=(1); SELECTED+=(0); EXTERNAL+=(0)
 
-# 18: ume — install.sh builds it from source with macos/ume.sh
+# 17: ume — install.sh builds it from source with macos/ume.sh
 LABELS+=("ume")
 DESCRIPTIONS+=("Tiling WM binary and LaunchAgent; source stays")
 if [ -x "$HOME/.local/bin/ume" ] || [ -f "$HOME/Library/LaunchAgents/dev.ume.daemon.plist" ]; then
@@ -297,12 +286,12 @@ while true; do
     echo -e "\n  ${YELLOW}⏭️  Uninstallation cancelled.${NC}"
     exit 0
   fi
-  # Dependency: Rust (8) selected → auto-select Solana AVM (11) and sui-move-analyzer (13) if detected
-  [ "${SELECTED[8]}" = "1" ] && [ "${DETECTED[11]}" = "1" ] && [ "${EXTERNAL[11]}" != "1" ] && SELECTED[11]=1
-  [ "${SELECTED[8]}" = "1" ] && [ "${DETECTED[13]}" = "1" ] && [ "${EXTERNAL[13]}" != "1" ] && SELECTED[13]=1
-  # Deselect Rust (8) → auto-deselect Solana AVM (11) and sui-move-analyzer (13)
-  [ "${SELECTED[8]}" = "0" ] && SELECTED[11]=0
-  [ "${SELECTED[8]}" = "0" ] && SELECTED[13]=0
+  # Dependency: Rust (7) selected → auto-select Solana AVM (10) and sui-move-analyzer (12) if detected
+  [ "${SELECTED[7]}" = "1" ] && [ "${DETECTED[10]}" = "1" ] && [ "${EXTERNAL[10]}" != "1" ] && SELECTED[10]=1
+  [ "${SELECTED[7]}" = "1" ] && [ "${DETECTED[12]}" = "1" ] && [ "${EXTERNAL[12]}" != "1" ] && SELECTED[12]=1
+  # Deselect Rust (7) → auto-deselect Solana AVM (10) and sui-move-analyzer (12)
+  [ "${SELECTED[7]}" = "0" ] && SELECTED[10]=0
+  [ "${SELECTED[7]}" = "0" ] && SELECTED[12]=0
 done
 
 # ========== Confirmation Summary ==========
@@ -385,18 +374,8 @@ if [ "${SELECTED[0]}" = "1" ]; then
   done_msg "Homebrew formulae + font done"
 fi
 
-# ========== Yabai + Skhd (index 1) ==========
+# ========== Ghostty (index 1) ==========
 if [ "${SELECTED[1]}" = "1" ]; then
-  step "Removing Yabai + Skhd"
-  for _pkg in yabai skhd; do
-    if brew list "$_pkg" &>/dev/null; then
-      brew uninstall --ignore-dependencies "$_pkg" && done_msg "Removed $_pkg" || warn_msg "Failed to remove $_pkg"
-    fi
-  done
-fi
-
-# ========== Ghostty (index 2) ==========
-if [ "${SELECTED[2]}" = "1" ]; then
   step "Removing Ghostty"
   if brew list --cask ghostty &>/dev/null; then
     brew uninstall --cask ghostty && done_msg "Removed ghostty" || warn_msg "Failed to remove ghostty"
@@ -405,8 +384,8 @@ if [ "${SELECTED[2]}" = "1" ]; then
   fi
 fi
 
-# ========== Cloudflare WARP + Hot (index 3) ==========
-if [ "${SELECTED[3]}" = "1" ]; then
+# ========== Cloudflare WARP + Hot (index 2) ==========
+if [ "${SELECTED[2]}" = "1" ]; then
   step "Removing Cloudflare WARP + Hot"
   if brew list --cask cloudflare-warp &>/dev/null; then
     brew uninstall --cask cloudflare-warp && done_msg "Cloudflare WARP removed" || warn_msg "Failed to remove cloudflare-warp"
@@ -420,8 +399,8 @@ if [ "${SELECTED[3]}" = "1" ]; then
   fi
 fi
 
-# ========== Google Chrome (index 4) ==========
-if [ "${SELECTED[4]}" = "1" ]; then
+# ========== Google Chrome (index 3) ==========
+if [ "${SELECTED[3]}" = "1" ]; then
   step "Removing Google Chrome"
   if brew list --cask google-chrome &>/dev/null; then
     brew uninstall --cask google-chrome && done_msg "Google Chrome removed" || warn_msg "Failed to remove Google Chrome"
@@ -430,8 +409,8 @@ if [ "${SELECTED[4]}" = "1" ]; then
   fi
 fi
 
-# ========== OrbStack (index 5) ==========
-if [ "${SELECTED[5]}" = "1" ]; then
+# ========== OrbStack (index 4) ==========
+if [ "${SELECTED[4]}" = "1" ]; then
   step "Removing OrbStack"
   if brew list --cask orbstack &>/dev/null; then
     brew uninstall --cask orbstack && done_msg "OrbStack removed" || warn_msg "Failed to remove OrbStack"
@@ -440,8 +419,8 @@ if [ "${SELECTED[5]}" = "1" ]; then
   fi
 fi
 
-# ========== mise (index 6) ==========
-if [ "${SELECTED[6]}" = "1" ]; then
+# ========== mise (index 5) ==========
+if [ "${SELECTED[5]}" = "1" ]; then
   step "Removing mise"
   if brew list mise &>/dev/null; then
     brew uninstall mise && done_msg "mise (brew) removed" || warn_msg "Failed to remove mise via brew"
@@ -452,35 +431,35 @@ if [ "${SELECTED[6]}" = "1" ]; then
   done_msg "mise data removed"
 fi
 
-# ========== Oh My Zsh (index 7) ==========
-if [ "${SELECTED[7]}" = "1" ]; then
+# ========== Oh My Zsh (index 6) ==========
+if [ "${SELECTED[6]}" = "1" ]; then
   step "Removing Oh My Zsh"
   rm -rf "$HOME/.oh-my-zsh"
   done_msg "Oh My Zsh removed"
 fi
 
-# ========== Rust (index 8) ==========
-if [ "${SELECTED[8]}" = "1" ]; then
+# ========== Rust (index 7) ==========
+if [ "${SELECTED[7]}" = "1" ]; then
   step "Removing Rust"
   rm -rf "$HOME/.cargo"
   rm -rf "$HOME/.rustup"
   done_msg "Rust removed"
 fi
 
-# ========== Bun (index 9) ==========
-if [ "${SELECTED[9]}" = "1" ]; then
+# ========== Bun (index 8) ==========
+if [ "${SELECTED[8]}" = "1" ]; then
   step "Removing Bun"
   rm -rf "$HOME/.bun"
   done_msg "Bun removed"
 fi
 
-# ========== NVM (index 10) ==========
-if [ "${SELECTED[10]}" = "1" ]; then
+# ========== NVM (index 9) ==========
+if [ "${SELECTED[9]}" = "1" ]; then
   bash "$(dirname "$0")/nvm.sh" uninstall
 fi
 
-# ========== Solana + AVM (index 11) ==========
-if [ "${SELECTED[11]}" = "1" ]; then
+# ========== Solana + AVM (index 10) ==========
+if [ "${SELECTED[10]}" = "1" ]; then
   step "Removing Solana + AVM"
   rm -rf "$HOME/.local/share/solana"
   rm -rf "$HOME/.config/solana"
@@ -491,8 +470,8 @@ if [ "${SELECTED[11]}" = "1" ]; then
   done_msg "AVM + Anchor removed"
 fi
 
-# ========== suiup + Sui (index 12) ==========
-if [ "${SELECTED[12]}" = "1" ]; then
+# ========== suiup + Sui (index 11) ==========
+if [ "${SELECTED[11]}" = "1" ]; then
   step "Removing suiup + Sui"
   rm -f "$HOME/.local/bin/suiup"
   done_msg "suiup removed"
@@ -508,16 +487,16 @@ if [ "${SELECTED[12]}" = "1" ]; then
   done
 fi
 
-# ========== sui-move-analyzer (index 13) ==========
-if [ "${SELECTED[13]}" = "1" ]; then
+# ========== sui-move-analyzer (index 12) ==========
+if [ "${SELECTED[12]}" = "1" ]; then
   step "Removing sui-move-analyzer"
   rm -f "$HOME/.cargo/bin/sui-move-analyzer"
   done_msg "sui-move-analyzer removed"
 
 fi
 
-# ========== SSH Keys (index 14) ==========
-if [ "${SELECTED[14]}" = "1" ]; then
+# ========== SSH Keys (index 13) ==========
+if [ "${SELECTED[13]}" = "1" ]; then
   step "Removing SSH Keys symlink"
   if [ -L "$HOME/.ssh" ]; then
     rm -f "$HOME/.ssh"
@@ -534,8 +513,8 @@ rm -f "$HOME/.node_repl_history"
 rm -rf "$HOME/.config/github-copilot" 2>/dev/null || true
 done_msg "Cache files removed"
 
-# ========== Miku Cursor (index 15) ==========
-if [ "${SELECTED[15]}" = "1" ]; then
+# ========== Miku Cursor (index 14) ==========
+if [ "${SELECTED[14]}" = "1" ]; then
   step "Removing Miku cursor"
 
   _mc_agent="$HOME/Library/LaunchAgents/com.rifuki.mousecape-miku.plist"
@@ -563,8 +542,8 @@ if [ "${SELECTED[15]}" = "1" ]; then
   done_msg "mousecloak removed"
 fi
 
-# ========== memmon (index 16) ==========
-if [ "${SELECTED[16]}" = "1" ]; then
+# ========== memmon (index 15) ==========
+if [ "${SELECTED[15]}" = "1" ]; then
   step "Removing memmon"
   launchctl bootout "gui/$(id -u)/dev.rifuki.memmon.panel" 2>/dev/null || true
   rm -f "$HOME/Library/LaunchAgents/dev.rifuki.memmon.panel.plist"
@@ -583,8 +562,8 @@ if [ "${SELECTED[16]}" = "1" ]; then
   done_msg "memmon removed"
 fi
 
-# ========== ume (index 18) ==========
-if [ "${SELECTED[18]}" = "1" ]; then
+# ========== ume (index 17) ==========
+if [ "${SELECTED[17]}" = "1" ]; then
   step "Removing ume"
   if [ -x "$HOME/.local/bin/ume" ]; then
     "$HOME/.local/bin/ume" service uninstall >/dev/null 2>&1 || warn_msg "Could not stop the ume LaunchAgent"
@@ -595,8 +574,8 @@ if [ "${SELECTED[18]}" = "1" ]; then
   warn_msg "Its signing identity stays in the login keychain: security delete-identity -c ume-cert"
 fi
 
-# ========== Deep Clean (index 17) ==========
-if [ "${SELECTED[17]}" = "1" ]; then
+# ========== Deep Clean (index 16) ==========
+if [ "${SELECTED[16]}" = "1" ]; then
   step "Deep cleaning residue files"
 
   # Kill running processes that might recreate files
