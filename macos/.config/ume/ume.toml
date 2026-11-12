@@ -87,7 +87,7 @@ color = "#c678dd"
 "alt-shift-9" = "window space 9"
 "ctrl-alt-o" = "opacity focused"
 "ctrl-alt-shift-o" = "opacity toggle"
-"ctrl-alt-f" = "exec ~/.local/bin/notchfs"
+"ctrl-alt-f" = "exec ~/.local/bin/ume notch"
 "ctrl-alt-n" = "exec ~/.local/bin/ume notch"
 
 # Reloads the Dock payload at login and after every Dock restart.

@@ -209,6 +209,15 @@ LABELS+=("Deep Clean")
 DESCRIPTIONS+=(".cache, .local, .npm, .wakatime, .gitconfig")
 DETECTED+=(1); SELECTED+=(0); EXTERNAL+=(0)
 
+# 18: ume — install.sh builds it from source with macos/ume.sh
+LABELS+=("ume")
+DESCRIPTIONS+=("Tiling WM binary and LaunchAgent; source stays")
+if [ -x "$HOME/.local/bin/ume" ] || [ -f "$HOME/Library/LaunchAgents/dev.ume.daemon.plist" ]; then
+  DETECTED+=(1); SELECTED+=(0); EXTERNAL+=(0)
+else
+  DETECTED+=(0); SELECTED+=(0); EXTERNAL+=(0)
+fi
+
 _total=${#LABELS[@]}
 
 # ========== Draw Menu ==========
@@ -572,6 +581,18 @@ if [ "${SELECTED[16]}" = "1" ]; then
   fi
   # Source checkout is a git repo of its own; not this script's to delete.
   done_msg "memmon removed"
+fi
+
+# ========== ume (index 18) ==========
+if [ "${SELECTED[18]}" = "1" ]; then
+  step "Removing ume"
+  if [ -x "$HOME/.local/bin/ume" ]; then
+    "$HOME/.local/bin/ume" service uninstall >/dev/null 2>&1 || warn_msg "Could not stop the ume LaunchAgent"
+  fi
+  rm -f "$HOME/Library/LaunchAgents/dev.ume.daemon.plist" "$HOME/.local/bin/ume"
+  rm -rf "$HOME/.local/lib/ume"
+  done_msg "Removed ume"
+  warn_msg "Its signing identity stays in the login keychain: security delete-identity -c ume-cert"
 fi
 
 # ========== Deep Clean (index 17) ==========
