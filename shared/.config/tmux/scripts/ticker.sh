@@ -15,24 +15,33 @@ export METER_NCPU=$(sysctl -n hw.ncpu) METER_MEM=$(sysctl -n hw.memsize)
 i=0
 busy=0
 clients=()
+wins=()
+paths=()
 while :; do
   if [ $((i % 5)) -eq 0 ]; then
-    out=$(tmux list-windows -a -F 'W#{@claude_state}' \; list-clients -F 'C#{client_name}' 2>/dev/null) || break
-    busy=0; clients=()
+    out=$(tmux list-windows -a -F 'W#{@claude_state}' \; list-clients -F 'C#{client_name}	#{window_id}	#{pane_current_path}' 2>/dev/null) || break
+    busy=0; clients=(); wins=(); paths=()
     while IFS= read -r l; do
       case $l in
         Wbusy|Wwait) busy=$((busy + 1)) ;;
-        C*) clients+=("${l#C}") ;;
+        C*) IFS=$'\t' read -r cn wid pth <<< "${l#C}"; clients+=("$cn"); wins+=("$wid"); paths+=("$pth") ;;
       esac
     done <<< "$out"
   fi
   [ $((i % 15)) -eq 0 ] && playing=$("$np")
   [ $((i % 10)) -eq 0 ] && mt=$("$meters")
+  br=()
+  if [ $((i % 10)) -eq 0 ]; then
+    for k in "${!wins[@]}"; do
+      g=$(git -C "${paths[$k]}" branch --show-current 2>/dev/null)
+      br+=(\; set -wq -t "${wins[$k]}" @git_branch "${g:+ ${g}}")
+    done
+  fi
   # resurrect auto-save every 5 min, replacing continuum's per-second check
   [ $i -gt 0 ] && [ $((i % 1500)) -eq 0 ] && { "$save" quiet >/dev/null 2>&1 & }
   if [ -n "$playing" ]; then m=${dance[$(( (i / 2) % 6 ))]}; else m=${doze[$(( (i / 4) % 6 ))]}; fi
   b="●"; [ $(( (i / 3) % 2 )) -eq 1 ] && b="○"
-  cmd=(set -gq @spin "${spin[$((i % 10))]}" \; set -gq @ocspin "${ocspin[$(( (i / 2) % 4 ))]}" \; set -gq @miku "$m" \; set -gq @blink "$b" \; set -gq @meters "$mt")
+  cmd=(set -gq @spin "${spin[$((i % 10))]}" \; set -gq @ocspin "${ocspin[$(( (i / 2) % 4 ))]}" \; set -gq @miku "$m" \; set -gq @blink "$b" \; set -gq @meters "$mt" "${br[@]}")
   if [ "$busy" -gt 0 ] || [ -n "$playing" ] || [ $((i % 4)) -eq 0 ]; then
     for c in "${clients[@]}"; do cmd+=(\; refresh-client -S -t "$c"); done
   fi
