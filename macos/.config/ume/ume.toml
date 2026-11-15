@@ -10,11 +10,14 @@ duration_ms = 250
 
 [mouse]
 focus_follows_mouse = true
+# Focus follows the pointer only after it rests 0.25 s. ctrl-alt-m turns it off and on,
+# ctrl-alt-shift-m switches between the delay and instant focus.
+focus_delay_ms = 250
 mouse_follows_focus = false
 
 [opacity]
-# The focused window at active, the others at inactive. ctrl-alt-o turns the focused
-# window's off and on, ctrl-alt-shift-o both.
+# The focused window at active, the others at inactive. ctrl-alt-o turns it all off and on,
+# ctrl-alt-shift-o only the focused window's.
 enabled = true
 active = 0.95
 inactive = 0.85
@@ -58,6 +61,7 @@ color = "#c678dd"
 "alt-period" = "display focus next"
 "alt-shift-comma" = "window display prev --follow"
 "alt-shift-period" = "window display next --follow"
+"alt-t" = "window toggle-float"
 "alt-return" = "window toggle-float; window grid 20:20:1:1:18:18"
 "alt-shift-return" = "window toggle-float; window grid 4:4:1:1:2:2"
 "alt-shift-left" = "window grid 1:2:0:0:1:1"
@@ -85,8 +89,10 @@ color = "#c678dd"
 "alt-shift-7" = "window space 7"
 "alt-shift-8" = "window space 8"
 "alt-shift-9" = "window space 9"
-"ctrl-alt-o" = "opacity focused"
-"ctrl-alt-shift-o" = "opacity toggle"
+"ctrl-alt-m" = "mouse toggle"
+"ctrl-alt-shift-m" = "mouse instant"
+"ctrl-alt-o" = "opacity toggle"
+"ctrl-alt-shift-o" = "opacity focused"
 "ctrl-alt-f" = "exec ~/.local/bin/ume notch"
 "ctrl-alt-n" = "exec ~/.local/bin/ume notch"
 
