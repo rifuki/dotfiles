@@ -212,7 +212,7 @@ else STATUS+=(""); SELECTED+=(0); EXTERNAL+=(0); fi
 
 # 11: Neovim Plugins (Lazy)
 LABELS+=("Neovim Plugins (Lazy)")
-DESCRIPTIONS+=("Headless Lazy sync — install/update all plugins")
+DESCRIPTIONS+=("Install plugins at the commits in lazy-lock.json")
 _lazy_dir="$HOME/.local/share/nvim/lazy"
 _lazy_count=0
 [ -d "$_lazy_dir" ] && _lazy_count=$(ls -1 "$_lazy_dir" 2>/dev/null | wc -l | tr -d ' ')
@@ -623,16 +623,16 @@ if [ "${SELECTED[1]}" = "1" ]; then
   # yazi: download binary from GitHub releases
   if ! command -v yazi &>/dev/null; then
     info_msg "Installing yazi..."
-    _yazi_url=$(curl -fsSL https://api.github.com/repos/sxyazi/yazi/releases/latest | grep -o '"browser_download_url": "[^"]*x86_64-unknown-linux-gnu.zip"' | cut -d'"' -f4)
-    if [ -n "$_yazi_url" ]; then
-      curl -fsSL "$_yazi_url" -o /tmp/yazi.zip
+    # releases/latest/download needs no GitHub API call, so no rate limit.
+    _yazi_target="$(uname -m)-unknown-linux-gnu"
+    if curl --proto '=https' --tlsv1.2 -fsSL "https://github.com/sxyazi/yazi/releases/latest/download/yazi-$_yazi_target.zip" -o /tmp/yazi.zip; then
       unzip -qo /tmp/yazi.zip -d /tmp/yazi-extract
-      sudo mv /tmp/yazi-extract/yazi-x86_64-unknown-linux-gnu/yazi /usr/local/bin/yazi
+      sudo mv "/tmp/yazi-extract/yazi-$_yazi_target/yazi" /usr/local/bin/yazi
       sudo chmod +x /usr/local/bin/yazi
       rm -rf /tmp/yazi.zip /tmp/yazi-extract
       done_msg "yazi installed"
     else
-      warn_msg "Could not find yazi release URL"
+      warn_msg "yazi download failed"
     fi
   else
     done_msg "yazi already installed"
@@ -654,16 +654,14 @@ if [ "${SELECTED[1]}" = "1" ]; then
   # JetBrainsMono Nerd Font
   if ! ls "$HOME/.local/share/fonts/JetBrainsMono"*"NerdFont"* &>/dev/null 2>&1; then
     info_msg "Installing JetBrainsMono Nerd Font..."
-    _font_url=$(curl -fsSL https://api.github.com/repos/ryanoasis/nerd-fonts/releases/latest | grep -o '"browser_download_url": "[^"]*JetBrainsMono.zip"' | cut -d'"' -f4)
-    if [ -n "$_font_url" ]; then
+    if curl --proto '=https' --tlsv1.2 -fsSL https://github.com/ryanoasis/nerd-fonts/releases/latest/download/JetBrainsMono.zip -o /tmp/JetBrainsMono.zip; then
       mkdir -p "$HOME/.local/share/fonts"
-      curl -fsSL "$_font_url" -o /tmp/JetBrainsMono.zip
       unzip -qo /tmp/JetBrainsMono.zip -d "$HOME/.local/share/fonts/"
       fc-cache -fv > /dev/null 2>&1
       rm -f /tmp/JetBrainsMono.zip
       done_msg "JetBrainsMono Nerd Font installed"
     else
-      warn_msg "Could not find font release URL"
+      warn_msg "Font download failed"
     fi
   else
     done_msg "JetBrainsMono Nerd Font already installed"
@@ -983,9 +981,14 @@ fi
 # ========== Neovim: Lazy + Mason Headless Install ==========
 if command -v nvim &>/dev/null && [ -d "$HOME/.config/nvim" ]; then
   if [ "${SELECTED[11]}" = "1" ]; then
-    step "Syncing Neovim plugins (Lazy)"
-    nvim --headless "+Lazy! sync" +qa 2>/dev/null || true
-    done_msg "Lazy plugins synced"
+    step "Installing Neovim plugins at the committed lockfile"
+    # First start installs whatever is missing and may rewrite the lock; restore puts it back.
+    _lock="$DOTFILES_DIR/shared/.config/nvim/lazy-lock.json"
+    nvim --headless +qa 2>/dev/null || true
+    git -C "$DOTFILES_DIR" checkout -- "$_lock" 2>/dev/null || true
+    nvim --headless "+Lazy! restore" +qa 2>/dev/null || true
+    git -C "$DOTFILES_DIR" checkout -- "$_lock" 2>/dev/null || true
+    done_msg "Lazy plugins match lazy-lock.json"
   fi
 
   if [ "${SELECTED[12]}" = "1" ]; then

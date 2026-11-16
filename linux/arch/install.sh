@@ -132,7 +132,7 @@ if [ -z "$_RESUME_SEL" ]; then
   else STATUS+=(""); SELECTED+=(1); EXTERNAL+=(0); fi
 
   LABELS+=("Neovim Plugins")
-  DESCRIPTIONS+=("Headless Lazy sync")
+  DESCRIPTIONS+=("Install plugins at the commits in lazy-lock.json")
   _lazy_count=0
   [ -d "$HOME/.local/share/nvim/lazy" ] && _lazy_count=$(ls -1 "$HOME/.local/share/nvim/lazy" 2>/dev/null | wc -l | tr -d ' ')
   if [ "$_lazy_count" -gt 0 ]; then STATUS+=("${_lazy_count} plugins"); SELECTED+=(0); EXTERNAL+=(0)
@@ -620,9 +620,14 @@ fi
 
 if command -v nvim &>/dev/null && [ -d "$HOME/.config/nvim" ]; then
   if [ "${SELECTED[7]}" = "1" ]; then
-    step "Syncing Neovim plugins"
-    nvim --headless "+Lazy! sync" +qa 2>/dev/null || true
-    done_msg "Lazy plugins synced"
+    step "Installing Neovim plugins at the committed lockfile"
+    # First start installs whatever is missing and may rewrite the lock; restore puts it back.
+    _lock="$DOTFILES_DIR/shared/.config/nvim/lazy-lock.json"
+    nvim --headless +qa 2>/dev/null || true
+    git -C "$DOTFILES_DIR" checkout -- "$_lock" 2>/dev/null || true
+    nvim --headless "+Lazy! restore" +qa 2>/dev/null || true
+    git -C "$DOTFILES_DIR" checkout -- "$_lock" 2>/dev/null || true
+    done_msg "Lazy plugins match lazy-lock.json"
   fi
   if [ "${SELECTED[8]}" = "1" ]; then
     step "Installing Mason packages"
