@@ -730,7 +730,7 @@ if [ "${SELECTED[4]}" = "1" ]; then
       source "$HOME/.cargo/env"
     fi
   fi
-  rustup show active-toolchain &>/dev/null || rustup default stable
+  rustc --version &>/dev/null || rustup default stable
   done_msg "Rust: $(rustc --version 2>/dev/null || true)"
 fi
 
