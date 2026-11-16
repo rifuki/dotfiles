@@ -37,17 +37,17 @@ bash <(curl -fsSL https://dotfiles.rifuki.dev/macos/uninstall.sh)
 
 **Debian:**
 ```bash
-bash <(curl -fsSL https://dotfiles.rifuki.dev/debian/uninstall.sh)
+bash <(curl -fsSL https://dotfiles.rifuki.dev/linux/debian/uninstall.sh)
 ```
 
 **Arch:**
 ```bash
-bash <(curl -fsSL https://dotfiles.rifuki.dev/arch/uninstall.sh)
+bash <(curl -fsSL https://dotfiles.rifuki.dev/linux/arch/uninstall.sh)
 ```
 
 **Gentoo:**
 ```bash
-bash <(curl -fsSL https://dotfiles.rifuki.dev/gentoo/uninstall.sh)
+bash <(curl -fsSL https://dotfiles.rifuki.dev/linux/gentoo/uninstall.sh)
 ```
 
 ### Remove Homebrew completely (macOS)
