@@ -74,7 +74,8 @@ _cur_pw_status=$(sudo -n passwd -S "$USER" 2>/dev/null | awk '{print $2}' || tru
 # cloud-init is present on all major cloud VPS (AWS, GCP, Azure, DO, etc.)
 # but NOT on local Debian Desktop/Server
 _is_vps=0
-if [ -d /run/cloud-init ] || [ -d /var/lib/cloud/instance ]; then
+# Ubuntu's WSL image ships cloud-init too, so WSL is ruled out first.
+if ! grep -qi microsoft /proc/version 2>/dev/null && { [ -d /run/cloud-init ] || [ -d /var/lib/cloud/instance ]; }; then
   _is_vps=1
 fi
 
