@@ -778,8 +778,9 @@ if [ "${SELECTED[7]}" = "1" ]; then
   if ! command -v docker &>/dev/null; then
     info_msg "Installing Docker from Docker's signed apt repository..."
     command -v gpg &>/dev/null || sudo apt install -y gnupg
+    _distro="$(. /etc/os-release && echo "$ID")"
     _key="$(mktemp)"
-    curl --proto '=https' --tlsv1.2 -fsSL https://download.docker.com/linux/debian/gpg -o "$_key"
+    curl --proto '=https' --tlsv1.2 -fsSL "https://download.docker.com/linux/$_distro/gpg" -o "$_key"
     # Docker's published release key; anything else stops the install.
     if [ "$(gpg --show-keys --with-colons "$_key" 2>/dev/null | awk -F: '/^fpr/{print $10; exit}')" != "9DC858229FC7DD38854AE2D88D81803C0EBFCD88" ]; then
       rm -f "$_key"
@@ -789,7 +790,7 @@ if [ "${SELECTED[7]}" = "1" ]; then
     sudo install -m 0755 -d /etc/apt/keyrings
     sudo install -m 0644 "$_key" /etc/apt/keyrings/docker.asc
     rm -f "$_key"
-    echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/debian $(. /etc/os-release && echo "$VERSION_CODENAME") stable" \
+    echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/$_distro $(. /etc/os-release && echo "$VERSION_CODENAME") stable" \
       | sudo tee /etc/apt/sources.list.d/docker.list >/dev/null
     sudo apt update -qq
     sudo apt install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
