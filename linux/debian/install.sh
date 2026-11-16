@@ -189,7 +189,9 @@ else STATUS+=(""); SELECTED+=(1); EXTERNAL+=(0); fi
 # 8: Swap (2GB)
 LABELS+=("Swap (2GB)")
 DESCRIPTIONS+=("Create 2GB swap file")
-if [ -f /swapfile ]; then STATUS+=("active"); SELECTED+=(0); EXTERNAL+=(0); else STATUS+=(""); SELECTED+=(1); EXTERNAL+=(0); fi
+if [ -f /swapfile ]; then STATUS+=("active"); SELECTED+=(0); EXTERNAL+=(0)
+elif grep -qi microsoft /proc/version 2>/dev/null; then STATUS+=("WSL: set in .wslconfig"); SELECTED+=(0); EXTERNAL+=(0)
+else STATUS+=(""); SELECTED+=(1); EXTERNAL+=(0); fi
 
 # 9: fail2ban — default unchecked; auto-check on VPS
 LABELS+=("fail2ban")
