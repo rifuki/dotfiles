@@ -1,0 +1,6 @@
+[extend]
+useDefault = true
+
+[[allowlists]]
+description = "EVM addresses are public, not secrets"
+regexes = ['''^0x[0-9a-fA-F]{40}$''']

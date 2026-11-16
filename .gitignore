@@ -5,6 +5,9 @@
 !.gitignore
 !.githooks/
 !.githooks/**
+!.github/
+!.github/**
+!.gitleaks.toml
 !README.md
 !install.sh
 !uninstall.sh

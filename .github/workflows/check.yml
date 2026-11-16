@@ -1,0 +1,46 @@
+name: check
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  syntax:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install zsh and luajit
+        run: sudo apt-get update -qq && sudo apt-get install -y -qq zsh luajit
+
+      # Third-party skills are vendored as-is, so only our own files are linted.
+      - name: Shell, zsh, Python and Lua
+        run: |
+          fail=0
+          while IFS= read -r f; do
+            [ -f "$f" ] || continue
+            case "$f" in
+              *.lua) luajit -b "$f" /dev/null || fail=1; continue ;;
+              *.py) python3 -c 'import ast,sys; ast.parse(open(sys.argv[1]).read(), sys.argv[1])' "$f" || fail=1; continue ;;
+              *.zshrc|*.zsh) zsh -n "$f" || fail=1; continue ;;
+            esac
+            case "$(head -n1 "$f")" in
+              '#!'*zsh*) zsh -n "$f" || fail=1 ;;
+              '#!'*python*) python3 -c 'import ast,sys; ast.parse(open(sys.argv[1]).read(), sys.argv[1])' "$f" || fail=1 ;;
+              '#!'*sh*) bash -n "$f" && shellcheck -S error "$f" || fail=1 ;;
+            esac
+          done < <(git ls-files ':!:shared/.agents/skills/**')
+          exit $fail
+
+  secrets:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
