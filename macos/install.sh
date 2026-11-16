@@ -110,16 +110,16 @@ EXTERNAL=()   # 1 = found but not installed by this script — cannot manage
 
 # 0: Homebrew Formulae + Nerd Font
 LABELS+=("Homebrew Formulae + Nerd Font")
-DESCRIPTIONS+=("neovim, tmux, trash, htop, ripgrep, starship, neofetch, yazi, fzf, gh, imagemagick, luarocks, wakatime-cli, cliclick, JetBrainsMono")
+DESCRIPTIONS+=("neovim, tmux, trash, htop, ripgrep, starship, neofetch, yazi, fzf, gh, imagemagick, luarocks, cliclick, JetBrainsMono")
 _fi=0
-for _cmd in nvim tmux trash htop rg starship neofetch yazi fzf gh magick luarocks wakatime-cli cliclick; do
+for _cmd in nvim tmux trash htop rg starship neofetch yazi fzf gh magick luarocks cliclick; do
   command -v "$_cmd" &>/dev/null && ((_fi++)) || true
 done
 if brew list --cask font-jetbrains-mono-nerd-font &>/dev/null || ls "$HOME/Library/Fonts/JetBrainsMono"*"NerdFont"* &>/dev/null 2>&1; then
   ((_fi++))
 fi
-if [ "$_fi" -eq 15 ]; then STATUS+=("all installed"); SELECTED+=(0)
-elif [ "$_fi" -gt 0 ]; then STATUS+=("${_fi}/15 installed"); SELECTED+=(1)
+if [ "$_fi" -eq 14 ]; then STATUS+=("all installed"); SELECTED+=(0)
+elif [ "$_fi" -gt 0 ]; then STATUS+=("${_fi}/14 installed"); SELECTED+=(1)
 else STATUS+=(""); SELECTED+=(1); fi
 EXTERNAL+=(0)
 
@@ -200,7 +200,6 @@ _omz_ready=1
 [ -f "$HOME/.oh-my-zsh/oh-my-zsh.sh" ] || _omz_ready=0
 [ -f "$HOME/.oh-my-zsh/custom/plugins/zsh-autosuggestions/zsh-autosuggestions.zsh" ] || _omz_ready=0
 [ -f "$HOME/.oh-my-zsh/custom/plugins/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh" ] || _omz_ready=0
-[ -f "$HOME/.oh-my-zsh/custom/plugins/zsh-wakatime/zsh-wakatime.plugin.zsh" ] || _omz_ready=0
 if [ "$_omz_ready" = "1" ]; then STATUS+=("installed"); SELECTED+=(0); EXTERNAL+=(0); else STATUS+=(""); SELECTED+=(1); EXTERNAL+=(0); fi
 
 # 7: Rust
@@ -526,7 +525,6 @@ if [ "${SELECTED[0]}" = "1" ]; then
     "gh:gh"
     "imagemagick:magick"
     "luarocks:luarocks"
-    "wakatime-cli:wakatime-cli"
     "cliclick:cliclick"
   )
   for _entry in "${_formulae[@]}"; do
@@ -644,10 +642,6 @@ if [ "${SELECTED[7]}" = "1" ]; then
   if [[ ! -f "$ZSH_CUSTOM/plugins/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh" ]]; then
     rm -rf "$ZSH_CUSTOM/plugins/zsh-syntax-highlighting" 2>/dev/null || true
     git clone https://github.com/zsh-users/zsh-syntax-highlighting.git "$ZSH_CUSTOM/plugins/zsh-syntax-highlighting"
-  fi
-  if [[ ! -f "$ZSH_CUSTOM/plugins/zsh-wakatime/zsh-wakatime.plugin.zsh" ]]; then
-    rm -rf "$ZSH_CUSTOM/plugins/zsh-wakatime" 2>/dev/null || true
-    git clone https://github.com/wbingli/zsh-wakatime.git "$ZSH_CUSTOM/plugins/zsh-wakatime"
   fi
   done_msg "Plugins ready"
 fi
