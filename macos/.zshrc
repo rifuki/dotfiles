@@ -34,6 +34,8 @@ plugins=(
     zsh-autosuggestions
     zsh-syntax-highlighting
 )
+# WakaTime is opt-in from the installer and loads once ~/.wakatime.cfg holds a key.
+[ -f "$HOME/.wakatime.cfg" ] && [ -d "$HOME/.oh-my-zsh/custom/plugins/zsh-wakatime" ] && plugins+=(zsh-wakatime)
 
 source $ZSH/oh-my-zsh.sh
 

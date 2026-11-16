@@ -313,6 +313,15 @@ else
   STATUS+=("private repo — needs GitHub SSH"); SELECTED+=(0); EXTERNAL+=(0)
 fi
 
+# 20: WakaTime
+LABELS+=("WakaTime")
+DESCRIPTIONS+=("Coding time tracking: wakatime-cli + zsh plugin (nvim plugin loads once ~/.wakatime.cfg exists)")
+if command -v wakatime-cli &>/dev/null && [ -d "$HOME/.oh-my-zsh/custom/plugins/zsh-wakatime" ]; then
+  STATUS+=("installed"); SELECTED+=(0); EXTERNAL+=(0)
+else
+  STATUS+=(""); SELECTED+=(0); EXTERNAL+=(0)
+fi
+
 _total=${#LABELS[@]}
 
 # ========== Draw Menu ==========
@@ -1235,6 +1244,19 @@ if [ "${SELECTED[16]}" = "1" ] || [ "${SELECTED[17]}" = "1" ]; then
   else
     warn_msg "nvim not installed, skipping Neovim headless tasks"
   fi
+fi
+
+# ========== 20: WakaTime ==========
+if [ "${SELECTED[20]}" = "1" ]; then
+  step "Setting up WakaTime"
+  command -v wakatime-cli &>/dev/null || brew install wakatime-cli
+  _wt="$HOME/.oh-my-zsh/custom/plugins/zsh-wakatime"
+  if [ ! -f "$_wt/zsh-wakatime.plugin.zsh" ]; then
+    rm -rf "$_wt"
+    git clone -q https://github.com/wbingli/zsh-wakatime.git "$_wt"
+  fi
+  done_msg "WakaTime installed"
+  [ -f "$HOME/.wakatime.cfg" ] || info_msg "Add your API key to ~/.wakatime.cfg, or run :WakaTimeApiKey in nvim"
 fi
 
 # ========== Done ==========
