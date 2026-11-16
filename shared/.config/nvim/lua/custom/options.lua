@@ -38,8 +38,19 @@ vim.filetype.add({
 -- Queries: ~/.config/nvim/queries/move/highlights.scm
 vim.treesitter.language.register("move", "move")
 
--- WSL clipboard
-if vim.fn.has("wsl") == 1 then
+-- Clipboard. Over SSH, yanks reach the local terminal's clipboard through OSC 52; pasting is
+-- the terminal's own (Cmd+V), so the clipboard is never read back. On WSL itself, Windows'.
+if vim.env.SSH_TTY or vim.env.SSH_CONNECTION then
+    local osc52 = require("vim.ui.clipboard.osc52")
+    local function from_register()
+        return { vim.fn.split(vim.fn.getreg(""), "\n"), vim.fn.getregtype("") }
+    end
+    vim.g.clipboard = {
+        name = "OSC 52",
+        copy = { ["+"] = osc52.copy("+"), ["*"] = osc52.copy("*") },
+        paste = { ["+"] = from_register, ["*"] = from_register },
+    }
+elseif vim.fn.has("wsl") == 1 then
     vim.g.clipboard = {
         name = "win32yank-wsl",
         copy = {
