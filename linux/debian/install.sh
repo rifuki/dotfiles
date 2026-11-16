@@ -672,7 +672,7 @@ if [ "${SELECTED[2]}" = "1" ]; then
   step "Installing Starship"
   if ! command -v starship &>/dev/null; then
     info_msg "Installing Starship..."
-    curl -sS https://starship.rs/install.sh | sh -s -- -y
+    curl --proto "=https" --tlsv1.2 -fsSL https://starship.rs/install.sh | sh -s -- -y
     done_msg "Starship installed"
   else
     done_msg "Starship already installed: $(starship --version | head -1)"
@@ -748,7 +748,7 @@ if [ "${SELECTED[6]}" = "1" ]; then
   step "Setting up Node.js 24 + Go via Mise"
   if ! command -v mise &>/dev/null; then
     info_msg "Installing Mise..."
-    curl https://mise.run | sh
+    curl --proto "=https" --tlsv1.2 -fsSL https://mise.run | sh
     export PATH="$HOME/.local/bin:$PATH"
     done_msg "Mise installed: $(mise --version 2>/dev/null)"
   else

@@ -269,7 +269,7 @@ fi
 if [ "${SELECTED[1]}" = "1" ]; then
   step "Installing Starship"
   if ! command -v starship &>/dev/null; then
-    curl -sS https://starship.rs/install.sh | sh -s -- -y
+    curl --proto "=https" --tlsv1.2 -fsSL https://starship.rs/install.sh | sh -s -- -y
     done_msg "Starship installed"
   else
     done_msg "Starship already installed: $(starship --version | head -1)"
@@ -329,7 +329,7 @@ fi
 if [ "${SELECTED[5]}" = "1" ]; then
   step "Setting up mise + Node 24 + Go"
   if ! command -v mise &>/dev/null; then
-    curl https://mise.run | sh
+    curl --proto "=https" --tlsv1.2 -fsSL https://mise.run | sh
     export PATH="$HOME/.local/bin:$PATH"
     done_msg "mise installed: $(mise --version 2>/dev/null)"
   else

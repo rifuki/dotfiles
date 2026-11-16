@@ -33,7 +33,6 @@
 **/.DS_Store
 **/.zcompdump*
 **/__pycache__/
-**/lazy-lock.json
 **/.config/tmux/plugins/
 **/*.zwc
 **/node_modules/
