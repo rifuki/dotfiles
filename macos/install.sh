@@ -422,7 +422,7 @@ DOTFILES_DIR="$HOME/.dotfiles"
 SHARED_DIR="$DOTFILES_DIR/shared"
 PLATFORM_DIR="$DOTFILES_DIR/macos"
 
-# The repo hook keeps personal skills out of the public skill tree.
+# Repo hooks keep personal skills and private names out of this public repo.
 step "Enabling repo hooks"
 git -C "$DOTFILES_DIR" config core.hooksPath .githooks
 
@@ -851,13 +851,6 @@ done_msg "~/.hyper.js"
 # ~/.claude across any extra ~/.claude-<name>/ profiles. Only links what is safe to
 # link: missing, already linked, or byte-identical. Anything you have edited locally
 # is reported and left alone, so re-running never overwrites your config.
-# Git hooks: warn after a pull that install.sh needs re-running. Symlinked rather
-# than core.hooksPath, so any other hook in .git/hooks keeps working.
-if [ -f "$SHARED_DIR/git-hooks/post-merge" ] && [ -d "$DOTFILES_DIR/.git/hooks" ]; then
-  ln -sf "$SHARED_DIR/git-hooks/post-merge" "$DOTFILES_DIR/.git/hooks/post-merge"
-  done_msg "Post-merge reminder hook installed"
-fi
-
 if [ -x "$SHARED_DIR/.claude/link-profiles.sh" ]; then
   step "Setting up Claude Code"
   mkdir -p "$HOME/.claude"

@@ -376,6 +376,9 @@ if [ "${SELECTED[0]}" != "1" ]; then
   SHARED_DIR="$DOTFILES_DIR/shared"
   PLATFORM_DIR="$DOTFILES_DIR/linux/debian"
 
+  # Repo hooks keep personal skills and private names out of this public repo.
+  git -C "$DOTFILES_DIR" config core.hooksPath .githooks 2>/dev/null || true
+
   # ========== Backup ==========
   step "Checking for existing configs"
   BACKUP_DIR="$HOME/.config/backup-$(date +%Y%m%d-%H%M%S)"
@@ -390,13 +393,11 @@ if [ "${SELECTED[0]}" != "1" ]; then
       _did_backup=1
     fi
   done
-  for _f in "$HOME/.zshrc"; do
-    if [ -f "$_f" ] && [ ! -L "$_f" ]; then
-      [ "$_did_backup" = "0" ] && mkdir -p "$BACKUP_DIR"
-      mv "$_f" "$BACKUP_DIR/"
-      _did_backup=1
-    fi
-  done
+  if [ -f "$HOME/.zshrc" ] && [ ! -L "$HOME/.zshrc" ]; then
+    [ "$_did_backup" = "0" ] && mkdir -p "$BACKUP_DIR"
+    mv "$HOME/.zshrc" "$BACKUP_DIR/"
+    _did_backup=1
+  fi
   [ "$_did_backup" = "1" ] && done_msg "Backed up to: $BACKUP_DIR" || done_msg "No existing configs to backup"
 
   for _d in "$SHARED_DIR/.config"/*/; do

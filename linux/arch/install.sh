@@ -232,6 +232,9 @@ SHARED_DIR="$DOTFILES_DIR/shared"
 PLATFORM_DIR="$DOTFILES_DIR/linux/arch"
 LINUX_SHARED_DIR="$DOTFILES_DIR/linux/shared"
 
+# Repo hooks keep personal skills and private names out of this public repo.
+git -C "$DOTFILES_DIR" config core.hooksPath .githooks 2>/dev/null || true
+
 # ========== 0: Arch Desktop + Fonts ==========
 if [ "${SELECTED[0]}" = "1" ]; then
   step "Installing Arch desktop packages"

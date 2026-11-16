@@ -310,13 +310,11 @@ for _d in "$SHARED_DIR/.config"/*/; do
     _did_backup=1
   fi
 done
-for _f in "$HOME/.zshrc"; do
-  if [ -e "$_f" ]; then
-    [ "$_did_backup" = "0" ] && mkdir -p "$UNINSTALL_BACKUP_DIR"
-    cp -L "$_f" "$UNINSTALL_BACKUP_DIR/" 2>/dev/null || true
-    _did_backup=1
-  fi
-done
+if [ -e "$HOME/.zshrc" ]; then
+  [ "$_did_backup" = "0" ] && mkdir -p "$UNINSTALL_BACKUP_DIR"
+  cp -L "$HOME/.zshrc" "$UNINSTALL_BACKUP_DIR/" 2>/dev/null || true
+  _did_backup=1
+fi
 [ "$_did_backup" = "1" ] && done_msg "Backed up to: $UNINSTALL_BACKUP_DIR" || done_msg "No configs to backup"
 
 # ========== Remove Symlinks (always) ==========
