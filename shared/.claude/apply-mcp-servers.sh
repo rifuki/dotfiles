@@ -2,7 +2,7 @@
 # Merge mcp-servers.json into every Claude profile's ~/.claude.json.
 #
 # User-scope MCP config lives in .claude.json, which link-profiles.sh deliberately
-# never shares — it also holds oauthAccount, and Claude Code rewrites the whole file
+# never shares: it also holds oauthAccount, and Claude Code rewrites the whole file
 # constantly, so a symlink would let the last writer clobber every other account's
 # identity. That leaves each profile needing its own copy of the same server list.
 #
@@ -37,7 +37,7 @@ for t in "${targets[@]}"; do
   cfg="$t/.claude.json"
   [ "$t" = "$HOME/.claude" ] && cfg="$HOME/.claude.json"
   if [ ! -f "$cfg" ]; then
-    echo "  $name: no .claude.json yet — skipped (log in first)"
+    echo "  $name: no .claude.json yet, skipped (log in first)"
     continue
   fi
   out="$(SRC="$SRC" PRIVATE_SRC="$PRIVATE_SRC" CFG="$cfg" MODE="$mode" python3 - <<'PY'

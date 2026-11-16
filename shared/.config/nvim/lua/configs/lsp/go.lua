@@ -1,12 +1,10 @@
--- Go LSP. cmd, filetypes and root_dir come from nvim-lspconfig's lsp/gopls.lua;
--- only settings are layered on top.
+-- cmd, filetypes and root_dir come from nvim-lspconfig; this file only adds settings.
 vim.lsp.config("gopls", {
     settings = {
         gopls = {
             usePlaceholders = true,
-            -- `true` is staticcheck's `-checks all`; the ST rules below are the
-            -- style checks the CLI's default config leaves off, so the editor
-            -- reports what `staticcheck ./...` reports.
+            -- `true` means `-checks all`; turning off the ST rules below matches
+            -- the CLI default, so the editor reports what `staticcheck ./...` does.
             staticcheck = true,
             analyses = {
                 ST1000 = false, -- package comment missing

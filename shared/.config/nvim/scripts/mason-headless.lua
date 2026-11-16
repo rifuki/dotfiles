@@ -4,7 +4,7 @@
 -- Our -c script runs after init.lua but BEFORE the event loop, so listeners
 -- registered here will catch all package:install:* events when the loop starts.
 --
--- No polling needed — we wait via the event counter and quit when pending == 0.
+-- No polling needed: we wait via the event counter and quit when pending == 0.
 
 local function log(msg)
     vim.api.nvim_out_write(msg .. "\n")
