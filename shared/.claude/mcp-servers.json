@@ -9,7 +9,10 @@
     "",
     "Never put credentials in here: this repo is public. Anything needing a token",
     "belongs in that profile's ~/.claude.json by hand, or in an env var the command",
-    "reads at runtime."
+    "reads at runtime.",
+    "",
+    "Servers that must not be public go in ~/.config/agents/mcp-servers.json,",
+    "which apply-mcp-servers.sh merges over this file when it exists."
   ],
   "mcpServers": {
     "graphify": {
@@ -17,10 +20,6 @@
       "command": "graphify-mcp",
       "args": ["--transport", "stdio"],
       "env": {}
-    },
-    "work-mcp": {
-      "type": "http",
-      "url": "https://mcp.example.invalid/mcp"
     }
   }
 }

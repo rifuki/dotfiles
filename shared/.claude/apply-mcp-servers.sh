@@ -18,6 +18,8 @@ set -uo pipefail
 HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 SRC="$HERE/mcp-servers.json"
 [ -f "$SRC" ] || { echo "missing $SRC" >&2; exit 1; }
+# Servers that cannot be named in a public repo live in the private agent-context repo.
+PRIVATE_SRC="${PRIVATE_MCP_SERVERS:-$HOME/.config/agents/mcp-servers.json}"
 
 mode=apply
 [ "${1-}" = "--check" ] && mode=check
@@ -38,10 +40,12 @@ for t in "${targets[@]}"; do
     echo "  $name: no .claude.json yet — skipped (log in first)"
     continue
   fi
-  out="$(SRC="$SRC" CFG="$cfg" MODE="$mode" python3 - <<'PY'
+  out="$(SRC="$SRC" PRIVATE_SRC="$PRIVATE_SRC" CFG="$cfg" MODE="$mode" python3 - <<'PY'
 import json, os, sys
 
 src = json.load(open(os.environ["SRC"]))["mcpServers"]
+if os.path.isfile(os.environ["PRIVATE_SRC"]):
+    src.update(json.load(open(os.environ["PRIVATE_SRC"]))["mcpServers"])
 cfg_path = os.environ["CFG"]
 cfg = json.load(open(cfg_path))
 cur = cfg.get("mcpServers", {})
