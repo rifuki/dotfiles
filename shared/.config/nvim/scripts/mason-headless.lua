@@ -42,7 +42,10 @@ if lazy_ok then pcall(lazy.load, { plugins = { "mason.nvim" } }) end
 
 -- ── Explicitly install formatters (mason-lspconfig only handles LSPs) ────────
 registry.refresh(function()
-    for _, name in ipairs({ "prettierd", "stylua" }) do
+    local formatters = { "prettierd", "stylua" }
+    -- Mason builds goimports with `go install`, same gate as gopls in mason.lua.
+    if vim.fn.executable("go") == 1 then table.insert(formatters, "goimports") end
+    for _, name in ipairs(formatters) do
         local ok, pkg = pcall(registry.get_package, name)
         if ok and not pkg:is_installed() then
             pkg:install()

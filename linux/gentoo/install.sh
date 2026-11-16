@@ -104,8 +104,8 @@ if [ -d "$HOME/.bun" ]; then STATUS+=("installed"); SELECTED+=(0); EXTERNAL+=(0)
 else STATUS+=(""); SELECTED+=(1); EXTERNAL+=(0); fi
 
 # 4: mise + Node 24
-LABELS+=("mise + Node 24")
-DESCRIPTIONS+=("Blazingly-fast polyglot version manager + Node.js 24")
+LABELS+=("mise + Node 24 + Go")
+DESCRIPTIONS+=("Polyglot version manager + Node.js 24 + Go")
 if command -v mise &>/dev/null; then STATUS+=("installed"); SELECTED+=(0); EXTERNAL+=(0)
 else STATUS+=(""); SELECTED+=(1); EXTERNAL+=(0); fi
 
@@ -442,9 +442,9 @@ if [ "${SELECTED[3]}" = "1" ]; then
   fi
 fi
 
-# ========== 4: mise + Node 24 ==========
+# ========== 4: mise + Node 24 + Go ==========
 if [ "${SELECTED[4]}" = "1" ]; then
-  step "Setting up mise + Node 24"
+  step "Setting up mise + Node 24 + Go"
   if ! command -v mise &>/dev/null; then
     info_msg "Installing mise..."
     curl https://mise.run | sh
@@ -460,6 +460,12 @@ if [ "${SELECTED[4]}" = "1" ]; then
   else
     done_msg "Node.js 24 already installed"
   fi
+  # Mason builds gopls and goimports with `go install`.
+  if ! command -v go &>/dev/null; then
+    mise use --global go@latest
+    export PATH="$HOME/.local/share/mise/shims:$PATH"
+  fi
+  done_msg "Go: $(go version 2>/dev/null)"
 fi
 
 # ========== 5: Docker ==========
@@ -842,7 +848,7 @@ if [ "${SELECTED[6]}" = "1" ] || [ "${SELECTED[7]}" = "1" ]; then
       # The lua -c registers progress listeners before MasonInstall fires events.
       nvim --headless \
         -c "lua local r=require('mason-registry');r:on('package:install:start',function(p)vim.api.nvim_out_write('  [mason] installing '..p.name..'...\n')end);r:on('package:install:success',function(p)vim.api.nvim_out_write('  [mason] done '..p.name..'\n')end);r:on('package:install:failed',function(p)vim.api.nvim_out_write('  [mason] FAILED '..p.name..'\n')end)" \
-        -c "MasonInstall lua-language-server taplo typescript-language-server deno intelephense dockerfile-language-server yaml-language-server gh-actions-language-server json-lsp css-lsp html-lsp bash-language-server clangd prettierd stylua prisma-language-server nomicfoundation-solidity-language-server tailwindcss-language-server$(command -v go >/dev/null 2>&1 && echo " gopls")" \
+        -c "MasonInstall lua-language-server taplo typescript-language-server deno intelephense dockerfile-language-server yaml-language-server gh-actions-language-server json-lsp css-lsp html-lsp bash-language-server clangd prettierd stylua prisma-language-server nomicfoundation-solidity-language-server tailwindcss-language-server$(command -v go >/dev/null 2>&1 && echo " gopls goimports")" \
         -c "qall" 2>/dev/null || true
       done_msg "Mason packages installed"
     fi

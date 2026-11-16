@@ -2,6 +2,7 @@
 export PATH="$HOME/.local/bin:$PATH"
 export PATH="$HOME/.bun/bin:$PATH"
 export PATH="$HOME/.cargo/bin:$PATH"
+export PATH="${GOPATH:-$HOME/go}/bin:$PATH"
 
 export EDITOR=nvim
 

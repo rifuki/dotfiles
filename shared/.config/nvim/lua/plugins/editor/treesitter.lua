@@ -40,6 +40,7 @@ return {
             "gomod",
             "gosum",
             "gowork",
+            "gotmpl",
         },
         auto_install = true,
         highlight = {

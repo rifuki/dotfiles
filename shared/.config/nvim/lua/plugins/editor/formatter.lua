@@ -18,8 +18,8 @@ return {
             -- prisma has no standalone CLI formatter; prismals implements
             -- textDocument/formatting, so route the filetype through the LSP.
             prisma = { lsp_format = "prefer" },
-            -- gopls formats with gofmt; no extra formatter binary to install.
-            go = { lsp_format = "prefer" },
+            -- gofmt style, not gofumpt, so shared repos get no reformat-only diffs.
+            go = { "goimports", lsp_format = "fallback" },
         },
         -- Note: prettierd uses .prettierrc config file (CLI args not supported well)
         -- Create .prettierrc in project root for custom settings:
