@@ -371,9 +371,7 @@ fi
 if [ "${SELECTED[0]}" = "1" ]; then
   step "Installing Starship"
   if ! command -v starship &>/dev/null; then
-    info_msg "Installing Starship..."
-    curl --proto "=https" --tlsv1.2 -fsSL https://starship.rs/install.sh | sh -s -- -y
-    done_msg "Starship installed"
+    warn_msg "Install via: sudo emerge app-shells/starship"
   else
     done_msg "Starship already installed: $(starship --version | head -1)"
   fi
@@ -389,7 +387,7 @@ if [ "${SELECTED[1]}" = "1" ]; then
   fi
   if [ ! -f "$HOME/.oh-my-zsh/oh-my-zsh.sh" ]; then
     info_msg "Installing Oh My Zsh..."
-    RUNZSH=no KEEP_ZSHRC=yes CHSH=no bash -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)" || {
+    git clone -q --depth 1 https://github.com/ohmyzsh/ohmyzsh.git "$HOME/.oh-my-zsh" || {
       fail_msg "Oh My Zsh installation failed!"
       exit 1
     }
@@ -435,7 +433,7 @@ if [ "${SELECTED[3]}" = "1" ]; then
   step "Setting up Bun"
   if [ ! -f "$HOME/.bun/bin/bun" ]; then
     info_msg "Installing Bun..."
-    curl -fsSL https://bun.sh/install | bash
+    curl --proto "=https" --tlsv1.2 -fsSL https://bun.sh/install | bash
     git -C "$DOTFILES_DIR" restore linux/gentoo/.zshrc 2>/dev/null || true
     done_msg "Bun installed"
   else
@@ -473,13 +471,8 @@ fi
 if [ "${SELECTED[5]}" = "1" ]; then
   step "Installing Docker"
   if ! command -v docker &>/dev/null; then
-    info_msg "Installing Docker via get.docker.com..."
-    curl -fsSL https://get.docker.com | sh
-    done_msg "Docker installed"
-  else
-    done_msg "Docker already installed: $(docker --version)"
-  fi
-  if ! groups "$USER" | grep -q docker; then
+    warn_msg "Install via: sudo emerge app-containers/docker app-containers/docker-cli, enable the docker service, then re-run"
+  elif ! groups "$USER" | grep -q docker; then
     info_msg "Adding $USER to docker group..."
     sudo usermod -aG docker "$USER"
     done_msg "Added to docker group (re-login to take effect)"

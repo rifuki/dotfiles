@@ -167,7 +167,7 @@ if [ -d "$HOME/.oh-my-zsh" ]; then STATUS+=("installed"); SELECTED+=(0); EXTERNA
 # 4: Rust
 LABELS+=("Rust")
 DESCRIPTIONS+=("Rust toolchain via rustup")
-if [ -f "$HOME/.cargo/bin/rustup" ]; then STATUS+=("installed"); SELECTED+=(0); EXTERNAL+=(0); else STATUS+=(""); SELECTED+=(1); EXTERNAL+=(0); fi
+if command -v rustup &>/dev/null || [ -f "$HOME/.cargo/bin/rustup" ]; then STATUS+=("installed"); SELECTED+=(0); EXTERNAL+=(0); else STATUS+=(""); SELECTED+=(1); EXTERNAL+=(0); fi
 
 # 5: Bun
 LABELS+=("Bun")
@@ -672,7 +672,12 @@ if [ "${SELECTED[2]}" = "1" ]; then
   step "Installing Starship"
   if ! command -v starship &>/dev/null; then
     info_msg "Installing Starship..."
-    curl --proto "=https" --tlsv1.2 -fsSL https://starship.rs/install.sh | sh -s -- -y
+    # Debian ships starship from trixie on; older releases fall back to the upstream script.
+    if apt-cache show starship &>/dev/null; then
+      sudo apt install -y starship
+    else
+      curl --proto "=https" --tlsv1.2 -fsSL https://starship.rs/install.sh | sh -s -- -y
+    fi
     done_msg "Starship installed"
   else
     done_msg "Starship already installed: $(starship --version | head -1)"
@@ -689,7 +694,7 @@ if [ "${SELECTED[3]}" = "1" ]; then
   fi
   if [ ! -f "$HOME/.oh-my-zsh/oh-my-zsh.sh" ]; then
     info_msg "Installing Oh My Zsh..."
-    RUNZSH=no KEEP_ZSHRC=yes CHSH=no bash -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)" || {
+    git clone -q --depth 1 https://github.com/ohmyzsh/ohmyzsh.git "$HOME/.oh-my-zsh" || {
       fail_msg "Oh My Zsh installation failed!"
       exit 1
     }
@@ -713,21 +718,19 @@ fi
 # ========== 4: Rust ==========
 if [ "${SELECTED[4]}" = "1" ]; then
   step "Setting up Rust"
-  if [ ! -f "$HOME/.cargo/bin/rustup" ]; then
-    info_msg "Installing Rust (stable)..."
-    curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --default-toolchain stable --no-modify-path
-    source "$HOME/.cargo/env"
-    done_msg "Rust installed"
-  else
-    source "$HOME/.cargo/env" 2>/dev/null || true
-    if ! "$HOME/.cargo/bin/rustup" show active-toolchain &>/dev/null; then
-      info_msg "No default toolchain found, setting stable..."
-      "$HOME/.cargo/bin/rustup" default stable
-      done_msg "Rust stable toolchain set"
+  [ -f "$HOME/.cargo/env" ] && source "$HOME/.cargo/env"
+  if ! command -v rustup &>/dev/null; then
+    info_msg "Installing rustup..."
+    # Debian ships rustup from trixie on; older releases fall back to the upstream script.
+    if apt-cache show rustup &>/dev/null; then
+      sudo apt install -y rustup
     else
-      done_msg "Rust already installed: $("$HOME/.cargo/bin/rustc" --version)"
+      curl --proto '=https' --tlsv1.2 -fsSL https://sh.rustup.rs | sh -s -- -y --default-toolchain none --no-modify-path
+      source "$HOME/.cargo/env"
     fi
   fi
+  rustup show active-toolchain &>/dev/null || rustup default stable
+  done_msg "Rust: $(rustc --version 2>/dev/null || true)"
 fi
 
 # ========== 5: Bun ==========
@@ -735,8 +738,8 @@ if [ "${SELECTED[5]}" = "1" ]; then
   step "Setting up Bun"
   if [ ! -f "$HOME/.bun/bin/bun" ]; then
     info_msg "Installing Bun..."
-    curl -fsSL https://bun.sh/install | bash
-    git -C "$DOTFILES_DIR" restore debian/.zshrc 2>/dev/null || true
+    curl --proto "=https" --tlsv1.2 -fsSL https://bun.sh/install | bash
+    git -C "$DOTFILES_DIR" restore linux/debian/.zshrc 2>/dev/null || true
     done_msg "Bun installed"
   else
     done_msg "Bun already installed: $("$HOME/.bun/bin/bun" --version)"
@@ -773,8 +776,23 @@ fi
 if [ "${SELECTED[7]}" = "1" ]; then
   step "Installing Docker"
   if ! command -v docker &>/dev/null; then
-    info_msg "Installing Docker via get.docker.com..."
-    curl -fsSL https://get.docker.com | sh
+    info_msg "Installing Docker from Docker's signed apt repository..."
+    command -v gpg &>/dev/null || sudo apt install -y gnupg
+    _key="$(mktemp)"
+    curl --proto '=https' --tlsv1.2 -fsSL https://download.docker.com/linux/debian/gpg -o "$_key"
+    # Docker's published release key; anything else stops the install.
+    if [ "$(gpg --show-keys --with-colons "$_key" 2>/dev/null | awk -F: '/^fpr/{print $10; exit}')" != "9DC858229FC7DD38854AE2D88D81803C0EBFCD88" ]; then
+      rm -f "$_key"
+      fail_msg "Docker signing key fingerprint mismatch"
+      exit 1
+    fi
+    sudo install -m 0755 -d /etc/apt/keyrings
+    sudo install -m 0644 "$_key" /etc/apt/keyrings/docker.asc
+    rm -f "$_key"
+    echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/debian $(. /etc/os-release && echo "$VERSION_CODENAME") stable" \
+      | sudo tee /etc/apt/sources.list.d/docker.list >/dev/null
+    sudo apt update -qq
+    sudo apt install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
     done_msg "Docker installed"
   else
     done_msg "Docker already installed: $(docker --version)"

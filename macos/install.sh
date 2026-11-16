@@ -211,7 +211,7 @@ if [ -f "$HOME/.cargo/bin/rustup" ]; then STATUS+=("installed"); SELECTED+=(0); 
 # 9: Bun
 LABELS+=("Bun")
 DESCRIPTIONS+=("JavaScript runtime")
-if [ -d "$HOME/.bun" ]; then STATUS+=("installed"); SELECTED+=(0); EXTERNAL+=(0); else STATUS+=(""); SELECTED+=(1); EXTERNAL+=(0); fi
+if command -v bun &>/dev/null || [ -d "$HOME/.bun" ]; then STATUS+=("installed"); SELECTED+=(0); EXTERNAL+=(0); else STATUS+=(""); SELECTED+=(1); EXTERNAL+=(0); fi
 
 # 10: Node (Homebrew)
 LABELS+=("Node (Homebrew)")
@@ -483,14 +483,21 @@ fi
 # ========== Homebrew ==========
 step "Checking Homebrew"
 if ! command -v brew &>/dev/null; then
-  info_msg "Installing Homebrew..."
+  info_msg "Installing Homebrew from its signed .pkg..."
+  _brew_dir="$(mktemp -d)"
   set +e
-  /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+  # Install only a pkg that Apple notarized and Homebrew's signing team (927JGANW46) signed.
+  curl --proto '=https' --tlsv1.2 -fsSLo "$_brew_dir/Homebrew.pkg" \
+      https://github.com/Homebrew/brew/releases/latest/download/Homebrew.pkg \
+    && spctl -a -t install "$_brew_dir/Homebrew.pkg" 2>/dev/null \
+    && pkgutil --check-signature "$_brew_dir/Homebrew.pkg" | grep -q '(927JGANW46)$' \
+    && sudo installer -pkg "$_brew_dir/Homebrew.pkg" -target /
   BREW_RESULT=$?
   set -e
+  rm -rf "$_brew_dir"
   if [ $BREW_RESULT -ne 0 ]; then
-    fail_msg "Homebrew installation failed"
-    echo -e "    ${DIM}Install manually, then re-run this script${NC}"
+    fail_msg "Homebrew installation failed (download, signature check or installer)"
+    echo -e "    ${DIM}Install manually from https://brew.sh, then re-run this script${NC}"
     exit 1
   fi
   eval "$(/opt/homebrew/bin/brew shellenv bash)"
@@ -620,7 +627,7 @@ if [ "${SELECTED[7]}" = "1" ]; then
   step "Setting up Oh My Zsh"
   if [ ! -f "$HOME/.oh-my-zsh/oh-my-zsh.sh" ]; then
     info_msg "Installing Oh My Zsh..."
-    RUNZSH=no KEEP_ZSHRC=yes CHSH=no bash -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)" || {
+    git clone -q --depth 1 https://github.com/ohmyzsh/ohmyzsh.git "$HOME/.oh-my-zsh" || {
       fail_msg "Oh My Zsh installation failed!"
       exit 1
     }
@@ -673,14 +680,9 @@ fi
 # ========== 9: Bun ==========
 if [ "${SELECTED[9]}" = "1" ]; then
   step "Setting up Bun"
-  if [ ! -f "$HOME/.bun/bin/bun" ]; then
-    info_msg "Installing Bun..."
-    curl -fsSL https://bun.sh/install | bash
-    git -C "$DOTFILES_DIR" restore .zshrc 2>/dev/null || true
-    done_msg "Bun installed"
-  else
-    done_msg "Bun already installed: $("$HOME/.bun/bin/bun" --version)"
-  fi
+  # Bun's own tap pins each release by sha256, unlike its curl installer.
+  command -v bun &>/dev/null || [ -x "$HOME/.bun/bin/bun" ] || brew install oven-sh/bun/bun
+  done_msg "Bun: $(bun --version 2>/dev/null || "$HOME/.bun/bin/bun" --version)"
 fi
 
 # ========== 10: Node (Homebrew) ==========
@@ -701,7 +703,7 @@ if [ "${SELECTED[11]}" = "1" ]; then
   _solana_bin="$HOME/.local/share/solana/install/active_release/bin"
   if [ ! -f "$_solana_bin/solana" ]; then
     info_msg "Installing Solana CLI..."
-    sh -c "$(curl -sSfL https://release.anza.xyz/stable/install)"
+    sh -c "$(curl --proto '=https' --tlsv1.2 -fsSL https://release.anza.xyz/stable/install)"
     done_msg "Solana CLI installed: $("$_solana_bin/solana" --version 2>/dev/null | head -1)"
   else
     done_msg "Solana CLI already installed: $("$_solana_bin/solana" --version 2>/dev/null | head -1)"
@@ -733,7 +735,7 @@ if [ "${SELECTED[12]}" = "1" ]; then
   step "Installing suiup + Sui Testnet"
   if [ ! -f "$HOME/.local/bin/suiup" ]; then
     info_msg "Installing suiup..."
-    curl -sSfL https://raw.githubusercontent.com/MystenLabs/suiup/main/install.sh | sh
+    curl --proto '=https' --tlsv1.2 -fsSL https://raw.githubusercontent.com/MystenLabs/suiup/main/install.sh | sh
     done_msg "suiup installed"
   else
     done_msg "suiup already installed"

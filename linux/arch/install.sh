@@ -113,12 +113,12 @@ if [ -z "$_RESUME_SEL" ]; then
 
   LABELS+=("Rust")
   DESCRIPTIONS+=("Rust toolchain via rustup")
-  if [ -f "$HOME/.cargo/bin/rustup" ]; then STATUS+=("installed"); SELECTED+=(0); EXTERNAL+=(0)
+  if command -v rustup &>/dev/null || [ -f "$HOME/.cargo/bin/rustup" ]; then STATUS+=("installed"); SELECTED+=(0); EXTERNAL+=(0)
   else STATUS+=(""); SELECTED+=(1); EXTERNAL+=(0); fi
 
   LABELS+=("Bun")
   DESCRIPTIONS+=("JavaScript runtime")
-  if [ -d "$HOME/.bun" ]; then STATUS+=("installed"); SELECTED+=(0); EXTERNAL+=(0)
+  if command -v bun &>/dev/null || [ -d "$HOME/.bun" ]; then STATUS+=("installed"); SELECTED+=(0); EXTERNAL+=(0)
   else STATUS+=(""); SELECTED+=(1); EXTERNAL+=(0); fi
 
   LABELS+=("mise + Node 24 + Go")
@@ -269,7 +269,7 @@ fi
 if [ "${SELECTED[1]}" = "1" ]; then
   step "Installing Starship"
   if ! command -v starship &>/dev/null; then
-    curl --proto "=https" --tlsv1.2 -fsSL https://starship.rs/install.sh | sh -s -- -y
+    install_pacman_packages starship
     done_msg "Starship installed"
   else
     done_msg "Starship already installed: $(starship --version | head -1)"
@@ -283,7 +283,7 @@ if [ "${SELECTED[2]}" = "1" ]; then
     install_pacman_packages zsh
   fi
   if [ ! -f "$HOME/.oh-my-zsh/oh-my-zsh.sh" ]; then
-    RUNZSH=no KEEP_ZSHRC=yes CHSH=no bash -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"
+    git clone -q --depth 1 https://github.com/ohmyzsh/ohmyzsh.git "$HOME/.oh-my-zsh"
     done_msg "Oh My Zsh installed"
   else
     done_msg "Oh My Zsh already installed"
@@ -303,34 +303,25 @@ fi
 # ========== 3: Rust ==========
 if [ "${SELECTED[3]}" = "1" ]; then
   step "Setting up Rust"
-  if [ ! -f "$HOME/.cargo/bin/rustup" ]; then
-    curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --default-toolchain stable --no-modify-path
-    source "$HOME/.cargo/env"
-    done_msg "Rust installed"
-  else
-    source "$HOME/.cargo/env" 2>/dev/null || true
-    done_msg "Rust already installed: $("$HOME/.cargo/bin/rustc" --version 2>/dev/null || true)"
-  fi
+  # A rustup from the old curl installer lives in ~/.cargo/bin and keeps working.
+  [ -f "$HOME/.cargo/env" ] && source "$HOME/.cargo/env"
+  command -v rustup &>/dev/null || install_pacman_packages rustup
+  rustup toolchain list 2>/dev/null | grep -q '^stable' || rustup default stable
+  done_msg "Rust: $(rustc --version 2>/dev/null || true)"
 fi
 
 # ========== 4: Bun ==========
 if [ "${SELECTED[4]}" = "1" ]; then
   step "Setting up Bun"
-  if [ ! -f "$HOME/.bun/bin/bun" ]; then
-    curl -fsSL https://bun.sh/install | bash
-    git -C "$DOTFILES_DIR" restore arch/.zshrc 2>/dev/null || true
-    done_msg "Bun installed"
-  else
-    done_msg "Bun already installed: $("$HOME/.bun/bin/bun" --version)"
-  fi
+  command -v bun &>/dev/null || [ -x "$HOME/.bun/bin/bun" ] || install_pacman_packages bun
+  done_msg "Bun: $(bun --version 2>/dev/null || "$HOME/.bun/bin/bun" --version)"
 fi
 
 # ========== 5: mise + Node 24 + Go ==========
 if [ "${SELECTED[5]}" = "1" ]; then
   step "Setting up mise + Node 24 + Go"
   if ! command -v mise &>/dev/null; then
-    curl --proto "=https" --tlsv1.2 -fsSL https://mise.run | sh
-    export PATH="$HOME/.local/bin:$PATH"
+    install_pacman_packages mise
     done_msg "mise installed: $(mise --version 2>/dev/null)"
   else
     done_msg "mise already installed: $(mise --version 2>/dev/null)"

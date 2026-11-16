@@ -280,6 +280,25 @@ def build_cursor(images, mode, mirror):
     }
 
 
+def safe_members(tar, dest):
+    """Yield members whose path, and link target if any, stay inside dest."""
+    root = Path(dest).resolve()
+
+    def inside(p):
+        p = p.resolve()
+        return p == root or root in p.parents
+
+    for m in tar.getmembers():
+        target = root / m.name
+        if not (m.isfile() or m.isdir() or m.issym() or m.islnk()) or not inside(target):
+            sys.exit(f"error: refusing unsafe archive member {m.name!r}")
+        if m.issym() and not inside(target.parent / m.linkname):
+            sys.exit(f"error: refusing symlink {m.name!r} -> {m.linkname!r}")
+        if m.islnk() and not inside(root / m.linkname):
+            sys.exit(f"error: refusing hard link {m.name!r} -> {m.linkname!r}")
+        yield m
+
+
 def main():
     ap = argparse.ArgumentParser(description=__doc__,
                                  formatter_class=argparse.RawDescriptionHelpFormatter)
@@ -306,10 +325,12 @@ def main():
         if not VENDORED_ARCHIVE.exists():
             sys.exit(f"error: {VENDORED_ARCHIVE} not found — pass a cursors directory instead")
         tmp = tempfile.TemporaryDirectory()
-        # The `filter` argument only exists on newer Pythons; macOS ships 3.9 with the CLT.
-        extract_kwargs = {"filter": "data"} if hasattr(tarfile, "data_filter") else {}
         with tarfile.open(VENDORED_ARCHIVE) as tar:
-            tar.extractall(tmp.name, **extract_kwargs)
+            if hasattr(tarfile, "data_filter"):
+                tar.extractall(tmp.name, filter="data")
+            else:
+                # macOS ships Python 3.9 with the CLT, which has no extraction filter.
+                tar.extractall(tmp.name, members=safe_members(tar, tmp.name))
         cursor_dir = Path(tmp.name) / "miku-cursor-linux/cursors"
 
     if not cursor_dir.is_dir():
