@@ -49,8 +49,10 @@ vim.lsp.enable({ "lua_ls", "dockerls", "bashls", "jsonls" })
 -- Taplo (TOML) — provide Cargo.toml schema so taplo doesn't show "excluded" diagnostic
 vim.lsp.config("taplo", {
     settings = {
-        taplo = {
+        -- taplo reads its settings under the VS Code extension's name; a `taplo` key is silently ignored.
+        evenBetterToml = {
             schema = {
+                enabled = true,
                 associations = {
                     ["Cargo\\.toml$"] = "https://json.schemastore.org/cargo.json",
                 },
