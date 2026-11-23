@@ -14,7 +14,7 @@ return {
         local lsps = {
             "lua_ls",
             -- rust_analyzer managed by rustup + rustaceanvim
-            "taplo", -- TOML language server
+            "tombi", -- TOML language server
             "ts_ls",
             "denols",
             "intelephense",
@@ -47,7 +47,7 @@ return {
             automatic_installation = true,
             automatic_enable = {
                 exclude = {
-                    "taplo", -- manual config
+                    "taplo", -- replaced by tombi; never start it if still installed
                     "move_analyzer", -- use sui-move-analyzer from cargo instead
                     "solidity_ls_nomicfoundation", -- Solidity LSP is toggled manually in configs/lsp/solidity.lua
                 },

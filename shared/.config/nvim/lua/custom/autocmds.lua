@@ -28,6 +28,33 @@ vim.api.nvim_create_autocmd("CursorHold", {
     desc = "Auto-save Rust files for live LSP diagnostics",
 })
 
+-- autoread only acts when something runs :checktime, and commands run in the built-in terminal
+-- (cargo add, git pull) never do, so a buffer kept showing the old file until :e.
+vim.o.autoread = true
+vim.api.nvim_create_autocmd({ "FocusGained", "BufEnter", "CursorHold", "TermLeave", "TermClose" }, {
+    callback = function()
+        if vim.fn.getcmdwintype() == "" then
+            vim.cmd("silent! checktime")
+        end
+    end,
+    desc = "Reload buffers changed on disk",
+})
+
+-- tombi checks `[[bin]] path = ...` only on save, so a file created or moved from NvimTree left a
+-- stale "does not exist" error. Re-send didSave when coming back to an unmodified TOML buffer.
+vim.api.nvim_create_autocmd({ "BufEnter", "FocusGained" }, {
+    pattern = "*.toml",
+    callback = function(args)
+        if vim.bo[args.buf].modified then
+            return
+        end
+        for _, client in ipairs(vim.lsp.get_clients({ bufnr = args.buf, name = "tombi" })) do
+            client:notify("textDocument/didSave", { textDocument = { uri = vim.uri_from_bufnr(args.buf) } })
+        end
+    end,
+    desc = "Re-lint TOML when returning to it",
+})
+
 -- Git commit message formatting (best practices)
 vim.api.nvim_create_autocmd("FileType", {
     pattern = "gitcommit",

@@ -46,18 +46,7 @@ vim.lsp.config("jsonls", {
 -- Default LSP servers with minimal config
 vim.lsp.enable({ "lua_ls", "dockerls", "bashls", "jsonls" })
 
--- Taplo (TOML) — provide Cargo.toml schema so taplo doesn't show "excluded" diagnostic
-vim.lsp.config("taplo", {
-    settings = {
-        -- taplo reads its settings under the VS Code extension's name; a `taplo` key is silently ignored.
-        evenBetterToml = {
-            schema = {
-                enabled = true,
-                associations = {
-                    ["Cargo\\.toml$"] = "https://json.schemastore.org/cargo.json",
-                },
-            },
-        },
-    },
-})
-vim.lsp.enable("taplo")
+-- TOML: tombi instead of taplo. taplo 0.10 returns no completion for a half-typed key inside
+-- [[bin]]-style tables and cannot read SchemaStore's catalog; tombi resolves Cargo.toml,
+-- .cargo/config.toml and rust-toolchain.toml schemas on its own and flags unknown keys.
+vim.lsp.enable("tombi")
