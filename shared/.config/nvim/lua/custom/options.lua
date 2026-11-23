@@ -64,3 +64,26 @@ elseif vim.fn.has("wsl") == 1 then
         cache_enabled = 0,
     }
 end
+
+-- Inside tmux on this machine, a yank also becomes a tmux buffer, which negi passes on to
+-- the device it is open on. The system clipboard still gets it, and pasting reads from there.
+if vim.env.TMUX and not (vim.env.SSH_TTY or vim.env.SSH_CONNECTION) then
+    local system = vim.fn.has("mac") == 1 and { copy = { "pbcopy" }, paste = { "pbpaste" } }
+        or vim.fn.has("wsl") == 1 and { copy = { "win32yank.exe", "-i", "--crlf" }, paste = { "win32yank.exe", "-o", "--lf" } }
+    if system then
+        local function copy(lines)
+            local text = table.concat(lines, "\n")
+            vim.fn.system(system.copy, text)
+            vim.fn.system({ "tmux", "load-buffer", "-" }, text)
+        end
+        local function paste()
+            return vim.fn.systemlist(system.paste)
+        end
+        vim.g.clipboard = {
+            name = "system and tmux",
+            copy = { ["+"] = copy, ["*"] = copy },
+            paste = { ["+"] = paste, ["*"] = paste },
+            cache_enabled = 0,
+        }
+    end
+end
